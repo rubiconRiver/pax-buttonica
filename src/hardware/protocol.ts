@@ -27,6 +27,8 @@ export type FromDevice =
   | { t: 'hello'; dev: string; fw: string; caps: DeviceCaps }
   | { t: 'btn'; dev: string; b: number; e: Gesture }
   | { t: 'bat'; dev: string; mv: number }
+  /** Added by the hub: how strongly it heard this button, in dBm (closer to zero is stronger). */
+  | { t: 'rssi'; dev: string; dbm: number }
   | { t: 'lost'; dev: string };
 
 export type ToDevice =

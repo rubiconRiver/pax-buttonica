@@ -100,7 +100,10 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 ```json
 {"t":"hub","v":0,"fw":"0.1.0"}
 {"t":"lost","dev":"A1B2C3D4E5F6"}
+{"t":"rssi","dev":"A1B2C3D4E5F6","dbm":-58}
 ```
+
+`rssi` is how strongly the hub heard that button, in dBm, at most once a second. Around −50 is excellent, −70 is fine, below about −80 is getting marginal. The test bench shows it, so range can be checked at the real table.
 
 ### Host → button
 

@@ -28,6 +28,8 @@ export interface HubDevice {
   caps?: DeviceCaps;
   /** Battery millivolts, if the button reports them. */
   mv?: number;
+  /** Signal strength at the hub, dBm. Around -50 is excellent; below about -80 is getting marginal. */
+  dbm?: number;
   lost?: boolean;
 }
 
@@ -97,6 +99,9 @@ function handle(msg: FromDevice) {
       break;
     case 'bat':
       patch(msg.dev, { mv: msg.mv });
+      break;
+    case 'rssi':
+      patch(msg.dev, { dbm: msg.dbm });
       break;
     case 'lost':
       patch(msg.dev, { lost: true });

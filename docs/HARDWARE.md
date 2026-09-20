@@ -84,6 +84,8 @@ If an upload won't start, hold **BOOT**, tap **RESET**, release BOOT, and try ag
 4. **Battery.** Unplug USB, switch on the pack. Same checks again.
 5. **A game.** Open `/play`, connect the hub from the top bar, and start: the seat-claiming ritual binds each button to a player.
 
+**Range check.** The bench shows each button's signal strength at the hub. Put the buttons where they'll really sit, have someone stand in the way, and look for anything weaker than about −80 dBm. If a seat is weak: raise the hub off the table on a short USB extension (away from the laptop's metal body), and inside the button keep the antenna end of the board away from the batteries and pointing up or outward.
+
 Wire traffic is shown at the bottom of the bench page, which is the first place to look when something doesn't respond.
 
 ## The shell — a brief for whoever is modelling it

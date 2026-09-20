@@ -20,6 +20,7 @@ npm run dev
 | `/join` | A phone becomes a button: scan the QR from the *Phones* menu (setup screen or in a game), or type the room code. Players say who they are and edit their own profile and sounds from there |
 | `/button` | Concept drawings of the physical button: exploded view, size, target dimensions. Made for sharing |
 | `/parts` | Interactive shopping list: pick how many buttons and what you already own, tick things off, read what each part is for |
+| *(in a game)* **Scoreboard** | Objectives with their requirements, who has scored what, secrets, other points, laws. Opens by itself in the status phase; `B` toggles it. Every phone gets it read-only under "The table" |
 | `/bench` | Hardware test bench: connect the USB hub and poke real buttons one at a time |
 | `/standard` | The button standard, rendered from `docs/BUTTON_STANDARD.md` |
 

@@ -24,6 +24,8 @@
 #define LOST_AFTER_FAILS 5
 
 struct Packet {
+  uint8_t mac[6];
+  int8_t rssi;  // how loudly we heard it, in dBm
   uint8_t len;
   char text[MAX_LINE + 1];
 };
@@ -36,6 +38,7 @@ struct Known {
   uint8_t mac[6];
   uint8_t fails;
   bool reportedLost;
+  uint32_t lastRssiReport;
 };
 static Known known[20];
 static int knownCount = 0;
@@ -48,6 +51,7 @@ static Known *lookup(const uint8_t *mac, bool create) {
   memcpy(k->mac, mac, 6);
   k->fails = 0;
   k->reportedLost = false;
+  k->lastRssiReport = 0;
   esp_now_peer_info_t peer = {};
   memcpy(peer.peer_addr, mac, 6);
   peer.channel = ESPNOW_CHANNEL;
@@ -77,6 +81,8 @@ static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int 
     k->reportedLost = false;
   }
   Packet p;
+  memcpy(p.mac, info->src_addr, 6);
+  p.rssi = info->rx_ctrl ? info->rx_ctrl->rssi : 0;
   p.len = (uint8_t)len;
   memcpy(p.text, data, len);
   p.text[len] = 0;
@@ -160,6 +166,15 @@ void loop() {
   while (xQueueReceive(inbox, &p, 0) == pdTRUE) {
     Serial.write((const uint8_t *)p.text, p.len);
     Serial.write('\n');
+    // The one thing the hub adds of its own: signal strength, at most once a second per button,
+    // so range can be checked at the real table instead of guessed at.
+    Known *k = lookup(p.mac, false);
+    if (k && p.rssi != 0 && millis() - k->lastRssiReport >= 1000) {
+      k->lastRssiReport = millis();
+      char hex[13];
+      macToHex(p.mac, hex);
+      Serial.printf("{\"t\":\"rssi\",\"dev\":\"%s\",\"dbm\":%d}\n", hex, p.rssi);
+    }
   }
 
   // Tell the app about buttons that have stopped answering.

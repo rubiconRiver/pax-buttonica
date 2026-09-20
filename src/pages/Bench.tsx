@@ -80,6 +80,7 @@ export function Bench() {
                   <span className="chip">{d.lost ? 'not answering' : `fw ${d.fw ?? '?'}`}</span>
                   {d.caps && <span className="chip">{d.caps.btn} btn · {d.caps.led} · {d.caps.audio}</span>}
                   {d.mv != null && <span className="chip">{(d.mv / 1000).toFixed(2)} V</span>}
+                  {d.dbm != null && <span className="chip" title="Signal strength at the hub. Closer to zero is stronger; below about -80 is marginal.">{d.dbm} dBm · {d.dbm > -65 ? 'strong' : d.dbm > -80 ? 'fine' : 'weak'}</span>}
                 </div>
                 <div className="bench__row">
                   {MODES.map((m) => (
