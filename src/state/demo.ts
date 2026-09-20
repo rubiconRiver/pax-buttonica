@@ -1,0 +1,33 @@
+import type { PlayerSetup } from '../engine/types';
+import type { GameStore } from './game';
+import { settingsStore } from './settings';
+
+export const DEMO_PLAYERS: PlayerSetup[] = [
+  { name: 'Ana', faction: 'The Emirates of Hacan', color: 'yellow', intro: { kind: 'jingle', id: 'trade-wind' }, outro: { kind: 'jingle', id: 'over-to-you' }, buttons: 1 },
+  { name: 'Bjorn', faction: 'The Barony of Letnev', color: 'red', intro: { kind: 'jingle', id: 'war-drums' }, outro: { kind: 'jingle', id: 'mic-drop' }, buttons: 1 },
+  { name: 'Chidi', faction: 'The Universities of Jol-Nar', color: 'blue', intro: { kind: 'jingle', id: 'glitch' }, outro: { kind: 'jingle', id: 'warp-out' }, buttons: 3 },
+  { name: 'Dara', faction: 'The Xxcha Kingdom', color: 'green', intro: { kind: 'jingle', id: 'council-bell' }, outro: { kind: 'jingle', id: 'sealed' }, buttons: 1 },
+  { name: 'Emeka', faction: 'The Nomad', color: 'purple', intro: { kind: 'jingle', id: 'warp-in' }, outro: { kind: 'jingle', id: 'stand-down' }, buttons: 1 },
+  { name: 'Freya', faction: 'The Argent Flight', color: 'orange', intro: { kind: 'jingle', id: 'herald' }, outro: { kind: 'jingle', id: 'over-to-you' }, buttons: 1 },
+];
+
+/** Picks in seat order from Ana: gives initiative order Chidi, Emeka, Ana, Bjorn, Freya, Dara. */
+const DEMO_PICKS = [3, 5, 1, 8, 2, 6];
+
+export type DemoPoint = 'strategy' | 'action' | 'late';
+
+export function seedDemo(store: GameStore, point: DemoPoint = 'action') {
+  const at = Date.now();
+  store.start(DEMO_PLAYERS, { vpTarget: 10, speaker: 0, primaryStage: settingsStore.get().primaryStage });
+  if (point === 'strategy') return;
+  for (const card of DEMO_PICKS) store.dispatch({ type: 'PICK_CARD', card, at });
+  if (point === 'late') {
+    for (let i = 0; i < DEMO_PLAYERS.length; i++) {
+      store.dispatch({ type: 'PLAY_CARD', at });
+      store.dispatch({ type: 'ACK_ALL', at });
+      store.dispatch({ type: 'END_TURN', at });
+    }
+  }
+  // A seeded game is a starting point, not something to undo back through.
+  store.set((s) => ({ game: s.game && { ...s.game, fx: [] }, past: [] }));
+}

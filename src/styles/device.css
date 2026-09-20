@@ -1,0 +1,271 @@
+/* The button. One custom property, --lum (0..1), is "how bright is the LED right now";
+   every glow, spill and reflection is derived from it so all modes stay consistent. */
+
+@property --lum {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+.dev {
+  --size: 140px;
+  --led: #ffffff;
+  --lum: 0;
+  position: relative;
+  width: var(--size);
+  height: var(--size);
+  flex: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: none;
+}
+
+.dev[data-mode='off'] { --lum: 0.025; }
+.dev[data-mode='dim'] { --lum: 0.2; }
+.dev[data-mode='solid'] { --lum: 1; }
+.dev[data-mode='pulse'] { animation: dev-pulse 1.7s ease-in-out infinite; }
+/* A slow, soft-edged blink: on, fade, dark, fade. Insistent without being an alarm. */
+.dev[data-mode='flash'] { animation: dev-flash var(--flash-ms, 2000ms) linear infinite; }
+.dev[data-mode='rainbow'] { --lum: 1; }
+.dev[data-mode='rainbow'] :is(.dev__light, .dev__halo, .dev__well) { animation: dev-hue 2.2s linear infinite; }
+
+@keyframes dev-pulse {
+  0%, 100% { --lum: 0.34; }
+  50% { --lum: 1; }
+}
+@keyframes dev-flash {
+  0%, 38% { --lum: 1; }
+  50%, 88% { --lum: 0.05; }
+  100% { --lum: 1; }
+}
+@keyframes dev-hue {
+  to { filter: hue-rotate(360deg); }
+}
+
+/* Light thrown onto the table. */
+.dev__halo {
+  position: absolute;
+  inset: -55%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--led) 62%, transparent) 0%, color-mix(in srgb, var(--led) 18%, transparent) 45%, transparent 72%);
+  opacity: calc(var(--lum) * 0.8);
+  pointer-events: none;
+}
+.dev[data-mode='rainbow'] .dev__halo { animation: dev-hue 2.2s linear infinite; }
+
+/* Housing: brushed dark metal. */
+.dev__base {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.16), transparent 55%),
+    conic-gradient(from 200deg, #1a1f2c, #434c62 11%, #141822 27%, #2f3648 45%, #0c0f16 61%, #3d465b 79%, #1a1f2c);
+  box-shadow:
+    0 calc(var(--size) * 0.1) calc(var(--size) * 0.18) rgba(0, 0, 0, 0.7),
+    0 calc(var(--size) * 0.02) calc(var(--size) * 0.03) rgba(0, 0, 0, 0.8),
+    inset 0 1.5px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -3px 6px rgba(0, 0, 0, 0.65);
+}
+
+.dev__well {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  background: #04060a;
+  box-shadow:
+    inset 0 5px 12px #000,
+    0 1px 0 rgba(255, 255, 255, 0.12),
+    inset 0 0 calc(var(--size) * 0.16) color-mix(in srgb, var(--led) calc(var(--lum) * 85%), transparent);
+}
+
+/* Hold-to-confirm ring. */
+.dev__ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease-out;
+}
+.dev__ring circle { fill: none; stroke-width: 3.2; }
+.dev__ring-track { stroke: rgba(255, 255, 255, 0.1); }
+.dev__ring-fill {
+  stroke: #fff;
+  stroke-linecap: round;
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 8px var(--led));
+}
+.dev[data-holding] .dev__ring,
+.dev[data-held] .dev__ring { opacity: 1; transition-delay: 0.16s; }
+.dev[data-holding] .dev__ring-fill { animation: dev-ring var(--hold-ms) linear forwards; }
+.dev[data-held] .dev__ring-fill { stroke-dashoffset: 0; }
+@keyframes dev-ring {
+  to { stroke-dashoffset: 0; }
+}
+
+/* The dome itself. */
+.dev__dome {
+  position: absolute;
+  inset: 13%;
+  border: 0;
+  padding: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  cursor: pointer;
+  background: radial-gradient(circle at 36% 28%, #6d7690 0%, #363c50 42%, #161a27 100%);
+  transform: translateY(-3.5%);
+  box-shadow:
+    0 calc(var(--size) * 0.05) 0 #07090e,
+    0 calc(var(--size) * 0.085) calc(var(--size) * 0.09) rgba(0, 0, 0, 0.65),
+    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * 60%), transparent);
+  transition: transform 0.24s cubic-bezier(0.2, 1.6, 0.35, 1), box-shadow 0.24s ease-out;
+  outline: none;
+}
+.dev[data-static] .dev__dome { cursor: default; }
+.dev__dome:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+
+.dev:not([data-static]) .dev__dome:hover { transform: translateY(-4.5%); }
+
+.dev[data-pressed] .dev__dome {
+  transform: translateY(1.2%) scale(0.982);
+  box-shadow:
+    0 calc(var(--size) * 0.006) 0 #07090e,
+    0 calc(var(--size) * 0.02) calc(var(--size) * 0.03) rgba(0, 0, 0, 0.7),
+    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * 60%), transparent);
+  transition-duration: 0.045s;
+  transition-timing-function: ease-out;
+}
+
+.dev__light,
+.dev__core,
+.dev__spec,
+.dev__deny {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.dev__light {
+  opacity: var(--lum);
+  background: radial-gradient(circle at 38% 30%, color-mix(in oklab, var(--led) 45%, white) 0%, var(--led) 40%, color-mix(in oklab, var(--led) 58%, #000) 100%);
+}
+
+/* The LED hot-spot you can see through the plastic at full brightness. */
+.dev__core {
+  background: radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.35) 18%, transparent 46%);
+  mix-blend-mode: screen;
+  opacity: calc((var(--lum) - 0.3) * 0.75);
+}
+
+.dev__spec {
+  background:
+    radial-gradient(ellipse 36% 20% at 33% 19%, rgba(255, 255, 255, 0.85), transparent 72%),
+    radial-gradient(ellipse 9% 5% at 66% 30%, rgba(255, 255, 255, 0.5), transparent 80%),
+    radial-gradient(ellipse 62% 26% at 50% 106%, rgba(255, 255, 255, 0.2), transparent 72%);
+  box-shadow:
+    inset 0 calc(var(--size) * -0.07) calc(var(--size) * 0.13) rgba(0, 0, 0, 0.55),
+    inset 0 2px 3px rgba(255, 255, 255, 0.4);
+}
+
+/* Reactions */
+.dev__deny { background: #ff2d45; opacity: 0; mix-blend-mode: screen; }
+.dev[data-react='denied'] { animation: dev-shake 0.42s cubic-bezier(0.36, 0.07, 0.19, 0.97); }
+.dev[data-react='denied'] .dev__deny { animation: dev-deny 0.5s ease-out; }
+.dev[data-react='ack'] .dev__dome,
+.dev[data-react='burst'] .dev__dome { animation: dev-pop 0.34s cubic-bezier(0.2, 1.8, 0.4, 1); }
+.dev[data-react='hint'] .dev__ring { opacity: 1; animation: dev-hint 0.5s ease-out; }
+
+@keyframes dev-shake {
+  10%, 90% { translate: -2px 0; }
+  20%, 80% { translate: 4px 0; }
+  30%, 50%, 70% { translate: -7px 0; }
+  40%, 60% { translate: 7px 0; }
+}
+@keyframes dev-deny {
+  0% { opacity: 0.95; }
+  100% { opacity: 0; }
+}
+@keyframes dev-pop {
+  0% { scale: 0.93; }
+  100% { scale: 1; }
+}
+@keyframes dev-hint {
+  0% { opacity: 1; scale: 1.08; }
+  100% { opacity: 0; scale: 1; }
+}
+
+.dev__shock {
+  position: absolute;
+  inset: 4%;
+  border-radius: 50%;
+  border: 3px solid color-mix(in srgb, var(--led) 60%, white);
+  box-shadow: 0 0 24px var(--led), inset 0 0 18px var(--led);
+  pointer-events: none;
+  animation: dev-shock 0.62s cubic-bezier(0.1, 0.8, 0.25, 1) forwards;
+}
+@keyframes dev-shock {
+  0% { scale: 0.85; opacity: 1; }
+  100% { scale: 2.3; opacity: 0; border-width: 0.5px; }
+}
+
+/* Keyboard hint */
+.dev__key {
+  position: absolute;
+  right: 0;
+  top: 0;
+  min-width: 20px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font: 700 11px/1.2 var(--font-d);
+  text-align: center;
+  color: #cbd3e6;
+  background: #0b0e16;
+  border: 1px solid #39415a;
+  box-shadow: 0 2px 0 #000;
+  pointer-events: none;
+}
+
+/* Shortcut buttons on a three-button device. */
+.dev__aux {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--size) * -0.13);
+  display: flex;
+  gap: calc(var(--size) * 0.42);
+  translate: -50% 0;
+}
+.dev__auxbtn {
+  width: calc(var(--size) * 0.24);
+  height: calc(var(--size) * 0.24);
+  min-width: 26px;
+  min-height: 26px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #4a5370;
+  color: #d5dcf0;
+  cursor: pointer;
+  background: radial-gradient(circle at 35% 28%, #4d566e, #1b2030 70%);
+  box-shadow: 0 3px 0 #06080d, 0 5px 8px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  transition: transform 0.2s cubic-bezier(0.2, 1.6, 0.35, 1), box-shadow 0.2s, color 0.08s, border-color 0.08s;
+}
+.dev__auxbtn svg { width: 58%; height: 58%; }
+.dev__auxbtn:hover { color: #fff; border-color: #8f9bc0; }
+.dev__auxbtn:active {
+  transform: translateY(3px);
+  box-shadow: 0 0 0 #06080d, 0 1px 2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition-duration: 0.04s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dev[data-mode='pulse'] { animation-duration: 3.4s; }
+  .dev[data-react='denied'] { animation: none; }
+  .dev__shock { display: none; }
+}

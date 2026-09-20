@@ -1,0 +1,99 @@
+# Building the buttons
+
+**Status: a plan, not a proven build.** The firmware in `firmware/` compiles for the ESP32-C3 but has never been flashed onto a board. The wiring below follows the parts' datasheets, not a working prototype. Build **one hub and one button first**, prove them on the [test bench](/bench), then buy parts for the rest. Prices are rough and in CAD.
+
+## What you're building
+
+```
+[button] ─┐
+[button] ─┼─ ESP-NOW (channel 1) ─→ [hub] ─ USB ─→ laptop running the web app (Chrome/Edge)
+[button] ─┘
+```
+
+- **Hub** — a bare ESP32-C3 board on a USB cable. No wiring at all.
+- **Button** — ESP32-C3 + LED ring + amp and speaker + one big switch + 4 AA cells, in a printed shell.
+
+## Parts, per button
+
+| Part | Notes | Approx. |
+|---|---|---|
+| ESP32-C3 "Super Mini" | Native USB, tiny, cheap. Any ESP32-C3 board works; change pins in `config.h`. | $4–8 |
+| WS2812B ring, 12 pixels (~50 mm) | Any count works; set `LED_COUNT`. | $3–6 |
+| MAX98357A I2S amp breakout | Or skip it and use a passive piezo (`AUDIO_PIEZO`), or no sound at all (`AUDIO_NONE` — the laptop plays everything). | $4–8 |
+| Speaker, 40 mm, 4–8 Ω, 2–3 W | | $3–5 |
+| Microswitch (lever or plunger type) | Sits under the printed dome's plunger. | $1–2 |
+| 4×AA holder with switch + leads | | $2–3 |
+| 4× NiMH AA cells | **NiMH, not alkaline** — see Power. | $10–15 |
+| 1N5817 Schottky diode | Reverse-polarity protection and a little voltage drop. | $0.20 |
+| 1000 µF 10 V capacitor, 330 Ω resistor | LED power smoothing; data-line protection. | $0.50 |
+| Optional: two tactile buttons | Strategy and pass shortcuts (`BUTTON_COUNT 3`). | $1 |
+| Optional: 2× 100 kΩ resistors | Battery voltage sense (`BATTERY_PIN`). | $0.10 |
+
+Roughly **$30–45 per button** with rechargeable cells, **$5–8 for the hub**. Six buttons and a hub: about $200–280. Cheaper from AliExpress if you can wait; faster from Amazon.ca. For genuine Adafruit/SparkFun parts in Canada: BC Robotics, Elmwood Electronics, PiShop.ca, Universal Solder, DigiKey.ca.
+
+## Wiring (defaults from `firmware/button/config.h`)
+
+| From | To |
+|---|---|
+| Battery **+** → holder switch → **1N5817** (stripe away from battery) | **5 V rail** |
+| Battery **−** | **GND rail** |
+| 5 V rail | ESP32-C3 `5V` pin · LED ring `5V`/`VCC` · MAX98357A `VIN` |
+| GND rail | ESP32-C3 `GND` · LED ring `GND` · MAX98357A `GND` |
+| 1000 µF capacitor | Across the LED ring's 5 V and GND, close to the ring (mind polarity) |
+| ESP32-C3 `GPIO10` → 330 Ω → | LED ring `DIN` |
+| ESP32-C3 `GPIO6` | MAX98357A `BCLK` |
+| ESP32-C3 `GPIO7` | MAX98357A `LRC` |
+| ESP32-C3 `GPIO1` | MAX98357A `DIN` |
+| MAX98357A `+` / `−` | Speaker |
+| ESP32-C3 `GPIO3` | Big switch → `GND` (no resistor; the firmware uses the internal pull-up) |
+| *Optional* `GPIO4`, `GPIO5` | Strategy / pass switches → `GND` |
+| *Optional* battery + → 100 kΩ → `GPIO0` → 100 kΩ → GND | Battery sense |
+
+On the ESP32-C3, **don't use GPIO 2, 8 or 9** for anything: they decide how the chip boots (8 is also the onboard LED, 9 the BOOT button).
+
+**Never plug in USB while the battery switch is on** unless your board has a diode between USB 5 V and the `5V` pin (most Super Minis do not). For development, power the button from USB alone.
+
+## Power
+
+- **Why NiMH:** four NiMH cells sit between about 4.4 V and 5.6 V. After the diode that suits the LEDs (happy to ~5.3 V) and the board's 3.3 V regulator. Four fresh **alkalines are 6.4 V — too much** for the LED ring. If you must use alkalines, use three.
+- **How long:** this first firmware keeps the radio listening all the time — about 80–100 mA before any light. With the default brightness cap and only one button at a time breathing at full, expect very roughly **8–15 hours** from 2000 mAh cells. *That's an estimate; measure yours.* The polling scheme in the standard is what gets that to days, and is the obvious next firmware milestone.
+- `MAX_BRIGHTNESS` and `DIM_LEVEL` in `config.h` are the two dials that matter most.
+
+## Flashing
+
+You need `arduino-cli` (or the Arduino IDE), the **esp32** board package (3.x), and two libraries: **Adafruit NeoPixel** and **ArduinoJson** (v7).
+
+```bash
+arduino-cli core install esp32:esp32
+arduino-cli lib install "Adafruit NeoPixel" "ArduinoJson"
+```
+
+Find the board's port, then build and upload. `CDCOnBoot=cdc` matters: it's what makes the C3's USB port a serial port.
+
+```bash
+arduino-cli board list
+arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc -u -p /dev/cu.usbmodemXXXX firmware/hub
+arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc -u -p /dev/cu.usbmodemXXXX firmware/button
+```
+
+If an upload won't start, hold **BOOT**, tap **RESET**, release BOOT, and try again.
+
+## Bring-up, in order
+
+1. **Hub alone.** Flash it, open `/bench` in Chrome, click *Connect the hub*. You should see the hub's firmware version.
+2. **Button on USB power, no battery.** Flash it. It blinks white once at power-up and announces itself within three seconds; it appears on the bench with its id and capabilities.
+3. **Poke it.** Send each light mode, a jingle, *Identify*. Press it: `tap`, `double`, `hold` should show up beside it. The white arc while holding is drawn by the button itself.
+4. **Battery.** Unplug USB, switch on the pack. Same checks again.
+5. **A game.** Open `/play`, connect the hub from the top bar, and start: the seat-claiming ritual binds each button to a player.
+
+Wire traffic is shown at the bottom of the bench page, which is the first place to look when something doesn't respond.
+
+## The shell — a brief for whoever is modelling it
+
+Nothing is designed yet. What the electronics need:
+
+- **Dome:** ~100 mm across, translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.
+- **Light:** the LED ring faces up, at least 15–20 mm below the dome's inner surface, or you'll see twelve dots instead of a glow. A white-painted or foil-lined cavity helps a lot.
+- **Base:** ~130 mm across, heavy enough (or rubber-footed) not to skate when slapped. Room for a 4×AA holder (~62 × 58 × 16 mm for the 2×2 kind), the amp, and a downward- or side-firing 40 mm speaker with a grille.
+- **Access:** battery door, power switch reachable from outside, USB-C port reachable for reflashing.
+- **Optional:** two small tactile buttons on the base rim for strategy and pass.

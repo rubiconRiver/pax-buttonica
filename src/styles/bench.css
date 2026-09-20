@@ -1,0 +1,21 @@
+@import './setup.css';
+
+.bench { max-width: 1040px; margin: 0 auto; padding: 18px 22px 80px; display: grid; gap: 16px; }
+.bench__intro { margin: 34px 0 8px; display: grid; gap: 10px; max-width: 64ch; }
+.bench__intro h1 { font-size: clamp(30px, 4vw, 46px); text-transform: uppercase; }
+.bench__card { padding: 24px; display: grid; gap: 14px; justify-items: start; }
+.bench__error { color: var(--danger); font-size: 13px; }
+.bench__controls { display: flex; flex-wrap: wrap; align-items: end; gap: 16px 34px; padding: 16px 18px; }
+.bench__hub { margin-left: auto; font-size: 13px; color: var(--muted); }
+.bench__hub b { color: var(--text); }
+.bench__devices { display: grid; grid-template-columns: repeat(auto-fill, minmax(420px, 1fr)); gap: 14px; }
+.bench__dev { padding: 16px; display: grid; gap: 12px; }
+.bench__dev[data-lost] { opacity: 0.5; }
+.bench__devhead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.bench__devhead code { font: 700 15px/1 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--gold-2); margin-right: auto; }
+.bench__row { display: flex; flex-wrap: wrap; gap: 6px; }
+.bench__presses { display: flex; gap: 6px; min-height: 22px; font-size: 13px; }
+.bench__log { overflow: hidden; }
+.bench__lines { height: 240px; padding: 10px 14px; font: 500 12px/1.6 ui-monospace, 'SF Mono', Menlo, monospace; color: #9fb0d8; }
+.bench__lines div[data-dir='out'] { color: #d6c08a; }
+.bench__lines span { display: inline-block; width: 1.6em; color: var(--faint); }

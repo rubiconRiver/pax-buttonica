@@ -1,0 +1,233 @@
+:root {
+  --bg: #04060b;
+  --bg-2: #0a0e18;
+  --panel: rgba(13, 18, 30, 0.82);
+  --panel-solid: #0d121e;
+  --line: rgba(150, 172, 225, 0.14);
+  --line-2: rgba(150, 172, 225, 0.28);
+  --text: #e9edf7;
+  --muted: #8d97af;
+  --faint: #5b6480;
+  --gold: #f2b84b;
+  --gold-2: #ffdf9a;
+  --cyan: #5ad1ff;
+  --danger: #ff5468;
+  --ok: #3ce08a;
+  --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+  --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Motion: fast and flat — no bounce. Nothing interactive waits longer than 60ms to react. */
+  --snap: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --out: cubic-bezier(0.16, 1, 0.3, 1);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 15px/1.55 var(--font-b);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Deep space: two faint nebulae, three star layers and a hex grid that fades toward the edges. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+}
+body::before {
+  background:
+    radial-gradient(1px 1px at 20px 30px, rgba(255, 255, 255, 0.85), transparent 60%) 0 0 / 190px 170px,
+    radial-gradient(1px 1px at 110px 90px, rgba(190, 215, 255, 0.7), transparent 60%) 0 0 / 260px 230px,
+    radial-gradient(1.6px 1.6px at 70px 160px, rgba(255, 235, 200, 0.75), transparent 60%) 0 0 / 410px 370px,
+    radial-gradient(60vw 50vh at 12% -5%, rgba(242, 184, 75, 0.1), transparent 70%),
+    radial-gradient(70vw 60vh at 95% 105%, rgba(88, 80, 236, 0.16), transparent 70%),
+    radial-gradient(50vw 40vh at 70% 10%, rgba(46, 196, 176, 0.06), transparent 70%),
+    var(--bg);
+}
+body::after {
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='84' height='48.5' viewBox='0 0 84 48.5'%3E%3Cpath d='M14 0l14 0 7 12.12-7 12.13-14 0-7-12.13zM56 0l14 0 7 12.12-7 12.13-14 0-7-12.13zM35 12.12l14 0M35 36.38l14 0M-7 36.38l14 0M77 36.38l14 0M14 24.25l14 0 7 12.13-7 12.12-14 0-7-12.12zM56 24.25l14 0 7 12.13-7 12.12-14 0-7-12.12z' fill='none' stroke='%2396acde' stroke-opacity='.07'/%3E%3C/svg%3E");
+  mask-image: radial-gradient(ellipse 75% 70% at 50% 45%, #000 20%, transparent 80%);
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-d);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.12;
+  margin: 0;
+}
+
+p { margin: 0; }
+a { color: var(--gold); text-decoration: none; }
+a:hover { color: var(--gold-2); }
+
+::selection { background: rgba(242, 184, 75, 0.35); }
+
+.eyebrow {
+  font: 700 12px/1 var(--font-d);
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.muted { color: var(--muted); }
+.mono-num { font-family: var(--font-d); font-variant-numeric: tabular-nums; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────────── */
+.btn {
+  --btn-bg: linear-gradient(#1d2437, #121727);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  --bc: #3a4463;
+  --c: 7px;
+  border: 1px solid var(--bc);
+  background: var(--btn-bg);
+  color: var(--text);
+  font: 700 12.5px/1 var(--font-d);
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 0.12s var(--snap), color 0.07s, filter 0.07s;
+}
+.btn svg { width: 15px; height: 15px; flex: none; }
+.btn:hover { --bc: #8f9dc8; filter: brightness(1.2); }
+.btn:active {
+  transform: translateY(1px);
+  filter: brightness(0.8);
+  transition-duration: 0.03s;
+}
+.btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+.btn:disabled { opacity: 0.38; cursor: not-allowed; filter: none; transform: none; }
+
+.btn--gold {
+  --btn-bg: linear-gradient(#ffd47c, #e9a02b);
+  --bc: #ffe3a6;
+  color: #231503;
+}
+.btn--gold:hover { --bc: #fff; }
+.btn--ghost { --btn-bg: transparent; --bc: var(--line-2); }
+.btn--danger:hover { --bc: var(--danger); color: #ffd9de; }
+.btn--lg { padding: 15px 26px; font-size: 14.5px; --c: 10px; }
+.btn--sm { padding: 7px 10px; font-size: 11px; --c: 5px; }
+.btn--icon { padding: 9px; }
+.btn[aria-pressed='true'] { --bc: var(--gold); color: var(--gold-2); --btn-bg: linear-gradient(rgba(242, 184, 75, 0.2), rgba(242, 184, 75, 0.08)); }
+
+/* ── Panels ──────────────────────────────────────────────────────────────── */
+.panel {
+  position: relative;
+  --bc: var(--line-2);
+  --c: 14px;
+  border: 1px solid var(--bc);
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+}
+.panel--ticks { --bc: rgba(242, 184, 75, 0.6); }
+
+/* Chamfered frames, the house shape: top-left and bottom-right corners cut at 45°.
+   clip-path removes the corner; the pseudo-elements redraw the border along the cut. */
+.panel, .btn, .scard, .playbtn, .play__banner {
+  position: relative;
+  border-radius: 0;
+  clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
+}
+:is(.panel, .btn, .scard, .playbtn, .play__banner)::before,
+:is(.panel, .btn, .scard, .playbtn, .play__banner)::after {
+  content: '';
+  position: absolute;
+  width: var(--c);
+  height: var(--c);
+  background: linear-gradient(135deg, var(--bc) calc(50% + 1px), transparent 0);
+  pointer-events: none;
+}
+:is(.panel, .btn, .scard, .playbtn, .play__banner)::before { top: -1px; left: -1px; }
+:is(.panel, .btn, .scard, .playbtn, .play__banner)::after { bottom: -1px; right: -1px; rotate: 180deg; }
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  font: 700 11px/1 var(--font-d);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 1px solid var(--line);
+}
+
+/* ── Form bits ───────────────────────────────────────────────────────────── */
+.input, .select {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 2px;
+  border: 1px solid #2c3450;
+  background: #080b13;
+  color: var(--text);
+  font: 500 14px/1.2 var(--font-b);
+  transition: border-color 0.07s, box-shadow 0.15s;
+}
+.input:hover, .select:hover { border-color: #4a5680; }
+.input:focus, .select:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242, 184, 75, 0.18); }
+.select {
+  appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238d97af' stroke-width='1.6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+
+input[type='range'] { accent-color: var(--gold); width: 100%; }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 7px;
+  border-radius: 2px;
+  font: 700 10.5px/1 var(--font-d);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--line-2);
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+.chip--gold { color: #231503; background: linear-gradient(#ffd47c, #e9a02b); border-color: #ffe3a6; }
+
+kbd {
+  font: 700 11px/1 var(--font-d);
+  padding: 3px 6px;
+  border-radius: 2px;
+  border: 1px solid #39415a;
+  background: #0b0e16;
+  box-shadow: 0 2px 0 #000;
+  color: #cbd3e6;
+}
+
+/* Shared entrance used for anything that "arrives". */
+@keyframes arrive {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes pop-in {
+  0% { transform: scale(1.12); filter: brightness(2.2); }
+  100% { transform: none; filter: none; }
+}
+
+.scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2c3450 transparent; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+  .dev[data-mode='pulse'], .dev[data-mode='flash'] { animation-duration: 2s !important; animation-iteration-count: infinite !important; }
+}

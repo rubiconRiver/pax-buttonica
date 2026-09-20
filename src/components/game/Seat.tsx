@@ -1,0 +1,99 @@
+import { forwardRef, type CSSProperties } from 'react';
+import { cardByNumber, colorById } from '../../engine/data';
+import type { DeviceOutput } from '../../engine/outputs';
+import type { DeviceInput, Player } from '../../engine/types';
+import { Device, type DeviceHandle } from '../Device';
+import { IconGavel } from '../Icons';
+import { formatClock, seatPosition } from './geometry';
+
+interface Props {
+  /** Where on the table this seat is drawn. */
+  spot: number;
+  count: number;
+  player: Player;
+  output: DeviceOutput;
+  size: number;
+  holdMs: number;
+  isSpeaker: boolean;
+  hasZero: boolean;
+  isActive: boolean;
+  liveMs: number;
+  explain: boolean;
+  react: { id: number; kind: 'denied' | 'ack' | 'hint' | 'burst' } | null;
+  onInput?(input: DeviceInput): void;
+}
+
+export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
+  { spot, count, player, output, size, holdMs, isSpeaker, hasZero, isActive, liveMs, explain, react, onInput },
+  ref,
+) {
+  const pos = seatPosition(spot, count);
+  const led = colorById(player.color).led;
+  return (
+    <div
+      className="seat"
+      data-above={pos.above || undefined}
+      data-active={isActive || undefined}
+      data-passed={player.passed || undefined}
+      style={{ '--x': pos.x, '--y': pos.y, '--pc': led, '--size': `${size}px` } as CSSProperties}
+    >
+      <Device
+        ref={ref}
+        color={output.color}
+        mode={output.mode}
+        size={size}
+        holdMs={holdMs}
+        buttons={player.buttons}
+        pan={pos.pan}
+        hotkey={onInput ? String(spot + 1) : undefined}
+        label={`${player.name}'s button`}
+        react={react}
+        silent={!onInput}
+        onInput={onInput}
+      />
+      <div className="plate">
+        <div className="plate__row">
+          <span className="plate__name">{player.name}</span>
+          {isSpeaker && (
+            <span className="plate__speaker" title="Speaker">
+              <IconGavel />
+            </span>
+          )}
+        </div>
+        <div className="plate__meta">
+          {hasZero && <span className="cardpip" style={{ '--cc': '#ffffff' } as CSSProperties} title="Naalu initiative 0">0</span>}
+          {player.cards.map((c) => (
+            <span
+              key={c}
+              className="cardpip"
+              data-used={player.usedCards.includes(c) || undefined}
+              style={{ '--cc': cardByNumber(c).color } as CSSProperties}
+              title={`${cardByNumber(c).name}${player.usedCards.includes(c) ? ' (played)' : ''}`}
+            >
+              {c}
+            </span>
+          ))}
+          <span className="plate__vp mono-num">{player.vp}<small>VP</small></span>
+          <span className="plate__time mono-num">{formatClock(liveMs)}</span>
+          {player.passed && <span className="plate__passed">Passed</span>}
+        </div>
+        {explain && <div className="plate__why">{output.reason}</div>}
+      </div>
+    </div>
+  );
+});
+
+/** A button nobody has claimed yet. */
+export const OpenSpot = forwardRef<DeviceHandle, { spot: number; count: number; size: number; holdMs: number; output: DeviceOutput; onInput(input: DeviceInput): void }>(
+  function OpenSpot({ spot, count, size, holdMs, output, onInput }, ref) {
+    const pos = seatPosition(spot, count);
+    return (
+      <div className="seat seat--open" data-above={pos.above || undefined} style={{ '--x': pos.x, '--y': pos.y, '--pc': '#ffffff', '--size': `${size}px` } as CSSProperties}>
+        <Device ref={ref} color={output.color} mode={output.mode} size={size} holdMs={holdMs} pan={pos.pan} hotkey={String(spot + 1)} label={`Unclaimed button ${spot + 1}`} onInput={onInput} />
+        <div className="plate">
+          <div className="plate__row"><span className="plate__name plate__name--open">Unclaimed</span></div>
+        </div>
+      </div>
+    );
+  },
+);
