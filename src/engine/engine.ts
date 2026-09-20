@@ -421,8 +421,25 @@ function claim(g: GameState, dev: string, at: number) {
   g.bindings[seat] = dev;
   log(g, `${g.players[seat].name} claims seat ${seat + 1}.`, { seat });
   fx(g, { kind: 'claim', seat });
-  s.next += 1;
+  advanceSeating(g, at);
+}
+
+/** Move on to the next seat that still needs a button; finish when none do. */
+function advanceSeating(g: GameState, at: number) {
+  const s = g.seating;
+  if (!s) return;
+  while (s.next < g.players.length && g.bindings[s.next] != null) s.next += 1;
   if (s.next >= g.players.length) finishSeating(g, at);
+}
+
+/** A device that already knows whose it is (a phone whose owner said who they are) takes its seat directly. */
+function bind(g: GameState, seat: number, dev: string, at: number) {
+  if (seat < 0 || seat >= g.players.length || g.bindings[seat] === dev) return;
+  g.bindings = g.bindings.map((b) => (b === dev ? null : b));
+  g.bindings[seat] = dev;
+  log(g, `${g.players[seat].name} joins on their own device.`, { seat });
+  fx(g, { kind: 'claim', seat });
+  advanceSeating(g, at);
 }
 
 function finishSeating(g: GameState, at: number) {
@@ -454,9 +471,19 @@ export function reduce(state: GameState, action: Action): GameState {
     case 'START_SEATING': {
       const wasRunning = !g.paused;
       pause(g, action.at);
-      g.bindings = g.players.map(() => null);
+      // Phones whose owners have said who they are keep their seats; everything else is up for grabs.
+      g.bindings = g.bindings.map((b) => (b?.startsWith('web-') ? b : null));
       g.seating = { next: 0, resume: wasRunning };
       log(g, 'Seat claiming: press your button when your name is called.', { tone: 'info' });
+      advanceSeating(g, action.at);
+      break;
+    }
+    case 'BIND':
+      bind(g, action.seat, action.dev, action.at);
+      break;
+    case 'UPDATE_PLAYER': {
+      const p = g.players[action.seat];
+      if (p) Object.assign(p, action.patch);
       break;
     }
     case 'SKIP_SEATING': {

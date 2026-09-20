@@ -2,6 +2,7 @@ import QRCode from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 import { closeRoom, openRoom, roomStatus } from '../../remote/host';
 import { useStore } from '../../state/createStore';
+import '../../styles/game.css';
 
 export function PhonesPanel({ onClose }: { onClose(): void }) {
   const room = useStore(roomStatus);
@@ -35,7 +36,7 @@ export function PhonesPanel({ onClose }: { onClose(): void }) {
     <div className="popover popover--phones panel" ref={ref}>
       {room.state === 'closed' ? (
         <>
-          <p className="room__note">No button? No problem. Open a room and any phone becomes one: same lights, same tap, double-tap and hold.</p>
+          <p className="room__note">Open a room and any phone becomes a button: same lights, same tap, double-tap and hold. Players say who they are and can set their own entrance and exit sounds from there.</p>
           <button type="button" className="btn btn--gold" onClick={() => void openRoom()}>Open a room</button>
         </>
       ) : (
@@ -45,7 +46,7 @@ export function PhonesPanel({ onClose }: { onClose(): void }) {
           {qr && room.state === 'open' && <img className="room__qr" src={qr} alt={`QR code for ${url}`} />}
           {url && <div className="room__url">{url.replace(/^https?:\/\//, '')}</div>}
           <div className="room__note">
-            <b>{room.phones.length}</b> phone{room.phones.length === 1 ? '' : 's'} connected. New phones get a seat at the next seat claiming (Settings → Re-claim seats).
+            <b>{room.phones.length}</b> phone{room.phones.length === 1 ? '' : 's'} connected. A phone that says who it is takes that player's seat by itself; anyone else claims one at the next seat claiming.
             {room.error && <div style={{ color: 'var(--danger)' }}>{room.error}</div>}
           </div>
           <button type="button" className="btn btn--sm btn--danger" onClick={closeRoom}>Close the room</button>

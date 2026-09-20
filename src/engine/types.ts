@@ -25,6 +25,8 @@ export interface PlayerSetup {
   outro: SoundRef;
   /** How many physical buttons this player's device has (1 or 3 today). */
   buttons: number;
+  /** The saved profile this player came from, so edits to it reach the game in progress. */
+  profileId?: string;
 }
 
 export interface Player extends PlayerSetup {
@@ -141,6 +143,8 @@ export type Action =
   | { type: 'INPUT'; seat: number; input: DeviceInput; at: number }
   | { type: 'DEVICE_INPUT'; dev: string; input: DeviceInput; at: number }
   | { type: 'START_SEATING'; at: number }
+  | { type: 'BIND'; seat: number; dev: string; at: number }
+  | { type: 'UPDATE_PLAYER'; seat: number; patch: Partial<Pick<PlayerSetup, 'name' | 'intro' | 'outro'>> }
   | { type: 'SKIP_SEATING'; devices: string[]; at: number }
   | { type: 'PICK_CARD'; card: number; at: number }
   | { type: 'END_TURN'; at: number }

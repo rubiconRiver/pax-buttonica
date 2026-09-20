@@ -219,6 +219,22 @@ describe('seat claiming', () => {
     expect(g.active).toBe(4);
   });
 
+  it('lets a phone that knows its owner take the seat directly, and the ritual skips it', () => {
+    let g = seated();
+    g = reduce(g, { type: 'BIND', seat: 0, dev: 'web-aaaa', at: 0 });
+    expect(g.seating?.next).toBe(1);
+    g = reduce(g, { type: 'BIND', seat: 2, dev: 'web-bbbb', at: 0 });
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'sim-0', input: 'tap', at: 0 }); // seat 1
+    expect(g.seating?.next).toBe(3); // seat 2 was already taken
+    g = reduce(g, { type: 'BIND', seat: 1, dev: 'web-aaaa', at: 0 }); // same phone moves: old seat frees up
+    expect(g.bindings.slice(0, 3)).toEqual([null, 'web-aaaa', 'web-bbbb']);
+
+    g = reduce(g, { type: 'SKIP_SEATING', devices: [0, 1, 2, 3, 4, 5].map(simDevice), at: 0 });
+    g = reduce(g, { type: 'START_SEATING', at: 0 });
+    expect(g.bindings.filter(Boolean)).toEqual(['web-aaaa', 'web-bbbb']);
+    expect(g.seating?.next).toBe(0);
+  });
+
   it('can re-seat mid-game without losing the turn, pausing the clock meanwhile', () => {
     let g = sixInAction(); // seat 5 active since t=0
     g = reduce(g, { type: 'START_SEATING', at: 1000 });

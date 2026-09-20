@@ -1,14 +1,16 @@
-import { useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { sfx, unlockAudio } from '../audio/synth';
 import { Device } from '../components/Device';
-import { IconArrow, IconClose } from '../components/Icons';
+import { PhonesPanel } from '../components/game/PhonesPanel';
+import { IconArrow, IconClose, IconPhone } from '../components/Icons';
 import { SoundPicker } from '../components/SoundPicker';
 import { FACTION_GROUPS, PLAYER_COLORS, colorById } from '../engine/data';
 import { cardsPerPlayer } from '../engine/engine';
 import type { GameOptions, PlayerSetup } from '../engine/types';
 import { useStore } from '../state/createStore';
-import { deleteProfile, profilesStore, saveProfile } from '../state/profiles';
+import { resumeRoom, roomStatus } from '../remote/host';
+import { createProfile, deleteProfile, patchProfile, profilesStore } from '../state/profiles';
 import '../styles/setup.css';
 
 const ALL_FACTIONS = FACTION_GROUPS.flatMap((g) => g.factions);
@@ -32,12 +34,34 @@ function initialSeats(n: number): PlayerSetup[] {
 
 export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: GameOptions): void }) {
   const profiles = useStore(profilesStore);
+  const room = useStore(roomStatus);
+  const [showPhones, setShowPhones] = useState(false);
   const [seats, setSeats] = useState<PlayerSetup[]>(() => initialSeats(6));
   const [vpTarget, setVpTarget] = useState(10);
   const [speaker, setSpeaker] = useState<number | 'random'>('random');
   const [open, setOpen] = useState(0);
 
-  const patch = (i: number, p: Partial<PlayerSetup>) => setSeats((list) => list.map((s, k) => (k === i ? { ...s, ...p } : s)));
+  // A seat linked to a profile edits that profile directly, so the player's phone and this screen never disagree.
+  const patch = (i: number, p: Partial<PlayerSetup>) => {
+    const linked = seats[i].profileId;
+    if (linked && !('profileId' in p)) patchProfile(linked, p);
+    setSeats((list) => list.map((s, k) => (k === i ? { ...s, ...p } : s)));
+  };
+
+  useEffect(resumeRoom, []);
+
+  // ...and the other direction: a player changing their sounds from their phone shows up here.
+  useEffect(() => {
+    setSeats((list) =>
+      list.map((s, i) => {
+        if (!s.profileId) return s;
+        const saved = profiles.find((p) => p.id === s.profileId);
+        if (!saved) return { ...s, profileId: undefined };
+        const colorFree = !list.some((o, k) => k !== i && o.color === saved.color);
+        return { ...s, name: saved.name, intro: saved.intro, outro: saved.outro, color: colorFree ? saved.color : s.color };
+      }),
+    );
+  }, [profiles]);
   const setCount = (n: number) => {
     sfx.click();
     setSeats((list) => {
@@ -54,26 +78,43 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
     if (seats.some((s) => !s.name.trim())) out.push('Everyone needs a name');
     const factions = seats.map((s) => s.faction);
     if (new Set(factions).size !== factions.length) out.push('Two players share a faction');
+    const names = seats.map((s) => s.name.trim().toLowerCase()).filter(Boolean);
+    if (new Set(names).size !== names.length) out.push('Two players share a name');
     return out;
   }, [seats]);
 
   const start = () => {
     unlockAudio();
     const sp = speaker === 'random' ? Math.floor(Math.random() * seats.length) : speaker;
-    onStart(seats.map((s) => ({ ...s, name: s.name.trim() })), { vpTarget, speaker: sp });
+    // Everyone at the table gets a profile, so they can claim it and change their sounds from their phone mid-game.
+    const players = seats.map((s) => {
+      const { profileId: _linked, ...fields } = { ...s, name: s.name.trim() };
+      const existing = profiles.find((p) => p.id === s.profileId) ?? profiles.find((p) => p.name.toLowerCase() === fields.name.toLowerCase());
+      if (existing) patchProfile(existing.id, fields);
+      return { ...fields, profileId: (existing ?? createProfile(fields.name, fields)).id };
+    });
+    onStart(players, { vpTarget, speaker: sp });
   };
 
   return (
     <div className="setup">
       <header className="setup__head">
         <Link to="/" className="brand"><span className="brand__dot" /><span>Pax <b>Buttonica</b></span></Link>
-        <Link to="/demo" className="btn btn--sm btn--ghost">Try the demo instead</Link>
+        <span style={{ display: 'flex', gap: 8 }}>
+          <span className="popover-anchor">
+            <button type="button" className="btn btn--sm" aria-pressed={showPhones || room.state === 'open'} title="Players can join now and set up their own profiles" onClick={() => { sfx.click(); setShowPhones((v) => !v); }}>
+              <IconPhone /> {room.state === 'open' ? `${room.code} · ${room.phones.length}` : 'Phones'}
+            </button>
+            {showPhones && <PhonesPanel onClose={() => setShowPhones(false)} />}
+          </span>
+          <Link to="/demo" className="btn btn--sm btn--ghost">Try the demo instead</Link>
+        </span>
       </header>
 
       <div className="setup__intro">
         <div className="eyebrow">New game</div>
         <h1>Who's at the table?</h1>
-        <p className="muted">Seat players clockwise, the way you're actually sitting. Next, everyone claims a button. Until real ones exist, the number keys <kbd>1</kbd>–<kbd>8</kbd> press the on-screen ones.</p>
+        <p className="muted">Pick a saved player for each seat, or type a new name. Open <b>Phones</b> and players can add themselves and choose their own entrance and exit sounds, now or mid-game. Seat players clockwise, the way you're actually sitting. Next, everyone claims a button. Until real ones exist, the number keys <kbd>1</kbd>–<kbd>8</kbd> press the on-screen ones.</p>
       </div>
 
       <div className="setup__options panel">
@@ -126,18 +167,20 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
                 {profiles.length > 0 && (
                   <select
                     className="select seatcard__profile"
-                    value=""
-                    aria-label="Load a saved profile"
+                    value={s.profileId ?? ''}
+                    aria-label="Who is sitting here?"
                     onChange={(e) => {
                       const p = profiles.find((x) => x.id === e.target.value);
-                      if (!p) return;
-                      const { id: _id, ...rest } = p;
-                      patch(i, { ...rest, color: taken.includes(rest.color) ? s.color : rest.color });
                       sfx.pick();
+                      if (!p) return patch(i, { profileId: undefined, name: '' });
+                      const { id, ...rest } = p;
+                      setSeats((list) => list.map((seat, k) => (k === i ? { ...rest, profileId: id, color: taken.includes(rest.color) ? seat.color : rest.color } : seat)));
                     }}
                   >
-                    <option value="">Load profile…</option>
-                    {profiles.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                    <option value="">New player</option>
+                    {profiles
+                      .filter((p) => p.id === s.profileId || !seats.some((o) => o.profileId === p.id))
+                      .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                   </select>
                 )}
                 <button type="button" className="btn btn--sm btn--ghost" onClick={() => { sfx.click(); setOpen(isOpen ? -1 : i); }}>{isOpen ? 'Done' : 'Edit'}</button>
@@ -181,22 +224,19 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
                       <button type="button" aria-pressed={s.buttons === 3} onClick={() => { sfx.click(); patch(i, { buttons: 3 }); }}>+ strategy &amp; pass</button>
                     </div>
                   </div>
-                  <div className="seatcard__save">
-                    <button type="button" className="btn btn--sm" disabled={!s.name.trim()} onClick={() => { saveProfile(s); sfx.ack(); }}>Save as profile</button>
-                    {profiles.some((p) => p.name.toLowerCase() === s.name.trim().toLowerCase()) && (
+                  {s.profileId && (
+                    <div className="seatcard__save">
+                      <span className="muted" style={{ fontSize: 12.5, marginRight: 'auto' }}>Saved player: changes here are kept.</span>
                       <button
                         type="button"
                         className="btn btn--sm btn--ghost btn--danger"
-                        title="Delete the saved profile with this name"
-                        onClick={() => {
-                          const p = profiles.find((x) => x.name.toLowerCase() === s.name.trim().toLowerCase());
-                          if (p) deleteProfile(p.id);
-                        }}
+                        title="Delete this saved player"
+                        onClick={() => s.profileId && deleteProfile(s.profileId)}
                       >
-                        <IconClose /> Forget profile
+                        <IconClose /> Forget
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </section>

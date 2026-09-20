@@ -18,9 +18,9 @@
 | Part | Notes | Approx. |
 |---|---|---|
 | ESP32-C3 "Super Mini" | Native USB, tiny, cheap. Any ESP32-C3 board works; change pins in `config.h`. | $4–8 |
-| WS2812B ring, 12 pixels (~50 mm) | Any count works; set `LED_COUNT`. | $3–6 |
+| WS2812B ring, 8 or 12 pixels (32–50 mm) | The 8-pixel ring suits the compact dome. Any count works; set `LED_COUNT`. | $3–6 |
 | MAX98357A I2S amp breakout | Or skip it and use a passive piezo (`AUDIO_PIEZO`), or no sound at all (`AUDIO_NONE` — the laptop plays everything). | $4–8 |
-| Speaker, 40 mm, 4–8 Ω, 2–3 W | | $3–5 |
+| Speaker, 28–40 mm, 4–8 Ω, 2–3 W | | $3–5 |
 | Microswitch (lever or plunger type) | Sits under the printed dome's plunger. | $1–2 |
 | 4×AA holder with switch + leads | | $2–3 |
 | 4× NiMH AA cells | **NiMH, not alkaline** — see Power. | $10–15 |
@@ -92,8 +92,9 @@ Wire traffic is shown at the bottom of the bench page, which is the first place 
 
 Nothing is designed yet. What the electronics need:
 
-- **Dome:** ~100 mm across, translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.
+- **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a 2×2 AA holder is about 62 × 58 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
+- **Dome:** translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.
 - **Light:** the LED ring faces up, at least 15–20 mm below the dome's inner surface, or you'll see twelve dots instead of a glow. A white-painted or foil-lined cavity helps a lot.
-- **Base:** ~130 mm across, heavy enough (or rubber-footed) not to skate when slapped. Room for a 4×AA holder (~62 × 58 × 16 mm for the 2×2 kind), the amp, and a downward- or side-firing 40 mm speaker with a grille.
+- **Base:** heavy enough (or rubber-footed) not to skate when slapped. Room for a 4×AA holder (~62 × 58 × 16 mm for the 2×2 kind), the amp, and a downward- or side-firing speaker with a grille (a 28 mm speaker fits the compact size; 40 mm sounds better if you have the room).
 - **Access:** battery door, power switch reachable from outside, USB-C port reachable for reflashing.
 - **Optional:** two small tactile buttons on the base rim for strategy and pass.

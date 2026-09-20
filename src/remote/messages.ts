@@ -4,8 +4,39 @@
  * as the hardware standard, carried over a WebRTC data channel instead of ESP-NOW.
  */
 import type { LedMode } from '../engine/outputs';
+import type { SoundRef } from '../engine/types';
 
-export type PhoneToHost = { t: 'hello'; dev: string } | { t: 'btn'; e: 'tap' | 'double' | 'hold' };
+/** Just enough of a profile to pick yourself out of a list. */
+export interface ProfileCard {
+  id: string;
+  name: string;
+  color: string;
+}
+
+/** What a player sees and edits about themselves from their phone. */
+export interface MyProfile extends ProfileCard {
+  intro: SoundRef;
+  outro: SoundRef;
+}
+
+export const MAX_CLIP_TRANSFER = 4 * 1024 * 1024;
+
+export type PhoneToHost =
+  | { t: 'hello'; dev: string; profileId?: string | null }
+  | { t: 'btn'; e: 'tap' | 'double' | 'hold' }
+  /** "I'm this person." No password: it's a board game. */
+  | { t: 'iam'; id: string }
+  | { t: 'create'; name: string }
+  | { t: 'leave' }
+  | { t: 'edit'; patch: { name?: string; color?: string; intro?: SoundRef; outro?: SoundRef } }
+  /** An uploaded sound travels to the host, which keeps it; phones never store clips. */
+  | { t: 'clip'; slot: 'intro' | 'outro'; name: string; mime: string; data: ArrayBuffer };
+
+export type HostToPhone =
+  | PhoneFrame
+  | { t: 'profiles'; list: ProfileCard[] }
+  | { t: 'me'; profile: MyProfile | null }
+  | { t: 'oops'; message: string };
 
 export interface PhoneFrame {
   t: 'state';

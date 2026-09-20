@@ -5,7 +5,8 @@ import { cardByNumber } from '../../engine/data';
 import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { setInputHandler, syncOutputs } from '../../hardware/serial';
-import { resumeRoom, roomStatus, setRoomHandlers, syncRoom } from '../../remote/host';
+import { assignIdentity, resumeRoom, roomStatus, setRoomHandlers, syncRoom } from '../../remote/host';
+import { profilesStore } from '../../state/profiles';
 import { useStore } from '../../state/createStore';
 import { seedDemo, type DemoPoint } from '../../state/demo';
 import type { GameStore } from '../../state/game';
@@ -49,6 +50,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const { past } = useStore(store);
   const settings = useStore(settingsStore);
   const room = useStore(roomStatus);
+  const profiles = useStore(profilesStore);
   const [tour, setTour] = useState(demo);
   const [banner, setBanner] = useState<{ id: number; text: string; sub?: string; color?: string } | null>(null);
   const devices = useRef<(DeviceHandle | null)[]>([]);
@@ -76,6 +78,31 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     resumeRoom();
     return () => setRoomHandlers(null, null);
   }, [dispatch]);
+
+  // A phone whose owner has said who they are takes that player's seat, no ritual needed.
+  // The other way round too: claim a seat by pressing, and the phone learns whose profile it's holding.
+  useEffect(() => {
+    for (const phone of room.phones) {
+      const seat = phone.profileId ? game.players.findIndex((p) => p.profileId === phone.profileId) : -1;
+      if (seat >= 0 && game.bindings[seat] !== phone.dev) {
+        dispatch({ type: 'BIND', seat, dev: phone.dev, at: Date.now() });
+        return; // one change per pass; the effect runs again with the new state
+      }
+      const held = game.bindings.indexOf(phone.dev);
+      const owner = held >= 0 ? game.players[held].profileId : undefined;
+      if (!phone.profileId && owner) assignIdentity(phone.dev, owner);
+    }
+  }, [room.phones, game.players, game.bindings, dispatch]);
+
+  // Someone changed their entrance music mid-game: it applies from their next turn.
+  useEffect(() => {
+    game.players.forEach((p, seat) => {
+      const saved = p.profileId ? profiles.find((x) => x.id === p.profileId) : undefined;
+      if (!saved) return;
+      const same = saved.name === p.name && JSON.stringify(saved.intro) === JSON.stringify(p.intro) && JSON.stringify(saved.outro) === JSON.stringify(p.outro);
+      if (!same) dispatch({ type: 'UPDATE_PLAYER', seat, patch: { name: saved.name, intro: saved.intro, outro: saved.outro } });
+    });
+  }, [profiles, game.players, dispatch]);
 
   // Number keys are the buttons: hold "3" to hold seat three's button.
   useEffect(() => {

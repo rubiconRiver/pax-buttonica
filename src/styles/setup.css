@@ -42,7 +42,7 @@
 .seatcard__name { font: 700 17px/1.2 var(--font-d); letter-spacing: 0.05em; }
 .seatcard__profile { width: 128px; font-size: 12px; }
 .seatcard__more { display: grid; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line); animation: arrive 0.2s var(--out); }
-.seatcard__save { display: flex; gap: 8px; }
+.seatcard__save { display: flex; align-items: center; gap: 8px; }
 
 .swatches { display: flex; gap: 7px; }
 .swatch {
@@ -51,7 +51,7 @@
   padding: 0;
   border-radius: 50%;
   border: 2px solid #0b0e17;
-  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--sw) 50%, white), var(--sw) 55%, color-mix(in oklab, var(--sw) 60%, black));
+  background: var(--sw);
   box-shadow: 0 0 0 1px #39415a;
   cursor: pointer;
   transition: transform 0.2s var(--snap), box-shadow 0.08s;

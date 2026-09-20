@@ -43,3 +43,14 @@
   text-transform: uppercase;
 }
 .join__code:focus { outline: none; border-color: var(--gold); }
+
+/* Who are you? */
+.who-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: min(100%, 360px); margin-top: 6px; }
+.who-list__item { justify-content: flex-start; padding: 14px 12px; font-size: 14px; --bc: color-mix(in srgb, var(--pc) 60%, #3a4463); }
+.who-list__item i { width: 12px; height: 12px; background: var(--pc); box-shadow: 0 0 10px var(--pc); flex: none; }
+.join__name { width: min(100%, 300px); text-align: center; font: 700 20px/1.2 var(--font-d); letter-spacing: 0.06em; padding: 12px; }
+
+/* Profile sheet */
+.sheet { position: fixed; inset: 0; z-index: 50; display: grid; align-items: end; background: rgba(2, 3, 6, 0.72); backdrop-filter: blur(6px); animation: arrive 0.16s var(--out); user-select: auto; -webkit-user-select: auto; }
+.sheet__card { width: min(100%, 460px); margin: 0 auto; padding: 18px 18px max(18px, env(safe-area-inset-bottom)); display: grid; gap: 14px; text-align: left; background: var(--panel-solid); max-height: 92dvh; overflow-y: auto; }
+.sheet__head, .sheet__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
