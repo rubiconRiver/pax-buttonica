@@ -105,14 +105,14 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 ### Host → button
 
 ```json
-{"t":"led","dev":"A1B2C3D4E5F6","c":"ff8a1f","m":"pulse"}
+{"t":"led","dev":"A1B2C3D4E5F6","c":"ff8a1f","m":"pulse","p":640}
 {"t":"snd","dev":"A1B2C3D4E5F6","w":"square","n":[[72,110],[76,110],[79,110],[84,340]]}
 {"t":"fx","dev":"A1B2C3D4E5F6","k":"denied"}
 {"t":"cfg","dev":"A1B2C3D4E5F6","hold":2000,"flash":2000}
 {"t":"id","dev":"A1B2C3D4E5F6"}
 ```
 
-- `led` — colour `c` and mode `m`. The only message a minimal device has to understand.
+- `led` — colour `c` and mode `m`. The only message a minimal device has to understand. For `pulse` and `flash` the host adds `p`: how many milliseconds into the cycle the light should already be. Start your animation there and the whole table breathes and blinks in step; ignore it and you'll merely be a little out of time.
 - `snd` — a jingle as `[midiNote, milliseconds]` pairs; note `0` is a rest. `w` is the waveform (`square`, `triangle`, `sawtooth`, `sine`) — a piezo can ignore it. Every built-in jingle fits in one packet.
 - `fx` — a canned reaction the device renders however it likes: `ack` (small happy blip), `denied` (red flash and a buzz), `confirm`.
 - `cfg` — settings, all in ms: `hold` is the hold time, `flash` is the full on-off cycle of `flash` mode.

@@ -11,6 +11,7 @@ import type { GameOptions, PlayerSetup } from '../engine/types';
 import { useStore } from '../state/createStore';
 import { resumeRoom, roomStatus } from '../remote/host';
 import { createProfile, deleteProfile, patchProfile, profilesStore } from '../state/profiles';
+import { syncStatus } from '../state/profileSync';
 import '../styles/setup.css';
 
 const ALL_FACTIONS = FACTION_GROUPS.flatMap((g) => g.factions);
@@ -35,6 +36,7 @@ function initialSeats(n: number): PlayerSetup[] {
 export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: GameOptions): void }) {
   const profiles = useStore(profilesStore);
   const room = useStore(roomStatus);
+  const sync = useStore(syncStatus);
   const [showPhones, setShowPhones] = useState(false);
   const [seats, setSeats] = useState<PlayerSetup[]>(() => initialSeats(6));
   const [vpTarget, setVpTarget] = useState(10);
@@ -173,7 +175,7 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
                       const p = profiles.find((x) => x.id === e.target.value);
                       sfx.pick();
                       if (!p) return patch(i, { profileId: undefined, name: '' });
-                      const { id, ...rest } = p;
+                      const { id, updatedAt: _synced, ...rest } = p;
                       setSeats((list) => list.map((seat, k) => (k === i ? { ...rest, profileId: id, color: taken.includes(rest.color) ? seat.color : rest.color } : seat)));
                     }}
                   >
@@ -245,6 +247,9 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
       </div>
 
       <footer className="setup__foot">
+        <span className="setup__sync" data-state={sync} title="Saved players are kept in the site's database and mirrored in this browser">
+          {sync === 'synced' ? `${profiles.length} saved player${profiles.length === 1 ? '' : 's'} · synced` : sync === 'offline' ? 'Offline: using the players saved in this browser' : 'Loading saved players…'}
+        </span>
         <span className="setup__problems">{problems.join(' · ')}</span>
         <button type="button" className="btn btn--gold btn--lg" disabled={problems.length > 0} onClick={start}>
           Begin round one <IconArrow />

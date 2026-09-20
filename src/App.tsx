@@ -4,6 +4,7 @@ import { Bench } from './pages/Bench';
 import { ButtonConcept } from './pages/ButtonConcept';
 import { Demo } from './pages/Demo';
 import { Join } from './pages/Join';
+import { Me } from './pages/Me';
 import { Landing } from './pages/Landing';
 import { Play } from './pages/Play';
 import { Standard } from './pages/Standard';
@@ -18,6 +19,7 @@ export function App() {
       <Route path="/" element={<Landing />} />
       <Route path="/demo" element={<Demo />} />
       <Route path="/play" element={<Play />} />
+      <Route path="/me" element={<Me />} />
       <Route path="/join" element={<Join />} />
       <Route path="/join/:code" element={<Join />} />
       <Route path="/standard" element={<Standard />} />

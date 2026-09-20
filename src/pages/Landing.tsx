@@ -159,8 +159,11 @@ export function Landing() {
         <article className="panel panel--ticks feature">
           <div className="eyebrow">Profiles</div>
           <h2>Bring your own entrance music</h2>
-          <p>Every player picks an <b>entrance</b> — played when their turn begins — and an <b>exit</b>, played when they hold the button down to end it. Choose a built-in jingle or upload eight seconds of whatever you think is funny. Profiles remember your colour, your faction and your sounds.</p>
-          <Link to="/play" className="btn">Set up a table</Link>
+          <p>Every player picks an <b>entrance</b> — played when their turn begins — and an <b>exit</b>, played when they hold the button down to end it. Choose a built-in jingle or upload eight seconds of whatever you think is funny. Set it up at home, before game night; your profile follows you to any table.</p>
+          <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link to="/me" className="btn">Set up your profile</Link>
+            <Link to="/play" className="btn btn--ghost">Set up a table</Link>
+          </span>
         </article>
         <article className="panel panel--ticks feature">
           <div className="eyebrow">Open standard</div>

@@ -23,7 +23,7 @@ function deviceId(): string {
 }
 
 type Link = 'connecting' | 'connected' | 'lost';
-const WHO = 'pb.phone.profile';
+export const WHO = 'pb.phone.profile';
 
 function useRoom(code: string | null) {
   const [link, setLink] = useState<Link>('connecting');
@@ -242,11 +242,11 @@ function PhoneButton({ code }: { code: string }) {
   );
 }
 
-function WhoAreYou({ profiles, onPick, onCreate, onSkip }: { profiles: ProfileCard[]; onPick(id: string): void; onCreate(name: string): void; onSkip(): void }) {
+export function WhoAreYou({ profiles, onPick, onCreate, onSkip, eyebrow = 'Connected' }: { profiles: ProfileCard[]; onPick(id: string): void; onCreate(name: string): void; onSkip?(): void; eyebrow?: string }) {
   const [name, setName] = useState('');
   return (
     <div className="join join--ask">
-      <div className="eyebrow">Connected</div>
+      <div className="eyebrow">{eyebrow}</div>
       <h1>Who are you?</h1>
       {profiles.length > 0 && (
         <div className="who-list">
@@ -262,14 +262,14 @@ function WhoAreYou({ profiles, onPick, onCreate, onSkip }: { profiles: ProfileCa
         <input className="input join__name" value={name} maxLength={14} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name" />
         <button type="submit" className="btn btn--gold" disabled={!name.trim()}>That's me</button>
       </form>
-      <button type="button" className="btn btn--sm btn--ghost" onClick={onSkip}>Skip: just be a button</button>
+      {onSkip && <button type="button" className="btn btn--sm btn--ghost" onClick={onSkip}>Skip: just be a button</button>}
     </div>
   );
 }
 
 let preview: Playing | null = null;
 
-function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
+export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
   me: MyProfile;
   oops: string | null;
   onEdit(patch: { name?: string; color?: string; intro?: SoundRef; outro?: SoundRef }): void;
@@ -352,7 +352,7 @@ function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
         {slot('intro', 'Entrance: plays when your turn starts')}
         {slot('outro', 'Exit: plays when you end your turn')}
         {(error || oops) && <p className="soundpick__error">{error ?? oops}</p>}
-        <p className="muted" style={{ fontSize: 12.5 }}>Sounds play from the big screen. Uploaded clips are sent to the host laptop and stay there.</p>
+        <p className="muted" style={{ fontSize: 12.5 }}>Sounds play from the big screen, not from your phone or your button.</p>
         <div className="sheet__foot">
           <button type="button" className="btn btn--sm btn--ghost" onClick={onSwitch}>Not {me.name}? Switch player</button>
           <button type="button" className="btn btn--gold" onClick={onClose}>Done</button>

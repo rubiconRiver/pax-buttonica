@@ -4,16 +4,21 @@ import { createStore } from './createStore';
 
 /**
  * A player's saved identity: their name, colour, usual faction and — crucially —
- * their sounds. Profiles live in the host laptop's browser. Players edit their
- * own from their phones while a room is open; there is no login (yet).
+ * their sounds. Profiles are kept in the site's database and mirrored in this
+ * browser, so a game still runs with the Wi-Fi off (see profileSync.ts).
+ * There is no login (yet): it's a board game.
  */
 export interface Profile extends Omit<PlayerSetup, 'profileId'> {
   id: string;
+  /** Milliseconds since the epoch; the newest edit wins when browsers disagree. */
+  updatedAt: number;
 }
 
-export type ProfilePatch = Partial<Omit<Profile, 'id'>>;
+export type ProfilePatch = Partial<Omit<Profile, 'id' | 'updatedAt'>>;
 
-export const profilesStore = createStore<Profile[]>([], 'pb.profiles.v1', (raw) => (Array.isArray(raw) ? (raw as Profile[]) : []));
+export const profilesStore = createStore<Profile[]>([], 'pb.profiles.v1', (raw) =>
+  Array.isArray(raw) ? (raw as Profile[]).map((p) => ({ ...p, updatedAt: p.updatedAt ?? Date.now() })) : [],
+);
 
 const INTROS = ['herald', 'war-drums', 'warp-in', 'council-bell', 'glitch', 'trade-wind'];
 const OUTROS = ['stand-down', 'mic-drop', 'warp-out', 'sealed', 'over-to-you'];
@@ -32,18 +37,25 @@ export function createProfile(name: string, from: ProfilePatch = {}): Profile {
     buttons: 1,
     ...from,
     name: name.trim().slice(0, 14),
+    updatedAt: Date.now(),
   };
   profilesStore.set((list) => sorted([...list, profile]));
   return profile;
 }
 
 export function patchProfile(id: string, patch: ProfilePatch) {
-  profilesStore.set((list) => sorted(list.map((p) => (p.id === id ? { ...p, ...patch, id } : p))));
+  profilesStore.set((list) => sorted(list.map((p) => (p.id === id ? { ...p, ...patch, id, updatedAt: Date.now() } : p))));
 }
 
+/** Deletions are announced to the sync layer so they reach the database too. */
+export const deletedProfiles: string[] = [];
+
 export function deleteProfile(id: string) {
+  deletedProfiles.push(id);
   profilesStore.set((list) => list.filter((p) => p.id !== id));
 }
+
+export const sortProfiles = sorted;
 
 /** Only what a phone is allowed to change about a profile, with everything checked. */
 export function sanitizePatch(raw: unknown, jingleIds: string[]): ProfilePatch {

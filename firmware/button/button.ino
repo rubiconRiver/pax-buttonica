@@ -347,10 +347,13 @@ static void handle(const Packet &p) {
     ledR = (rgb >> 16) & 0xFF;
     ledG = (rgb >> 8) & 0xFF;
     ledB = rgb & 0xFF;
-    if (next != mode) {
-      mode = next;
+    // "p" says how far into its cycle the light should already be, so the whole table blinks as one.
+    if (doc["p"].is<uint32_t>()) {
+      modeSince = millis() - doc["p"].as<uint32_t>();
+    } else if (next != mode) {
       modeSince = millis();
     }
+    mode = next;
   } else if (!strcmp(type, "snd")) {
     static uint16_t list[MAX_NOTES][2];
     int count = 0;

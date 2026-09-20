@@ -30,7 +30,7 @@ export type FromDevice =
   | { t: 'lost'; dev: string };
 
 export type ToDevice =
-  | { t: 'led'; dev: string; c: string; m: LedMode }
+  | { t: 'led'; dev: string; c: string; m: LedMode; p?: number }
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
   | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' }
   | { t: 'cfg'; dev: string; hold: number; flash?: number }
@@ -49,9 +49,16 @@ export function inputFor(b: number, e: Gesture): DeviceInput | null {
   return null;
 }
 
-export const ledFrame = (dev: string, o: DeviceOutput): ToDevice => ({
-  t: 'led',
-  dev,
-  c: o.color.replace('#', ''),
-  m: o.mode,
-});
+export const PULSE_MS = 1700;
+
+/**
+ * Where in its cycle a repeating light should be right now, so every button on
+ * the table breathes and blinks together no matter when it got the message.
+ */
+export const phaseNow = (mode: LedMode, flashMs: number): number | undefined =>
+  mode === 'pulse' ? Date.now() % PULSE_MS : mode === 'flash' ? Date.now() % flashMs : undefined;
+
+export const ledFrame = (dev: string, o: DeviceOutput, flashMs: number): ToDevice => {
+  const p = phaseNow(o.mode, flashMs);
+  return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }) };
+};

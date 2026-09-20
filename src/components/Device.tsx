@@ -1,7 +1,8 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState, type CSSProperties } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { LedMode } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
+import { PULSE_MS } from '../hardware/protocol';
 import '../styles/device.css';
 
 /** Presses shorter than this are taps; longer ones that let go early are abandoned holds. */
@@ -44,6 +45,16 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   const stopCharge = useRef<() => void>(() => {});
   const live = useRef({ pressed: false, held: false });
   const interactive = !!onInput;
+  const root = useRef<HTMLDivElement>(null);
+
+  // Start repeating lights part-way through their cycle, according to the clock on the wall, so every
+  // button (on this screen, on a phone across the table) breathes and blinks in step.
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el) return;
+    const period = mode === 'pulse' ? PULSE_MS : mode === 'flash' ? parseFloat(getComputedStyle(el).getPropertyValue('--flash-ms')) || 2000 : 0;
+    el.style.animationDelay = period ? `-${Date.now() % period}ms` : '';
+  }, [mode]);
 
   const clear = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -111,6 +122,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
 
   return (
     <div
+      ref={root}
       className="dev"
       style={style}
       data-mode={mode}

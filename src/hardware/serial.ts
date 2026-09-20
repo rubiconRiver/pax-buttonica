@@ -180,6 +180,6 @@ export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[]
     const key = `${o.color}|${o.mode}`;
     if (lastFrames.get(dev) === key) continue;
     lastFrames.set(dev, key);
-    sendToDevice(ledFrame(dev, o));
+    sendToDevice(ledFrame(dev, o, settingsStore.get().flashMs));
   }
 }

@@ -13,7 +13,7 @@ static const int BUTTON_PINS[3] = {3, 4, 5};
 
 // ── Light ───────────────────────────────────────────────────────────────────
 #define LED_PIN 10
-#define LED_COUNT 12          // WS2812 pixels under the dome
+#define LED_COUNT 8           // WS2812 pixels under the dome (8-LED ring; set 12 for a 12-LED ring)
 #define MAX_BRIGHTNESS 0.55f  // of full scale; the battery and your eyes will thank you
 #define DIM_LEVEL 0.14f       // what "dim" means on this hardware
 

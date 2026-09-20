@@ -79,4 +79,7 @@
   background: linear-gradient(transparent, rgba(4, 6, 11, 0.95) 40%);
   z-index: 10;
 }
+.setup__sync { margin-right: auto; font-size: 12.5px; color: var(--faint); }
+.setup__sync[data-state='synced'] { color: var(--ok); }
+.setup__sync[data-state='offline'] { color: var(--gold); }
 .setup__problems { font-size: 13px; color: #ff9aa7; }
