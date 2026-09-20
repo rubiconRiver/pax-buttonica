@@ -33,6 +33,21 @@ Roughly **$22–35 per button** including rechargeable cells (about **$11–20 i
 
 `hardware/pcb/` holds a 70 mm round board that every part solders onto: ESP32 at the top, an MX-style keyboard switch dead centre, diode, capacitor, a three-hole connection for the LED ring and a screw terminal for the batteries, plus a spare solder hole beside every ESP32 pin. Upload `hardware/pcb/pax-button-gerbers.zip` to a board house; details, and two checks to make before soldering the ESP32, are in [`hardware/pcb/README.md`](../hardware/pcb/README.md). It passes KiCad's rule check; no board has been manufactured yet.
 
+### Putting a button together on the board
+
+The green board is the base. **Everything solders onto it, the ESP32 included**, and the copper inside the board makes the connections, so there is nothing to wire between parts. Lowest parts first, so the board lies flat while you work:
+
+1. **Check your ESP32 first.** Look down on it with the USB port at the top. The top pin on the **right** should be labelled 5V. If it's on the left, the ESP32 goes on the back of the board instead (it says so on the board).
+2. **D1, the diode.** Bend the legs, push it through, stripe toward the **K**. Solder underneath, snip the legs.
+3. **The ESP32.** It comes with two loose strips of pins. Stand the strips in the board's two *inner* rows of holes, lower the ESP32 onto them with the **USB port pointing off the edge**, and solder every pin on top (to the ESP32) and underneath (to the board). Solder one corner first and check it's sitting flat before doing the rest. The outer rows of holes stay empty: they're spares for adding things later.
+4. **SW1, the switch.** Push it in from the top until it clicks flat, then solder its two metal pins underneath.
+5. **C1, the capacitor.** The longer leg goes in the hole by the **+**. The stripe on the can is the negative side.
+6. **The battery leads** into J1: red to **+**, black to **−**. Either solder them straight into the holes or fit a screw terminal.
+7. **The LED ring.** Three wires from the ring's 5V (or VCC), GND and **DI** (data *in*, not DO) pads to the holes marked 5V, G and DIN.
+8. Skip R1 and leave JP1 alone: the board works as it comes.
+
+That's about forty-five solder joints a button, all of them big through-hole ones; roughly half an hour each once you've done the first. Flash the firmware over USB with the battery switched **off**, and keep it off whenever USB is plugged in.
+
 With the board, the wiring table below is what the copper does for you. Without it, it's what you wire by hand on perfboard (using a KW12 microswitch, which fits perfboard; keyboard switches don't).
 
 ## Wiring (defaults from `firmware/button/config.h`)

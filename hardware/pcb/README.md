@@ -27,6 +27,10 @@ The ground is a copper pour on both sides. There is no copper under the module's
 1. **Which way the module's GPIO numbers run.** Sources disagree on whether the five pins after 3V3 are labelled 4-3-2-1-0 or 0-1-2-3-4. The switch goes to the **fifth pin on the 5V side**. Read the number printed beside that pin on your module and put it in `firmware/button/config.h` as the first entry of `BUTTON_PINS`. The LED data line goes to GPIO10, which everyone agrees on.
 2. **That your module isn't mirrored.** Looking down on the module with USB-C at the top, 5V should be the top pin on the **right**. If yours has 5V on the left, solder the module to the **back** of the board instead; flipping it swaps the rows back. Check before you solder: it's printed on both sides of the board too.
 
+## Assembly
+
+Step by step in [`docs/HARDWARE.md`](../../docs/HARDWARE.md#putting-a-button-together-on-the-board): diode, ESP32 (on its pin strips, USB off the edge), switch, capacitor, battery leads, LED ring.
+
 ## Ordering (JLCPCB, PCBWay and similar)
 
 Upload `pax-button-gerbers.zip`. The preview should show a round board with a square switch outline in the middle. Then:
