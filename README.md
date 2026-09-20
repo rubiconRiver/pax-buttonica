@@ -19,6 +19,7 @@ npm run dev
 | `/me` | Set up your own profile (name, colour, entrance and exit sounds) at home, no game needed |
 | `/join` | A phone becomes a button: scan the QR from the *Phones* menu (setup screen or in a game), or type the room code. Players say who they are and edit their own profile and sounds from there |
 | `/button` | Concept drawings of the physical button: exploded view, size, target dimensions. Made for sharing |
+| `/parts` | Interactive shopping list: pick how many buttons and what you already own, tick things off, read what each part is for |
 | `/bench` | Hardware test bench: connect the USB hub and poke real buttons one at a time |
 | `/standard` | The button standard, rendered from `docs/BUTTON_STANDARD.md` |
 

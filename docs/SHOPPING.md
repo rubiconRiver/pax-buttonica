@@ -1,5 +1,7 @@
 # Shopping list — six buttons, one hub, spares
 
+> The interactive version, with quantities that follow the number of buttons and an explanation of every part, is on the site at `/parts`.
+
 Checked on Amazon.ca on **2026-09-20**; prices and stock move, so treat them as a snapshot. Everything listed showed "In Stock" with delivery within a week. This is the speakerless standard build from [HARDWARE.md](HARDWARE.md).
 
 | # | Item | Qty | Price (CAD) | Link |

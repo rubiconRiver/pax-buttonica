@@ -27,6 +27,7 @@ export function ButtonConcept() {
       <nav className="nav">
         <Link to="/" className="brand"><span className="brand__dot" /><span>Pax <b>Buttonica</b></span></Link>
         <div className="nav__links">
+          <Link to="/parts">Parts list</Link>
           <Link to="/hardware">Build guide</Link>
           <Link to="/standard">Button standard</Link>
           <Link to="/demo" className="btn btn--sm btn--gold">Live demo</Link>

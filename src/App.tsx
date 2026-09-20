@@ -5,6 +5,7 @@ import { ButtonConcept } from './pages/ButtonConcept';
 import { Demo } from './pages/Demo';
 import { Join } from './pages/Join';
 import { Me } from './pages/Me';
+import { Parts } from './pages/Parts';
 import { Landing } from './pages/Landing';
 import { Play } from './pages/Play';
 import { Standard } from './pages/Standard';
@@ -20,6 +21,7 @@ export function App() {
       <Route path="/demo" element={<Demo />} />
       <Route path="/play" element={<Play />} />
       <Route path="/me" element={<Me />} />
+      <Route path="/parts" element={<Parts />} />
       <Route path="/join" element={<Join />} />
       <Route path="/join/:code" element={<Join />} />
       <Route path="/standard" element={<Standard />} />

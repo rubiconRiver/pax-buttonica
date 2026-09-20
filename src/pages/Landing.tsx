@@ -172,7 +172,7 @@ export function Landing() {
           <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link to="/standard" className="btn">Read the standard</Link>
             <Link to="/button" className="btn btn--ghost">See the button</Link>
-            <Link to="/hardware" className="btn btn--ghost">Parts &amp; wiring</Link>
+            <Link to="/parts" className="btn btn--ghost">Parts list</Link>
           </span>
         </article>
       </section>
