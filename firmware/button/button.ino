@@ -1,8 +1,8 @@
 /*
  * Pax Buttonica button — draft standard v0 (see docs/BUTTON_STANDARD.md).
  *
- * A dumb, glowing thing. It shows the colour and mode it's told to show, plays
- * the notes it's handed, and reports tap / double / hold. It knows nothing
+ * A dumb, glowing thing. It shows the colour and mode it's told to show and
+ * reports tap / double / hold. (It can also play note lists, if you fit a speaker.) It knows nothing
  * about Twilight Imperium.
  *
  * Board: ESP32-C3. Libraries: Adafruit NeoPixel, ArduinoJson (v7).

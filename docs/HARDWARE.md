@@ -11,7 +11,7 @@
 ```
 
 - **Hub** — a bare ESP32-C3 board on a USB cable. No wiring at all.
-- **Button** — ESP32-C3 + LED ring + amp and speaker + one big switch + 4 AA cells, in a printed shell.
+- **Button** — ESP32-C3 + LED ring + one big switch + 4 AA cells, in a printed shell. **No speaker:** every sound, including each player's entrance and exit music, plays from the laptop.
 
 ## Parts, per button
 
@@ -19,8 +19,6 @@
 |---|---|---|
 | ESP32-C3 "Super Mini" | Native USB, tiny, cheap. Any ESP32-C3 board works; change pins in `config.h`. | $4–8 |
 | WS2812B ring, 8 or 12 pixels (32–50 mm) | The 8-pixel ring suits the compact dome. Any count works; set `LED_COUNT`. | $3–6 |
-| MAX98357A I2S amp breakout | Or skip it and use a passive piezo (`AUDIO_PIEZO`), or no sound at all (`AUDIO_NONE` — the laptop plays everything). | $4–8 |
-| Speaker, 28–40 mm, 4–8 Ω, 2–3 W | | $3–5 |
 | Microswitch (lever or plunger type) | Sits under the printed dome's plunger. | $1–2 |
 | 4×AA holder with switch + leads | | $2–3 |
 | 4× NiMH AA cells | **NiMH, not alkaline** — see Power. | $10–15 |
@@ -29,7 +27,7 @@
 | Optional: two tactile buttons | Strategy and pass shortcuts (`BUTTON_COUNT 3`). | $1 |
 | Optional: 2× 100 kΩ resistors | Battery voltage sense (`BATTERY_PIN`). | $0.10 |
 
-Roughly **$30–45 per button** with rechargeable cells, **$5–8 for the hub**. Six buttons and a hub: about $200–280. Cheaper from AliExpress if you can wait; faster from Amazon.ca. For genuine Adafruit/SparkFun parts in Canada: BC Robotics, Elmwood Electronics, PiShop.ca, Universal Solder, DigiKey.ca.
+Roughly **$22–35 per button** including rechargeable cells (about **$11–20 if you already own the AAs**: the cells are the most expensive line), and **$5–8 for the hub**. Six buttons and a hub: about $140–220. Cheaper from AliExpress if you can wait; faster from Amazon.ca. For genuine Adafruit/SparkFun parts in Canada: BC Robotics, Elmwood Electronics, PiShop.ca, Universal Solder, DigiKey.ca.
 
 ## Wiring (defaults from `firmware/button/config.h`)
 
@@ -37,17 +35,17 @@ Roughly **$30–45 per button** with rechargeable cells, **$5–8 for the hub**.
 |---|---|
 | Battery **+** → holder switch → **1N5817** (stripe away from battery) | **5 V rail** |
 | Battery **−** | **GND rail** |
-| 5 V rail | ESP32-C3 `5V` pin · LED ring `5V`/`VCC` · MAX98357A `VIN` |
-| GND rail | ESP32-C3 `GND` · LED ring `GND` · MAX98357A `GND` |
+| 5 V rail | ESP32-C3 `5V` pin · LED ring `5V`/`VCC` |
+| GND rail | ESP32-C3 `GND` · LED ring `GND` |
 | 1000 µF capacitor | Across the LED ring's 5 V and GND, close to the ring (mind polarity) |
 | ESP32-C3 `GPIO10` → 330 Ω → | LED ring `DIN` |
-| ESP32-C3 `GPIO6` | MAX98357A `BCLK` |
-| ESP32-C3 `GPIO7` | MAX98357A `LRC` |
-| ESP32-C3 `GPIO1` | MAX98357A `DIN` |
-| MAX98357A `+` / `−` | Speaker |
 | ESP32-C3 `GPIO3` | Big switch → `GND` (no resistor; the firmware uses the internal pull-up) |
 | *Optional* `GPIO4`, `GPIO5` | Strategy / pass switches → `GND` |
 | *Optional* battery + → 100 kΩ → `GPIO0` → 100 kΩ → GND | Battery sense |
+
+That's the whole circuit: three wires to the LED ring, two to the switch, two to the batteries.
+
+**Want your own button to make noise?** It's optional and off by default. Fit a MAX98357A I2S amp (`VIN`/`GND` to the rails, `BCLK` → GPIO6, `LRC` → GPIO7, `DIN` → GPIO1) and a small 4–8 Ω speaker, or a passive piezo on GPIO1, and pick `AUDIO_I2S` or `AUDIO_PIEZO` in `config.h`. The app notices and sends that button its owner's jingles; uploaded clips still play from the laptop.
 
 On the ESP32-C3, **don't use GPIO 2, 8 or 9** for anything: they decide how the chip boots (8 is also the onboard LED, 9 the BOOT button).
 
@@ -82,7 +80,7 @@ If an upload won't start, hold **BOOT**, tap **RESET**, release BOOT, and try ag
 
 1. **Hub alone.** Flash it, open `/bench` in Chrome, click *Connect the hub*. You should see the hub's firmware version.
 2. **Button on USB power, no battery.** Flash it. It blinks white once at power-up and announces itself within three seconds; it appears on the bench with its id and capabilities.
-3. **Poke it.** Send each light mode, a jingle, *Identify*. Press it: `tap`, `double`, `hold` should show up beside it. The white arc while holding is drawn by the button itself.
+3. **Poke it.** Send each light mode and *Identify*. Press it: `tap`, `double`, `hold` should show up beside it. The white arc while holding is drawn by the button itself.
 4. **Battery.** Unplug USB, switch on the pack. Same checks again.
 5. **A game.** Open `/play`, connect the hub from the top bar, and start: the seat-claiming ritual binds each button to a player.
 
@@ -92,9 +90,9 @@ Wire traffic is shown at the bottom of the bench page, which is the first place 
 
 Nothing is designed yet. What the electronics need:
 
-- **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a 2×2 AA holder is about 62 × 58 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
+- **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a back-to-back 2×2 AA holder is about 58 × 32 × 30 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
 - **Dome:** translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.
 - **Light:** the LED ring faces up, at least 15–20 mm below the dome's inner surface, or you'll see twelve dots instead of a glow. A white-painted or foil-lined cavity helps a lot.
-- **Base:** heavy enough (or rubber-footed) not to skate when slapped. Room for a 4×AA holder (~62 × 58 × 16 mm for the 2×2 kind), the amp, and a downward- or side-firing speaker with a grille (a 28 mm speaker fits the compact size; 40 mm sounds better if you have the room).
+- **Base:** heavy enough (or rubber-footed) not to skate when slapped. Room for the batteries and the ESP32 board, and nothing else: no speaker, no grille. A flat four-in-a-row AA holder is about 62 × 58 × 15 mm and needs a base over 90 mm; a back-to-back 2×2 holder is about 58 × 32 × 30 mm and fits the compact base.
 - **Access:** battery door, power switch reachable from outside, USB-C port reachable for reflashing.
 - **Optional:** two small tactile buttons on the base rim for strategy and pass.

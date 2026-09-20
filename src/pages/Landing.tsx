@@ -57,7 +57,7 @@ const LIGHTS: { mode: LedMode; color: string; title: string; text: string }[] = 
 
 const ROLES = [
   { title: 'Shell & dome', text: 'A printable housing with a translucent dome, a satisfying plunger and room for four AAs. Make it feel expensive to press.' },
-  { title: 'Firmware', text: 'ESP32 + ESP-NOW. Six light modes, two gestures, a note-list player and a polling loop that sips battery. The standard is short on purpose.' },
+  { title: 'Firmware', text: 'ESP32 + ESP-NOW. Six light modes, three gestures and a polling loop that sips battery. The standard is short on purpose.' },
   { title: 'Web app', text: 'React + TypeScript. The rules engine is a pure function with tests; the simulator is the reference implementation for the hardware.' },
   { title: 'Playtesting', text: "Eight hours, six players, one table. Tell us where it's annoying. That's the whole job. Snacks are involved." },
 ];
@@ -138,7 +138,7 @@ export function Landing() {
               {['#ffd21f', '#ff3b3b', '#2f8cff'].map((c, k) => <Device key={c} color={c} mode={k === 0 ? 'pulse' : 'dim'} size={54} />)}
             </div>
             <h3>Buttons</h3>
-            <p>An ESP32, a ring of LEDs, a speaker, four AAs. One per player.</p>
+            <p>An ESP32, a ring of LEDs, one switch, four AAs. One per player.</p>
           </div>
           <div className="link"><span>ESP-NOW</span><i /><small>direct radio, no router</small></div>
           <div className="node panel">
@@ -150,7 +150,7 @@ export function Landing() {
           <div className="node panel">
             <div className="node__art"><div className="laptop"><b /></div></div>
             <h3>This site</h3>
-            <p>Runs the game in your browser. Works with the Wi-Fi off.</p>
+            <p>Runs the game and plays every sound. Works with the Wi-Fi off.</p>
           </div>
         </div>
       </section>

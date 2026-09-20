@@ -18,9 +18,12 @@ static const int BUTTON_PINS[3] = {3, 4, 5};
 #define DIM_LEVEL 0.14f       // what "dim" means on this hardware
 
 // ── Sound: pick ONE ─────────────────────────────────────────────────────────
-#define AUDIO_I2S        // MAX98357A amp + small speaker
+// The standard button has no speaker: every sound plays from the laptop, which
+// is cheaper, simpler to build, and sounds better. The other two are there if
+// you want your own button to chirp.
+#define AUDIO_NONE       // silent (standard)
+// #define AUDIO_I2S     // MAX98357A amp + small speaker
 // #define AUDIO_PIEZO   // passive piezo straight on a pin
-// #define AUDIO_NONE    // silent: the laptop plays the sounds
 
 #define I2S_BCLK_PIN 6
 #define I2S_LRC_PIN 7

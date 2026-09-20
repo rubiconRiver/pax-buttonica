@@ -37,7 +37,7 @@ export function ButtonConcept() {
         <div className="concept__copy">
           <div className="eyebrow">Concept · nothing here is built yet</div>
           <h1>Meet the button</h1>
-          <p>One per player. A frosted dome about the width of a bank card, lit from inside in your colour, with a speaker for your entrance music. Press the whole dome: tap, double-tap, or hold.</p>
+          <p>One per player. A frosted dome about the width of a bank card, lit from inside in your colour. No screen, no speaker: your entrance music plays from the big screen. Press the whole dome: tap, double-tap, or hold.</p>
           <div className="concept__pick">
             <span className="opt__label">Your colour</span>
             <div className="swatches">
@@ -61,8 +61,8 @@ export function ButtonConcept() {
       <section className="section">
         <div className="section__head">
           <div className="eyebrow">What's inside</div>
-          <h2>Six layers, all off the shelf</h2>
-          <p>Every electronic part is a hobby-shop module. The shell is the only thing that has to be designed, and it's printable. Full parts list and wiring are in the <Link to="/hardware">build guide</Link>.</p>
+          <h2>Six layers, three of them electronic</h2>
+          <p>A radio board, a ring of LEDs and a switch: every electronic part is a hobby-shop module, and the whole circuit is seven wires. The shell is the only thing that has to be designed, and it's printable. Full parts list and wiring are in the <Link to="/hardware">build guide</Link>.</p>
         </div>
         <div className="panel concept__sheet lit" data-mode="solid"><ExplodedView /></div>
       </section>

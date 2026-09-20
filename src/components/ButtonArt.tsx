@@ -76,18 +76,6 @@ function Dome({ id, cx, y, rx, rise }: { id: string; cx: number; y: number; rx: 
   );
 }
 
-function Slots({ cx, y, rx, h }: { cx: number; y: number; rx: number; h: number }) {
-  return (
-    <g fill="#04060a">
-      {[-3, -2, -1, 0, 1, 2, 3].map((k) => {
-        const dx = k * 13;
-        const drop = rx * K * Math.sqrt(1 - (dx / rx) ** 2);
-        return <rect key={k} x={cx + dx - 2.5} y={y + drop + h * 0.3} width="5" height={h * 0.42} rx="2.5" />;
-      })}
-    </g>
-  );
-}
-
 /** The assembled button, lit. `aux` adds the optional strategy and pass buttons. */
 export function ButtonRender({ aux = false, className }: { aux?: boolean; className?: string }) {
   const id = useId().replace(/:/g, '');
@@ -98,7 +86,6 @@ export function ButtonRender({ aux = false, className }: { aux?: boolean; classN
       <ellipse className="lit__hue" cx={cx} cy={y + h + 16} rx="196" ry="66" fill="var(--led)" style={lum(0.34)} filter={`url(#${id}-blur)`} />
       <ellipse cx={cx} cy={y + h + 8} rx={rx + 6} ry={rx * K + 6} fill="#000" opacity="0.55" filter={`url(#${id}-soft)`} />
       <Cyl cx={cx} y={y} rx={rx} h={h} paint={{ top: '#1b202c', side: `url(#${id}-shell)` }} />
-      <Slots cx={cx} y={y} rx={rx} h={h} />
       <ellipse cx={cx} cy={y} rx="118" ry={118 * K} fill="#04060a" />
       <ellipse className="lit__hue" cx={cx} cy={y} rx="116" ry={116 * K} fill="none" stroke="var(--led)" strokeWidth="7" style={lum(0.8)} filter={`url(#${id}-soft)`} />
       {aux &&
@@ -123,9 +110,9 @@ const CALLOUTS: Callout[] = [
   { y: 110, from: 446, title: 'Dome', lines: ['Frosted, about 66 mm across. It is the button:', 'the whole dome travels 3–4 mm when pressed.'] },
   { y: 238, from: 438, title: 'Diffuser & plunger', lines: ['Turns eight points of light into one glow.', 'The stem underneath presses the switch.'] },
   { y: 332, from: 412, title: 'LED ring', lines: ['Eight RGB pixels: any colour, any pattern.', 'Also draws the white arc while you hold.'] },
-  { y: 420, from: 470, title: 'Electronics deck', lines: ['Microswitch, ESP32-C3 (radio, brains, USB-C', 'for updates) and a small audio amp.'] },
-  { y: 585, from: 494, title: 'Power & sound', lines: ['Four AA cells (NiMH) in a 2×2 holder, and a', '28 mm speaker for your entrance music.'] },
-  { y: 790, from: 484, title: 'Base', lines: ['About 88 mm across. Weighted, rubber feet,', 'speaker slots, power switch, battery door.'] },
+  { y: 420, from: 470, title: 'Electronics deck', lines: ['A microswitch and an ESP32-C3: radio, brains', 'and a USB-C port for updates. That is all.'] },
+  { y: 585, from: 434, title: 'Power', lines: ['Four rechargeable AA cells in a 2×2 holder.', 'Roughly a game day per charge, for now.'] },
+  { y: 790, from: 484, title: 'Base', lines: ['About 88 mm across. Weighted, rubber feet,', 'power switch, battery door. No speaker.'] },
 ];
 
 /** Everything inside, pulled apart along the centre line. */
@@ -143,25 +130,19 @@ export function ExplodedView({ className }: { className?: string }) {
       <Cyl cx={cx} y={730} rx={150} h={120} paint={shell} />
       <ellipse cx={cx} cy="730" rx="140" ry={140 * K} fill="#05070b" />
       <path d={`M${cx - 140} 730 A140 ${140 * K} 0 0 1 ${cx + 140} 730`} fill="none" stroke="rgba(255,255,255,0.1)" />
-      <Slots cx={cx} y={730} rx={150} h={120} />
       <rect x={cx + 118} y="800" width="16" height="9" rx="2" fill="#d7dbe6" />
       {[-96, 0, 96].map((dx) => <ellipse key={dx} cx={cx + dx} cy={850 + 150 * K * Math.sqrt(1 - (dx / 150) ** 2) - 2} rx="14" ry="4" fill="#020305" />)}
 
-      {/* 5 · batteries and speaker */}
-      <Box x={cx - 150} y={540} w={197} d={109} h={100} top="#161a24" front="#0e1119" />
+      {/* 5 · batteries */}
+      <Box x={cx - 98} y={540} w={197} d={109} h={100} top="#161a24" front="#0e1119" />
       {[0, 1].map((r) => (
         <g key={r}>
-          <rect x={cx - 140} y={566 + r * 47} width="168" height="40" rx="20" fill="#2a8f5b" stroke="rgba(255,255,255,0.2)" />
-          <rect x={cx - 140} y={566 + r * 47} width="40" height="40" rx="20" fill="#c9ced9" />
-          <rect x={cx + 28} y={578 + r * 47} width="8" height="16" rx="2" fill="#f2b84b" />
-          <text x={cx - 42} y={591 + r * 47} fill="#0b2a1a" fontSize="13" fontWeight="800" fontFamily="Oxanium, sans-serif" textAnchor="middle" letterSpacing="2">AA · NiMH</text>
+          <rect x={cx - 88} y={566 + r * 47} width="168" height="40" rx="20" fill="#2a8f5b" stroke="rgba(255,255,255,0.2)" />
+          <rect x={cx - 88} y={566 + r * 47} width="40" height="40" rx="20" fill="#c9ced9" />
+          <rect x={cx + 80} y={578 + r * 47} width="8" height="16" rx="2" fill="#f2b84b" />
+          <text x={cx + 10} y={591 + r * 47} fill="#0b2a1a" fontSize="13" fontWeight="800" fontFamily="Oxanium, sans-serif" textAnchor="middle" letterSpacing="2">AA · NiMH</text>
         </g>
       ))}
-      <Cyl cx={cx + 112} y={600} rx={48} h={34} paint={{ top: '#11141c', side: `url(#${id}-shell)` }}>
-        <ellipse cx={cx + 112} cy="600" rx="38" ry={38 * K} fill="#1d2230" stroke="rgba(255,255,255,0.15)" />
-        <ellipse cx={cx + 112} cy="600" rx="22" ry={22 * K} fill="#0a0c12" stroke="rgba(255,255,255,0.15)" />
-        <ellipse cx={cx + 112} cy="600" rx="8" ry={8 * K} fill="#2c3344" />
-      </Cyl>
 
       {/* 4 · electronics deck */}
       <Cyl cx={cx} y={428} rx={136} h={7} paint={{ top: '#1a1f2b', side: '#0d1017' }} />
@@ -169,8 +150,6 @@ export function ExplodedView({ className }: { className?: string }) {
       <rect x={cx - 120} y="419" width="14" height="10" rx="2" fill="#c9ced9" />
       <path d={`M${cx - 58} 418 h8 v4 h-8 v4 h8`} fill="none" stroke="#f2b84b" strokeWidth="1.5" />
       <rect x={cx - 92} y="420" width="20" height="8" fill="#05070b" />
-      <Box x={cx + 46} y={426} w={56} d={46} h={6} top="#3a1d52" front="#25123a" />
-      <rect x={cx + 84} y="416" width="16" height="9" fill="#2f8cff" />
       <Box x={cx - 20} y={418} w={40} d={30} h={16} top="#1c1f27" front="#0c0e13" />
       <rect x={cx - 5} y="404" width="10" height="9" rx="2" fill="#e5484d" />
 

@@ -28,7 +28,7 @@
 |---|---|---|
 | Button 0 — the big one | **Yes** | Reports `tap`, `double` and `hold`. |
 | One RGB light | **Yes** | The whole dome shows one colour. A ring of pixels is fine; treat it as one light. |
-| Sound | No | If the device is silent, the laptop plays the sounds instead. |
+| Sound | No | The standard button is silent: the laptop plays every sound. A builder can add a speaker and the host will use it. |
 | Button 1 — strategy | No | Shortcut for double-tap: "I'm playing my strategy card". |
 | Button 2 — pass | No | Shortcut: "I pass". |
 | Buttons 3+ | No | Reserved. The host ignores indexes it doesn't understand, so extras are harmless. |
@@ -136,10 +136,9 @@ Anyone without a physical button can use their phone: the host opens a room, the
 
 ## Sound
 
-Two tiers, and the host picks per device:
+The standard button has **no speaker**. Entrance and exit music, the strategy-card alarm and every other sound play from the laptop (or whatever it's plugged into). That keeps the button cheap and easy to build, and a laptop sounds better than a 28 mm speaker ever will.
 
-1. **Tones** (`caps.audio: "tones"`) — the button plays `snd` note lists through a piezo or a small I2S amp. Personal jingles travel with the player's profile and are sent when their turn starts and ends.
-2. **Laptop audio** — uploaded clips (your favourite eight seconds of anything) play from the laptop. They never leave the browser and are never sent to a button.
+A builder who wants their own button to chirp can fit one and report `caps.audio: "tones"`. The host then sends that player's jingles to the button as `snd` note lists. Uploaded clips always play from the laptop; they never leave the browser and are never sent to a button.
 
 ## Power, honestly
 
@@ -154,8 +153,7 @@ The button must be able to hear the hub within about a quarter of a second, whic
 | Part | Example | Approx. CAD |
 |---|---|---|
 | Microcontroller | ESP32-C3 "Super Mini" (native USB, tiny) | $4–8 |
-| Light | 7–12 WS2812 pixels in a ring under the dome | $2–5 |
-| Sound | MAX98357A I2S amp + 40 mm speaker, *or* a piezo | $1–12 |
+| Light | 8–12 WS2812 pixels in a ring under the dome | $2–5 |
 | Switch | A microswitch under a printed plunger | $1–2 |
 | Power | 4×AA holder with a switch | $2–3 |
 | Shell | Printed base + translucent printed dome | filament |
