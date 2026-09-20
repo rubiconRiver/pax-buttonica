@@ -1,6 +1,6 @@
 import { useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
-import { ButtonRender, CrossSection, ExplodedView, SizeChart } from '../components/ButtonArt';
+import { ButtonRender, CrossSection, ExplodedView, InsideView, SizeChart } from '../components/ButtonArt';
 import { IconArrow } from '../components/Icons';
 import { MiniTable } from '../components/MiniTable';
 import { PLAYER_COLORS, STRATEGY_CARDS } from '../engine/data';
@@ -68,11 +68,34 @@ export function ButtonConcept() {
         <div className="panel concept__sheet lit" data-mode="solid"><ExplodedView /></div>
       </section>
 
+      <section className="section">
+        <div className="section__head">
+          <div className="eyebrow">Built by hand</div>
+          <h2>What you'll actually end up with</h2>
+          <p>A printed puck with a glowing dome, and nothing sticking out of it. Inside there are five short wires, not a nest: the ESP32, the microswitch, the diode and the capacitor are all soldered to one small piece of perfboard, so most connections are solder on the underside of that board. Three wires go up to the LED ring, two go down to the battery box, and the battery box is the floor of the button, with its own switch and door.</p>
+        </div>
+        <div className="panel concept__sheet lit" data-mode="solid"><InsideView /></div>
+        <div className="concept__honest">
+          <article className="panel concept__card">
+            <h3>The work</h3>
+            <p>About sixteen solder joints a button, around a hundred for six. Budget two hours for the first one and half an hour each after that. None of it is fine-pitch: the smallest thing you solder to is a 2.5 mm pad.</p>
+          </article>
+          <article className="panel concept__card">
+            <h3>The look</h3>
+            <p>A good hobby build, not a shop product: you'll see print layer lines up close, and the dome shows a soft ring of light rather than a perfectly even glow unless the LEDs sit well below it. Lit, in a dim room, across a table, it looks the part.</p>
+          </article>
+          <article className="panel concept__card">
+            <h3>What makes it messy</h3>
+            <p>Pin headers and push-on jumper leads: bulky, and they work loose when the button gets slapped. Solder wires straight to the pads, cut them to length, sleeve loose joints in heat-shrink, and hold the board down with two screws or a dab of hot glue.</p>
+          </article>
+        </div>
+      </section>
+
       <section className="section concept__two">
         <article className="panel concept__card lit" data-mode="solid">
           <div className="eyebrow">Size</div>
           <h3>Small on purpose</h3>
-          <p>Six players, a galaxy and a lot of plastic ships: table space is scarce. The target is 88 mm across, set by the smallest sensible 4 × AA holder.</p>
+          <p>Six players, a galaxy and a lot of plastic ships: table space is scarce. The target is 88 mm across with an open battery tray, or about 105 mm if you use the battery box with its own switch and lid, which is less to design and build.</p>
           <SizeChart />
         </article>
         <article className="panel concept__card lit" data-mode="solid">

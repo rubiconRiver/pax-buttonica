@@ -19,9 +19,10 @@ interface Choices {
   haveWire: boolean;
   haveFilament: boolean;
   resistors: boolean;
+  tidy: boolean;
 }
 
-const DEFAULTS: Choices = { buttons: 6, spares: true, holder: 'covered', rings: 'amazon', haveCells: false, haveCharger: false, haveWire: false, haveFilament: false, resistors: false };
+const DEFAULTS: Choices = { buttons: 6, spares: true, holder: 'covered', rings: 'amazon', haveCells: false, haveCharger: false, haveWire: false, haveFilament: false, resistors: false, tidy: true };
 
 interface Line {
   id: string;
@@ -192,6 +193,38 @@ function lines(c: Choices): Line[] {
     qty: packs(n, 10),
     need: `${n} needed, 10 in the bag`,
   });
+
+  if (c.tidy) {
+    out.push({
+      id: 'perf',
+      name: 'Double-sided perfboard assortment',
+      role: 'A small board that the ESP32 and the microswitch are soldered onto: the difference between a tidy build and a nest.',
+      explain: (
+        <>
+          Cut or pick a piece about 4 × 6 cm per button. The microswitch is soldered down in the middle, so it's held rigidly and the press feels the same every time; the ESP32 sits flat beside it; the diode and capacitor go on the board too. Power, ground and the two signal lines become short solder bridges on the underside instead of flying wires. What's left is three wires up to the LED ring and two down to the batteries.
+        </>
+      ),
+      watch: <>Solder wires straight to the ESP32's pads. Skip the pin headers and jumper leads that come with kits: they're bulky and they work loose.</>,
+      url: 'https://www.amazon.ca/dp/B072Z7Y19F',
+      seller: 'Amazon.ca',
+      unit: '32-pc kit',
+      price: 17.99,
+      qty: 1,
+      need: `${n} small boards needed`,
+    });
+    out.push({
+      id: 'shrink',
+      name: 'Heat-shrink tubing assortment',
+      role: 'Sleeves for every joint that is not on the board.',
+      explain: <>Slide a short piece over the wire before soldering, push it over the joint afterwards and warm it with the side of the iron or a lighter. It insulates, it's strain relief, and it's most of what makes hand wiring look deliberate. Essential on the diode if you put it inline in the battery lead.</>,
+      url: 'https://www.amazon.ca/dp/B01MFA3OFA',
+      seller: 'Amazon.ca',
+      unit: 'kit',
+      price: 13.99,
+      qty: 1,
+      need: 'a few centimetres per button',
+    });
+  }
 
   if (c.resistors)
     out.push({
@@ -367,6 +400,7 @@ export function Parts() {
           <Toggle on={c.haveCharger} onChange={(v) => set({ haveCharger: v })}>I have a NiMH charger</Toggle>
           <Toggle on={c.haveWire} onChange={(v) => set({ haveWire: v })}>I have hook-up wire</Toggle>
           <Toggle on={c.haveFilament} onChange={(v) => set({ haveFilament: v })}>I have translucent or white filament</Toggle>
+          <Toggle on={c.tidy} onChange={(v) => set({ tidy: v })}>Perfboard and heat-shrink, for a tidy build (recommended)</Toggle>
           <Toggle on={c.resistors} onChange={(v) => set({ resistors: v })}>Add the optional data-line resistors</Toggle>
         </div>
       </section>

@@ -258,3 +258,85 @@ export function SizeChart({ className }: { className?: string }) {
     </svg>
   );
 }
+
+/** The inside as it would really be built by hand: a perfboard deck, five short wires, the battery box as the floor. */
+export function InsideView({ className }: { className?: string }) {
+  const cx = 290, floor = 345, M = 3;
+  const shellW = 105 * M, shellTop = floor - 40 * M;
+  const deckY = floor - 26 * M;
+  const label = (y: number, fromX: number, fromY: number, title: string, text: string) => (
+    <g key={title}>
+      <path d={`M${fromX} ${fromY} L500 ${y} H520`} fill="none" stroke="rgba(242,184,75,0.55)" />
+      <circle cx={fromX} cy={fromY} r="2.5" fill="#f2b84b" />
+      <text x="528" y={y - 2} fill="#ffdf9a" fontSize="13.5" fontWeight="700" fontFamily="Oxanium, sans-serif" letterSpacing="2">{title.toUpperCase()}</text>
+      <text x="528" y={y + 15} fill="#a9b3c9" fontSize="12" fontFamily="Inter, sans-serif">{text}</text>
+    </g>
+  );
+  return (
+    <svg className={className} viewBox="110 30 750 330" role="img" aria-label="Cutaway of a hand-built button showing where each part sits">
+      <line x1="110" y1={floor} x2="480" y2={floor} stroke="rgba(255,255,255,0.18)" />
+
+      {/* shell walls */}
+      <path d={`M${cx - shellW / 2} ${shellTop} V${floor - 8} q0 8 8 8 H${cx - 108} V${floor - 62} H${cx - shellW / 2 + 9} V${shellTop} Z`} fill="#1b202c" stroke="rgba(255,255,255,0.3)" />
+      <path d={`M${cx + shellW / 2} ${shellTop} V${floor - 8} q0 8 -8 8 H${cx + 108} V${floor - 62} H${cx + shellW / 2 - 9} V${shellTop} Z`} fill="#1b202c" stroke="rgba(255,255,255,0.3)" />
+      <path d={`M${cx - shellW / 2} ${shellTop} H${cx - 102} v9 H${cx - shellW / 2} Z M${cx + shellW / 2} ${shellTop} H${cx + 102} v9 H${cx + shellW / 2} Z`} fill="#1b202c" stroke="rgba(255,255,255,0.3)" />
+
+      {/* battery box: it is the floor */}
+      <rect x={cx - 105} y={floor - 60} width="210" height="60" fill="#0e1119" stroke="rgba(255,255,255,0.35)" />
+      {[-3, -1, 1, 3].map((k) => (
+        <g key={k}>
+          <circle cx={cx + k * 24.5} cy={floor - 30} r="21.5" fill="#2a8f5b" stroke="rgba(255,255,255,0.25)" />
+          <text x={cx + k * 24.5} y={floor - 26} textAnchor="middle" fill="#0b2a1a" fontSize="11" fontWeight="800" fontFamily="Oxanium, sans-serif">AA</text>
+        </g>
+      ))}
+      <rect x={cx + 78} y={floor - 3} width="20" height="7" fill="#d7dbe6" />
+
+      {/* perfboard deck on two printed posts */}
+      <rect x={cx - 96} y={deckY + 5} width="8" height={floor - 60 - deckY - 5} fill="#2c3344" />
+      <rect x={cx + 88} y={deckY + 5} width="8" height={floor - 60 - deckY - 5} fill="#2c3344" />
+      <rect x={cx - 100} y={deckY} width="200" height="5" fill="#1e6b47" stroke="rgba(255,255,255,0.25)" />
+      {Array.from({ length: 19 }, (_, k) => <circle key={k} cx={cx - 90 + k * 10} cy={deckY + 2.5} r="1" fill="#d6c08a" />)}
+
+      {/* ESP32, flat on the deck, USB-C facing a slot in the wall */}
+      <rect x={cx - 98} y={deckY - 11} width="56" height="11" fill="#0f2a44" stroke="rgba(255,255,255,0.3)" />
+      <rect x={cx - 106} y={deckY - 10} width="12" height="8" rx="2" fill="#c9ced9" />
+      {/* microswitch, dead centre */}
+      <rect x={cx - 30} y={deckY - 30} width="60" height="30" fill="#15181f" stroke="rgba(255,255,255,0.35)" />
+      <path d={`M${cx - 27} ${deckY - 32} L${cx + 26} ${deckY - 39}`} stroke="#c9ced9" strokeWidth="2.5" />
+      <rect x={cx - 4} y={deckY - 35} width="8" height="6" fill="#e5484d" />
+      {/* capacitor lying down, diode beside it */}
+      <rect x={cx + 40} y={deckY - 22} width="46" height="22" rx="4" fill="#1d2c5e" stroke="rgba(255,255,255,0.3)" />
+      <rect x={cx + 40} y={deckY - 22} width="8" height="22" rx="3" fill="#c9ced9" />
+
+      {/* LED ring around the switch */}
+      {[-1, 1].map((s) => (
+        <g key={s}>
+          <rect x={cx + s * 54 - 15} y={deckY - 46} width="30" height="4" fill="#0d2419" stroke="rgba(255,255,255,0.3)" />
+          <rect x={cx + s * 54 - 5} y={deckY - 50} width="10" height="4" fill="#f4f6fb" />
+          <rect x={cx + s * 54 - 2} y={deckY - 42} width="4" height="42" fill="#2c3344" />
+        </g>
+      ))}
+
+      {/* dome and its plunger */}
+      <path className="lit__hue" d={`M${cx - 99} ${shellTop} A99 80 0 0 1 ${cx + 99} ${shellTop} Z`} fill="var(--led)" style={{ opacity: 'calc(var(--lum) * 0.55)' }} />
+      <path d={`M${cx - 99} ${shellTop} A99 80 0 0 1 ${cx + 99} ${shellTop}`} fill="rgba(200,206,220,0.1)" stroke="rgba(255,255,255,0.6)" strokeWidth="2" />
+      <rect x={cx - 5} y={shellTop - 78} width="10" height={deckY - 39 - (shellTop - 78)} fill="rgba(228,232,240,0.75)" />
+
+      {/* the wires: three to the ring, two to the batteries */}
+      <g fill="none" strokeWidth="2.2" strokeLinecap="round">
+        <path d={`M${cx - 62} ${deckY - 42} C${cx - 80} ${deckY - 34} ${cx - 84} ${deckY - 24} ${cx - 80} ${deckY - 11}`} stroke="#ff6b6b" />
+        <path d={`M${cx - 58} ${deckY - 42} C${cx - 72} ${deckY - 32} ${cx - 74} ${deckY - 22} ${cx - 70} ${deckY - 11}`} stroke="#9aa3b8" />
+        <path d={`M${cx - 54} ${deckY - 42} C${cx - 64} ${deckY - 30} ${cx - 64} ${deckY - 20} ${cx - 60} ${deckY - 11}`} stroke="#3ce08a" />
+        <path d={`M${cx + 70} ${floor - 60} C${cx + 74} ${floor - 70} ${cx + 66} ${deckY + 14} ${cx + 70} ${deckY + 5}`} stroke="#ff6b6b" />
+        <path d={`M${cx + 80} ${floor - 60} C${cx + 86} ${floor - 70} ${cx + 78} ${deckY + 14} ${cx + 82} ${deckY + 5}`} stroke="#9aa3b8" />
+      </g>
+
+      {label(60, cx + 40, shellTop - 66, 'Dome and plunger', 'One printed piece. It rides up and down 3–4 mm.')}
+      {label(112, cx + 66, deckY - 48, 'LED ring', 'On two printed posts, around the switch. Three wires.')}
+      {label(164, cx + 22, deckY - 22, 'Microswitch', 'Soldered to the board, so the click never shifts.')}
+      {label(216, cx - 60, deckY - 6, 'ESP32', 'Flat on the board. USB-C lines up with a slot in the wall.')}
+      {label(268, cx + 60, deckY + 2, 'Perfboard deck', 'Diode and capacitor live here. Joins are on the underside.')}
+      {label(320, cx + 96, floor - 30, 'Battery box = the floor', 'Its own switch and door. Two wires up to the deck.')}
+    </svg>
+  );
+}

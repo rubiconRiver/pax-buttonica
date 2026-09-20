@@ -17,7 +17,10 @@ Checked on Amazon.ca on **2026-09-20**; prices and stock move, so treat them as 
 | 9 | 24 AWG silicone wire kit, 10 colours — skip if you have wire | 1 | $14.15 | https://www.amazon.ca/dp/B09X4HVFJX |
 | 10 | Transparent PETG 1 kg, for the domes — skip if you have translucent/white filament | 1 | $16.99 | https://www.amazon.ca/dp/B0D91G9ZW3 |
 
-About **$245** before tax for all of it; about **$194** without the charger, wire and filament.
+| 11 | Double-sided perfboard assortment (ELEGOO, 32 pcs) — the tidy way to mount the ESP32 and microswitch | 1 | $17.99 | https://www.amazon.ca/dp/B072Z7Y19F |
+| 12 | Heat-shrink tubing assortment (Ginsco, 580 pcs) | 1 | $13.99 | https://www.amazon.ca/dp/B01MFA3OFA |
+
+About **$277** before tax for all of it; about **$226** without the charger, wire and filament.
 
 ## Alternatives
 
