@@ -20,9 +20,10 @@ interface Choices {
   haveFilament: boolean;
   resistors: boolean;
   tidy: boolean;
+  build: 'pcb' | 'perf';
 }
 
-const DEFAULTS: Choices = { buttons: 6, spares: true, holder: 'covered', rings: 'amazon', haveCells: false, haveCharger: false, haveWire: false, haveFilament: false, resistors: false, tidy: true };
+const DEFAULTS: Choices = { buttons: 6, spares: true, holder: 'covered', rings: 'amazon', haveCells: false, haveCharger: false, haveWire: false, haveFilament: false, resistors: false, tidy: true, build: 'pcb' };
 
 interface Line {
   id: string;
@@ -142,9 +143,46 @@ function lines(c: Choices): Line[] {
         },
   );
 
-  out.push({
+  if (c.build === 'pcb') {
+    out.push({
+      id: 'pcb',
+      name: 'Custom carrier boards',
+      role: 'One round board per button that every part solders onto. No nest of wires.',
+      explain: (
+        <>
+          A 70 mm disc designed for this project: the ESP32 at the top with its USB port at the rim, the switch dead centre, the diode and capacitor in place, a three-hole connection for the LED ring and a screw terminal for the batteries. A spare solder hole sits beside every ESP32 pin, so extra buttons or a speaker can be added later. You upload one zip file from the project (<code>hardware/pcb/pax-button-gerbers.zip</code>) and they make it: 2 layers, 70 × 70 mm, 1.6 mm, green, fastest courier.
+        </>
+      ),
+      watch: <>The price is an estimate, including express shipping and the fees at the door. The design passes its rule check but no board has been made yet, so keep the perfboard fallback below until one works.</>,
+      url: 'https://cart.jlcpcb.com/quote',
+      seller: 'JLCPCB (or PCBWay)',
+      unit: 'batch of 10, landed',
+      price: 70,
+      qty: 1,
+      need: `${n} needed; the minimum batch is 5`,
+    });
+    out.push({
+      id: 'mx',
+      name: 'Kailh BOX Jade clicky switches',
+      role: 'The click. A mechanical keyboard switch under the dome.',
+      explain: (
+        <>
+          BOX Jades have a thick metal click bar: a sharp, loud, deliberate click on the way down and again on the way up, with 3.6 mm of travel. They're rated for tens of millions of presses, and the footprint is the universal Cherry MX one, so any MX-style switch fits the board. The dome's plunger gets a small cross-shaped socket that pushes onto the switch stem, exactly like a keycap.
+        </>
+      ),
+      watch: <>Budget option: <a href="https://www.amazon.ca/dp/B0C6FH6XQ7" target="_blank" rel="noreferrer">Cherry MX Blue, 10 pcs, $8.89</a>: a lighter, higher-pitched click.</>,
+      url: 'https://www.amazon.ca/dp/B0CXT1M67C',
+      seller: 'Amazon.ca',
+      unit: '10-pack',
+      price: 15.99,
+      qty: packs(n + (c.spares ? 1 : 0), 10),
+      need: `${n} needed${c.spares ? ' + spares' : ''}; add about $5 delivery`,
+    });
+  }
+
+  if (c.build === 'perf' || c.tidy) out.push({
     id: 'switch',
-    name: 'KW12 microswitches, straight lever',
+    name: c.build === 'pcb' ? 'KW12 microswitches (fallback)' : 'KW12 microswitches, straight lever',
     role: 'The click. The dome pushes a plunger down onto this.',
     explain: (
       <>
@@ -394,13 +432,20 @@ export function Parts() {
             <button type="button" aria-pressed={c.rings === 'canadian'} onClick={() => { sfx.click(); set({ rings: 'canadian' }); }}>Canadian shop · cheap</button>
           </div>
         </div>
+        <div className="opt">
+          <span className="opt__label">Inside</span>
+          <div className="seg">
+            <button type="button" aria-pressed={c.build === 'pcb'} onClick={() => { sfx.click(); set({ build: 'pcb' }); }}>Custom board · tidy</button>
+            <button type="button" aria-pressed={c.build === 'perf'} onClick={() => { sfx.click(); set({ build: 'perf' }); }}>Perfboard · no waiting</button>
+          </div>
+        </div>
         <div className="parts__toggles">
           <Toggle on={c.spares} onChange={(v) => set({ spares: v })}>Include spares (recommended)</Toggle>
           <Toggle on={c.haveCells} onChange={(v) => set({ haveCells: v })}>I have {c.buttons * 4} rechargeable AAs</Toggle>
           <Toggle on={c.haveCharger} onChange={(v) => set({ haveCharger: v })}>I have a NiMH charger</Toggle>
           <Toggle on={c.haveWire} onChange={(v) => set({ haveWire: v })}>I have hook-up wire</Toggle>
           <Toggle on={c.haveFilament} onChange={(v) => set({ haveFilament: v })}>I have translucent or white filament</Toggle>
-          <Toggle on={c.tidy} onChange={(v) => set({ tidy: v })}>Perfboard and heat-shrink, for a tidy build (recommended)</Toggle>
+          <Toggle on={c.tidy} onChange={(v) => set({ tidy: v })}>{c.build === 'pcb' ? 'Fallback kit in case the boards are late: perfboard, microswitches, heat-shrink' : 'Perfboard and heat-shrink, for a tidy build (recommended)'}</Toggle>
           <Toggle on={c.resistors} onChange={(v) => set({ resistors: v })}>Add the optional data-line resistors</Toggle>
         </div>
       </section>

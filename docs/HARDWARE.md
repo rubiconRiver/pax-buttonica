@@ -29,6 +29,12 @@
 
 Roughly **$22–35 per button** including rechargeable cells (about **$11–20 if you already own the AAs**: the cells are the most expensive line), and **$5–8 for the hub**. Six buttons and a hub: about $140–220. Cheaper from AliExpress if you can wait; faster from Amazon.ca. For genuine Adafruit/SparkFun parts in Canada: BC Robotics, Elmwood Electronics, PiShop.ca, Universal Solder, DigiKey.ca.
 
+## The tidy way: a custom carrier board
+
+`hardware/pcb/` holds a 70 mm round board that every part solders onto: ESP32 at the top, an MX-style keyboard switch dead centre, diode, capacitor, a three-hole connection for the LED ring and a screw terminal for the batteries, plus a spare solder hole beside every ESP32 pin. Upload `hardware/pcb/pax-button-gerbers.zip` to a board house; details, and two checks to make before soldering the ESP32, are in [`hardware/pcb/README.md`](../hardware/pcb/README.md). It passes KiCad's rule check; no board has been manufactured yet.
+
+With the board, the wiring table below is what the copper does for you. Without it, it's what you wire by hand on perfboard (using a KW12 microswitch, which fits perfboard; keyboard switches don't).
+
 ## Wiring (defaults from `firmware/button/config.h`)
 
 | From | To |

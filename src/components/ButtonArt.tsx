@@ -333,9 +333,9 @@ export function InsideView({ className }: { className?: string }) {
 
       {label(60, cx + 40, shellTop - 66, 'Dome and plunger', 'One printed piece. It rides up and down 3–4 mm.')}
       {label(112, cx + 66, deckY - 48, 'LED ring', 'On two printed posts, around the switch. Three wires.')}
-      {label(164, cx + 22, deckY - 22, 'Microswitch', 'Soldered to the board, so the click never shifts.')}
+      {label(164, cx + 22, deckY - 22, 'Switch', 'Soldered to the board, so the click never shifts.')}
       {label(216, cx - 60, deckY - 6, 'ESP32', 'Flat on the board. USB-C lines up with a slot in the wall.')}
-      {label(268, cx + 60, deckY + 2, 'Perfboard deck', 'Diode and capacitor live here. Joins are on the underside.')}
+      {label(268, cx + 60, deckY + 2, 'Carrier board', 'Custom board or perfboard. Diode and capacitor live here.')}
       {label(320, cx + 96, floor - 30, 'Battery box = the floor', 'Its own switch and door. Two wires up to the deck.')}
     </svg>
   );

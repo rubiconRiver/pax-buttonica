@@ -72,7 +72,7 @@ export function ButtonConcept() {
         <div className="section__head">
           <div className="eyebrow">Built by hand</div>
           <h2>What you'll actually end up with</h2>
-          <p>A printed puck with a glowing dome, and nothing sticking out of it. Inside there are five short wires, not a nest: the ESP32, the microswitch, the diode and the capacitor are all soldered to one small piece of perfboard, so most connections are solder on the underside of that board. Three wires go up to the LED ring, two go down to the battery box, and the battery box is the floor of the button, with its own switch and door.</p>
+          <p>A printed puck with a glowing dome, and nothing sticking out of it. Inside there are five short wires, not a nest: the ESP32, the switch, the diode and the capacitor are all soldered to one small board (a custom-made one, or a piece of perfboard), so almost every connection is part of that board. Three wires go up to the LED ring, two go down to the battery box, and the battery box is the floor of the button, with its own switch and door.</p>
         </div>
         <div className="panel concept__sheet lit" data-mode="solid"><InsideView /></div>
         <div className="concept__honest">

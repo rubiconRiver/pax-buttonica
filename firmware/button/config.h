@@ -9,7 +9,9 @@
 // Each switch connects its pin to GND (internal pull-ups are used).
 // Button 0 is the big one. 1 = strategy shortcut, 2 = pass shortcut.
 #define BUTTON_COUNT 1
-static const int BUTTON_PINS[3] = {3, 4, 5};
+// On the carrier board (hardware/pcb) the big switch goes to the FIFTH pin on the module's 5V side.
+// Read the number printed beside that pin on your module: usually 3, on some boards 1. Put it first here.
+static const int BUTTON_PINS[3] = {3, 5, 6};
 
 // ── Light ───────────────────────────────────────────────────────────────────
 #define LED_PIN 10

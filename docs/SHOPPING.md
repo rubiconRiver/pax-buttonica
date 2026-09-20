@@ -22,6 +22,12 @@ Checked on Amazon.ca on **2026-09-20**; prices and stock move, so treat them as 
 
 About **$277** before tax for all of it; about **$226** without the charger, wire and filament.
 
+## If you are ordering the custom carrier board
+
+- Boards: upload `hardware/pcb/pax-button-gerbers.zip` at https://cart.jlcpcb.com/quote — roughly $70 landed for ten with express shipping (an estimate).
+- Switches: Kailh BOX Jade, clicky, 10-pack, $15.99 + about $5 delivery — https://www.amazon.ca/dp/B0CXT1M67C . Budget alternative: Cherry MX Blue, 10 pcs, $8.89 — https://www.amazon.ca/dp/B0C6FH6XQ7
+- Keep items 4, 11 and 12 (microswitches, perfboard, heat-shrink) as the fallback until a board is proven.
+
 ## Alternatives
 
 - **Microswitches, if the 15-pack is gone:** DEVMO KW12-3 (roller lever; snip the roller off), 10 pcs, $19.99 — https://www.amazon.ca/dp/B07TKGPMVV

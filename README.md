@@ -39,6 +39,7 @@ src/hardware/   The wire protocol, and the Web Serial transport to the USB hub (
 api/            Vercel functions: profiles and uploaded clips in Neon Postgres (DATABASE_URL). No auth yet.
 src/remote/     Phones as buttons: WebRTC data channels via PeerJS's public broker. No server of ours involved.
 firmware/       ESP32-C3 sketches for the hub and the buttons. See docs/HARDWARE.md.
+hardware/pcb/   The button's carrier board: generator script, KiCad file, renders and the zip a board house needs.
 src/audio/      WebAudio synth: interface sounds, jingles as note lists, uploaded clips (IndexedDB).
 src/components/ Device.tsx is the simulated button; components/game/ is the table.
 src/state/      Tiny stores: game (+undo, persisted), settings, profiles, demo seeding.
