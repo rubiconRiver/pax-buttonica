@@ -4,10 +4,11 @@ import type { DataConnection, Peer } from 'peerjs';
 import { JINGLES } from '../audio/jingles';
 import { playSound, unlockAudio, type Playing } from '../audio/synth';
 import { Device } from '../components/Device';
+import { Scoreboard } from '../components/game/Scoreboard';
 import { IconClose, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import type { SoundRef } from '../engine/types';
-import { CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, cleanCode, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type ProfileCard } from '../remote/messages';
+import { CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, cleanCode, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type ProfileCard, type TableSnapshot } from '../remote/messages';
 import '../styles/setup.css';
 import '../styles/game.css';
 import '../styles/join.css';
@@ -32,6 +33,7 @@ function useRoom(code: string | null) {
   /** undefined = the host hasn't told us yet; null = nobody in particular. */
   const [me, setMe] = useState<MyProfile | null | undefined>(undefined);
   const [oops, setOops] = useState<string | null>(null);
+  const [table, setTable] = useState<TableSnapshot | null>(null);
   const conn = useRef<DataConnection | null>(null);
 
   useEffect(() => {
@@ -52,6 +54,7 @@ function useRoom(code: string | null) {
         const msg = raw as HostToPhone;
         if (msg?.t === 'state') setFrame(msg);
         else if (msg?.t === 'profiles') setProfiles(msg.list);
+        else if (msg?.t === 'table') setTable(msg.table);
         else if (msg?.t === 'oops') setOops(msg.message);
         else if (msg?.t === 'me') {
           setMe(msg.profile);
@@ -98,7 +101,7 @@ function useRoom(code: string | null) {
     localStorage.removeItem(WHO);
     say({ t: 'leave' });
   };
-  return { link, frame, profiles, me, oops, clearOops: () => setOops(null), say, forget };
+  return { link, frame, table, profiles, me, oops, clearOops: () => setOops(null), say, forget };
 }
 
 /** Keep the phone awake while it's being a button. */
@@ -150,13 +153,34 @@ export function Join() {
 }
 
 function PhoneButton({ code }: { code: string }) {
-  const { link, frame, profiles, me, oops, clearOops, say, forget } = useRoom(code);
+  const { link, frame, table, profiles, me, oops, clearOops, say, forget } = useRoom(code);
+  const [view, setView] = useState<'button' | 'table'>('button');
   const [anonymous, setAnonymous] = useState(() => sessionStorage.getItem('pb.phone.anon') === '1');
   const [editing, setEditing] = useState(false);
   const send = (e: 'tap' | 'double' | 'hold') => say({ t: 'btn', e });
   const [size, setSize] = useState(280);
   const lastMode = useRef<string | null>(null);
   useWakeLock(link === 'connected');
+
+  // The table view also arrives through the site, so it works even if this phone can't reach the laptop directly.
+  const [polled, setPolled] = useState<TableSnapshot | null>(null);
+  useEffect(() => {
+    if (view !== 'table') return;
+    let live = true;
+    const look = () =>
+      fetch(`/api/table?code=${code}`)
+        .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
+        .then((j) => live && j?.table && setPolled(j.table as TableSnapshot))
+        .catch(() => {});
+    void look();
+    const timer = window.setInterval(look, 4000);
+    return () => {
+      live = false;
+      window.clearInterval(timer);
+    };
+  }, [view, code]);
+  const shown = link === 'connected' && table ? table : polled ?? table;
+
 
   useEffect(() => {
     const fit = () => setSize(Math.round(Math.min(window.innerWidth * 0.82, window.innerHeight * 0.5, 460)));
@@ -185,6 +209,22 @@ function PhoneButton({ code }: { code: string }) {
           setAnonymous(true);
         }}
       />
+    );
+  }
+
+  const tabs = (
+    <nav className="join__tabs">
+      <button type="button" aria-pressed={view === 'button'} onClick={() => setView('button')}>My button</button>
+      <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>The table</button>
+    </nav>
+  );
+
+  if (view === 'table') {
+    return (
+      <div className="join join--table">
+        {shown ? <Scoreboard table={shown} /> : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game to start…</p>}
+        {tabs}
+      </div>
     );
   }
 
@@ -227,6 +267,7 @@ function PhoneButton({ code }: { code: string }) {
               : frame.reason}
       </p>
       <p className="join__help">Room {code} · Tap: done · Double-tap: strategy card · Hold: end turn</p>
+      {tabs}
 
       {editing && me && (
         <ProfileSheet

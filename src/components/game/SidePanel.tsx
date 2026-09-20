@@ -52,7 +52,7 @@ export function SidePanel({ game, dispatch }: Props) {
                 <span className="roster__who">
                   <span className="roster__name">{p.name}</span>
                   <span className="roster__faction">{p.passed ? 'Passed' : p.faction.replace(/^The /, '')}</span>
-                  <span className="roster__bar"><i style={{ width: `${(p.vp / game.vpTarget) * 100}%` }} /></span>
+                  <span className="roster__bar"><i style={{ width: `${Math.min(100, (p.vp / game.vpTarget) * 100)}%` }} /></span>
                 </span>
                 <button
                   type="button"

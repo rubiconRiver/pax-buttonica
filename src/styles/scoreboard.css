@@ -1,0 +1,103 @@
+/* One screen with everything public about the game. Sized to be read from the far end of a big table. */
+.board { display: grid; gap: clamp(12px, 1.6vw, 22px); width: 100%; }
+.board h3 { font-size: clamp(13px, 1.1vw, 16px); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-2); display: flex; align-items: baseline; gap: 10px; }
+.board h3 small { font: 500 12px/1 var(--font-b); letter-spacing: 0; text-transform: none; color: var(--faint); }
+.board__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.board__ready { font-size: 15px; font-weight: 700; color: #fff; padding: 4px 10px; border: 1px solid var(--line-2); }
+.board__empty { font-size: 13px; color: var(--faint); }
+
+/* Standings */
+.board__standings { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 8px; }
+.stand { display: grid; gap: 5px; padding: 10px 12px 12px; border: 1px solid color-mix(in srgb, var(--pc) 40%, #1a2030); background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 14%, #0b0e17), #0b0e17 70%); min-width: 0; }
+.stand[data-active] { border-color: var(--pc); }
+.stand[data-lead] .stand__vp { text-shadow: 0 0 26px var(--pc); }
+.stand__name { display: flex; align-items: center; gap: 6px; font: 700 clamp(13px, 1.25vw, 19px)/1.1 var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in oklab, var(--pc) 60%, white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stand__name svg { width: 14px; height: 14px; color: var(--gold); flex: none; }
+.stand__vp { font-size: clamp(34px, 4.2vw, 64px); font-weight: 800; line-height: 0.95; color: #fff; animation: pop-in 0.3s var(--out); }
+.stand__bar { height: 4px; background: rgba(255, 255, 255, 0.08); }
+.stand__bar i { display: block; height: 100%; background: var(--pc); box-shadow: 0 0 10px var(--pc); transition: width 0.4s var(--out); }
+.stand__split { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 11.5px; color: var(--muted); }
+.stand__split b { color: var(--text); font-family: var(--font-d); }
+.stand__cards { display: flex; gap: 4px; min-height: 20px; align-items: center; }
+
+/* Objectives */
+.board__cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(12px, 1.6vw, 22px); align-items: start; }
+.board__cols[data-cols='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.board__col { display: grid; gap: 8px; --sc: #f2b84b; }
+.board__col[data-stage='2'] { --sc: #3b9bf5; }
+.board__col[data-stage='0'] { --sc: #8d97af; }
+.board__col h3 { color: color-mix(in oklab, var(--sc) 70%, white); }
+
+.obj { border: 1px solid color-mix(in srgb, var(--sc) 55%, #10141f); background: #090c14; animation: arrive 0.25s var(--out); }
+.obj__head { display: flex; align-items: stretch; gap: 0; background: color-mix(in srgb, var(--sc) 24%, #0b0e17); border-bottom: 1px solid color-mix(in srgb, var(--sc) 50%, transparent); }
+.obj__head b { flex: 1; padding: 8px 12px; font: 800 clamp(14px, 1.35vw, 20px)/1.15 var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: #fff; }
+.obj__pts { display: grid; place-items: center; min-width: clamp(34px, 3vw, 46px); font-size: clamp(18px, 1.8vw, 26px); font-weight: 800; color: #07090e; background: var(--sc); }
+.obj__text { padding: 9px 12px 4px; font-size: clamp(14px, 1.3vw, 19px); line-height: 1.4; color: #dfe4f0; }
+.obj__who { display: flex; flex-wrap: wrap; gap: 5px; padding: 6px 12px 11px; }
+
+.who-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px 4px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
+  background: none;
+  color: var(--faint);
+  font: 600 clamp(11px, 0.95vw, 14px)/1 var(--font-b);
+  transition: background 0.08s, color 0.08s, border-color 0.08s, transform 0.1s var(--snap);
+}
+.who-chip i { width: 9px; height: 9px; background: var(--pc); opacity: 0.35; }
+.who-chip[aria-pressed='true'] { color: #06080d; background: var(--pc); border-color: var(--pc); font-weight: 700; }
+.who-chip[aria-pressed='true'] i { background: #06080d; opacity: 0.85; }
+button.who-chip { cursor: pointer; }
+button.who-chip:hover { border-color: var(--pc); color: #fff; }
+button.who-chip[aria-pressed='true']:hover { color: #06080d; filter: brightness(1.15); }
+button.who-chip:active { transform: scale(0.94); }
+/* On a read-only board, only the players who scored are worth the ink. */
+.board:not([data-edit]) .who-chip[aria-pressed='false'] { display: none; }
+.board:not([data-edit]) .obj__who:not(:has([aria-pressed='true']))::after { content: 'Nobody yet'; font-size: 12.5px; color: var(--faint); }
+
+.xbtn { display: inline-grid; place-items: center; width: 22px; padding: 0; border: 0; background: none; color: rgba(255, 255, 255, 0.35); cursor: pointer; align-self: stretch; }
+.xbtn svg { width: 11px; height: 11px; }
+.xbtn:hover { color: var(--danger); }
+
+.board__add { justify-self: start; }
+.reveal { display: grid; gap: 8px; padding: 10px; border: 1px dashed color-mix(in srgb, var(--sc) 60%, transparent); background: #080b13; }
+.reveal__top { display: flex; gap: 8px; }
+.reveal__list { max-height: 300px; display: grid; gap: 3px; }
+.reveal__item { display: grid; gap: 2px; padding: 7px 10px; border: 1px solid transparent; background: rgba(255, 255, 255, 0.03); color: var(--text); text-align: left; cursor: pointer; }
+.reveal__item b { font: 700 13.5px/1.2 var(--font-d); letter-spacing: 0.05em; text-transform: uppercase; }
+.reveal__item span { font-size: 12.5px; color: var(--muted); }
+.reveal__item:hover { border-color: var(--sc); background: color-mix(in srgb, var(--sc) 12%, transparent); }
+.reveal__custom, .addlaw { display: grid; grid-template-columns: 1fr 1.6fr auto; gap: 6px; }
+
+/* Laws, secrets, other points */
+.board__lower { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: clamp(12px, 1.6vw, 22px); align-items: start; }
+.board__laws, .board__others { display: grid; gap: 8px; }
+.law { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-left: 3px solid #a562f0; background: rgba(165, 98, 240, 0.08); font-size: clamp(13px, 1.15vw, 17px); }
+.law b { font-family: var(--font-d); letter-spacing: 0.05em; text-transform: uppercase; color: #fff; }
+.law span { color: #c9d0e2; flex: 1; }
+.others { display: grid; gap: 5px; }
+.other { display: grid; grid-template-columns: minmax(70px, 9ch) 1fr; gap: 10px; align-items: start; padding: 6px 0 6px 10px; border-left: 3px solid var(--pc); }
+.other__name { font: 700 14px/1.6 var(--font-d); letter-spacing: 0.05em; text-transform: uppercase; color: color-mix(in oklab, var(--pc) 60%, white); }
+.other__items { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 8px; border: 1px solid var(--line-2); border-radius: 2px; font-size: 12.5px; color: #c9d0e2; background: rgba(255, 255, 255, 0.03); }
+.tag i { font: 800 12px/1 var(--font-d); font-style: normal; color: var(--gold-2); padding-right: 4px; }
+.tag--secret { border-color: rgba(255, 84, 104, 0.45); }
+.tag--add { cursor: pointer; color: var(--muted); padding: 4px 9px; border-style: dashed; background: none; }
+.tag--add:hover { color: #fff; border-color: var(--gold); }
+.addpts { display: grid; gap: 6px; width: 100%; padding: 8px; border: 1px dashed var(--line-2); background: #080b13; }
+.addpts form { display: flex; gap: 6px; }
+.addpts .input { flex: 1; min-width: 0; }
+
+/* Full-screen overlay on the host */
+.boardwrap { position: fixed; inset: 0; z-index: 45; overflow-y: auto; padding: clamp(14px, 2vw, 30px); background: rgba(3, 5, 10, 0.94); backdrop-filter: blur(8px); animation: arrive 0.18s var(--out); }
+.boardwrap__close { position: fixed; top: 12px; right: 16px; z-index: 46; }
+.boardwrap .board { max-width: 1700px; margin: 0 auto; padding-top: 26px; }
+
+@media (max-width: 760px) {
+  .board__standings { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .board__cols, .board__cols[data-cols='3'], .board__lower { grid-template-columns: 1fr; }
+  .reveal__custom, .addlaw { grid-template-columns: 1fr; }
+}

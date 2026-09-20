@@ -13,6 +13,8 @@ export interface Settings {
   explainLights: boolean;
   /** Strategy cards: the owner's button blinks for the primary before everyone else is called. */
   primaryStage: boolean;
+  /** Put the scoreboard up by itself whenever the status phase begins. */
+  autoScoreboard: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +25,7 @@ export const DEFAULT_SETTINGS: Settings = {
   clipMaxSec: 6,
   explainLights: true,
   primaryStage: true,
+  autoScoreboard: true,
 };
 
 export const settingsStore = createStore<Settings>(DEFAULT_SETTINGS, 'pb.settings.v1');

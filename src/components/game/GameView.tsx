@@ -5,7 +5,10 @@ import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { setInputHandler, syncOutputs } from '../../hardware/serial';
-import { assignIdentity, resumeRoom, roomStatus, setRoomHandlers, syncRoom } from '../../remote/host';
+import { assignIdentity, resumeRoom, roomStatus, setRoomHandlers, syncRoom, syncTable } from '../../remote/host';
+import { snapshotOf } from '../../remote/messages';
+import { IconClose } from '../Icons';
+import { Scoreboard } from './Scoreboard';
 import { profilesStore } from '../../state/profiles';
 import { useStore } from '../../state/createStore';
 import { seedDemo, type DemoPoint } from '../../state/demo';
@@ -53,6 +56,8 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const room = useStore(roomStatus);
   const profiles = useStore(profilesStore);
   const [tour, setTour] = useState(demo);
+  const [board, setBoard] = useState<'closed' | 'open' | 'auto'>('closed');
+  const table = useMemo(() => snapshotOf(game), [game]);
   const [banner, setBanner] = useState<{ id: number; text: string; sub?: string; color?: string } | null>(null);
   const devices = useRef<(DeviceHandle | null)[]>([]);
   const dispatch = useCallback((a: Action) => store.dispatch(a), [store]);
@@ -105,6 +110,19 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     });
   }, [profiles, game.players, dispatch]);
 
+  // Everyone's phone gets the public state of the game, for the "Table" view.
+  useEffect(() => {
+    syncTable(table);
+  }, [table, room.phones]);
+
+  // Scoring happens in the status phase, so that's when the scoreboard goes up on its own…
+  const phaseKey = game.seating ? 'seating' : game.phase;
+  useEffect(() => {
+    if (phaseKey === 'status' && settings.autoScoreboard) setBoard((b) => (b === 'closed' ? 'auto' : b));
+    // …and comes down again when the round moves on, unless someone opened it by hand.
+    else setBoard((b) => (b === 'auto' ? 'closed' : b));
+  }, [phaseKey, settings.autoScoreboard]);
+
   // Number keys are the buttons: hold "3" to hold seat three's button.
   useEffect(() => {
     const seatOf = (e: KeyboardEvent) => {
@@ -119,6 +137,9 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
         return;
       }
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const typing = e.target instanceof Element && e.target.closest('input, select, textarea');
+      if (!typing && e.key.toLowerCase() === 'b') return setBoard((b) => (b === 'closed' ? 'open' : 'closed'));
+      if (e.key === 'Escape') return setBoard('closed');
       const s = seatOf(e);
       if (s >= 0) devices.current[s]?.down();
     };
@@ -189,7 +210,14 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
   return (
     <div className="game" data-demo={demo || undefined} onPointerDownCapture={unlockAudio}>
-      <TopBar game={game} demo={demo} canUndo={past.length > 0} dispatch={dispatch} onUndo={store.undo} onExit={onExit} />
+      <TopBar game={game} demo={demo} canUndo={past.length > 0} dispatch={dispatch} onUndo={store.undo} onExit={onExit} onScoreboard={() => setBoard((b) => (b === 'closed' ? 'open' : 'closed'))} />
+
+      {board !== 'closed' && (
+        <div className="boardwrap">
+          <button type="button" className="btn btn--sm boardwrap__close" onClick={() => setBoard('closed')}><IconClose /> Back to the table (B)</button>
+          <Scoreboard table={table} dispatch={dispatch} />
+        </div>
+      )}
 
       <main className="game__main">
         <div className="stage">

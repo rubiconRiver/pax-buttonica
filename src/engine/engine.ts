@@ -17,6 +17,8 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
   const players: Player[] = setups.map((s) => ({
     ...s,
     vp: 0,
+    secrets: [],
+    extras: [],
     cards: [],
     usedCards: [],
     passed: false,
@@ -32,6 +34,9 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     speaker: options.speaker,
     zeroToken: naalu >= 0 ? naalu : null,
     custodiansRemoved: false,
+    objectives: [],
+    laws: [],
+    idSeq: 0,
     primaryStage: options.primaryStage ?? true,
     pickOrder: [],
     pickIdx: 0,
@@ -119,6 +124,15 @@ export function seatSpots(g: GameState): number[] {
     }
   });
   return spots;
+}
+
+/** Where a player's points come from. */
+export function scoreBreakdown(g: GameState, seat: number) {
+  const p = g.players[seat];
+  const publics = g.objectives.filter((o) => o.scoredBy.includes(seat));
+  const fromPublics = publics.reduce((t, o) => t + o.points, 0);
+  const fromExtras = p.extras.reduce((t, e) => t + e.points, 0);
+  return { publics, fromPublics, fromSecrets: p.secrets.length, fromExtras, total: Math.max(0, fromPublics + p.secrets.length + fromExtras) };
 }
 
 /** Live elapsed time of the running turn. */
@@ -534,26 +548,82 @@ export function reduce(state: GameState, action: Action): GameState {
       advance(g, action.at);
       break;
     case 'VP': {
+      // The quick +/- on the roster: a manual correction, kept as its own line in the breakdown.
       const p = g.players[action.seat];
-      const before = p.vp;
-      p.vp = Math.max(0, Math.min(g.vpTarget, p.vp + action.delta));
-      if (p.vp !== before) {
-        log(g, `${p.name} ${p.vp > before ? 'scores' : 'loses'} a point (${p.vp}/${g.vpTarget}).`, {
-          seat: action.seat,
-          tone: p.vp > before ? 'good' : 'warn',
-        });
-      }
-      if (p.vp >= g.vpTarget && g.phase !== 'finished') {
-        if (g.active != null) g.players[g.active].timeMs += clockStop(g, action.at);
-        g.phase = 'finished';
-        g.winner = action.seat;
-        g.active = null;
-        g.strategyPlay = null;
-        log(g, `${p.name} claims the throne!`, { seat: action.seat, tone: 'good' });
-        fx(g, { kind: 'win', seat: action.seat });
-      }
+      const other = p.extras.find((e) => e.label === 'Other');
+      if (other) other.points += action.delta;
+      else p.extras.push({ label: 'Other', points: action.delta });
+      p.extras = p.extras.filter((e) => e.points !== 0 || e.label !== 'Other');
+      rescore(g, action.seat, action.at);
       break;
     }
+    case 'REVEAL_OBJECTIVE': {
+      const name = action.name.trim().slice(0, 60);
+      if (!name || g.objectives.some((o) => o.name === name)) break;
+      g.idSeq += 1;
+      g.objectives.push({ id: `o${g.idSeq}`, stage: action.stage, name, text: action.text.trim().slice(0, 200), points: Math.max(1, Math.min(3, Math.round(action.points))), scoredBy: [], round: g.round });
+      log(g, `Objective revealed: ${name}.`, { tone: 'info' });
+      break;
+    }
+    case 'REMOVE_OBJECTIVE': {
+      const o = g.objectives.find((x) => x.id === action.id);
+      if (!o) break;
+      g.objectives = g.objectives.filter((x) => x.id !== action.id);
+      log(g, `${o.name} removed.`, { tone: 'warn' });
+      for (const seat of o.scoredBy) rescore(g, seat, action.at, true);
+      break;
+    }
+    case 'SCORE_OBJECTIVE': {
+      const o = g.objectives.find((x) => x.id === action.id);
+      if (!o || !g.players[action.seat] || o.scoredBy.includes(action.seat) === action.scored) break;
+      o.scoredBy = action.scored ? [...o.scoredBy, action.seat] : o.scoredBy.filter((s) => s !== action.seat);
+      log(g, `${g.players[action.seat].name} ${action.scored ? 'scores' : 'un-scores'} ${o.name}.`, { seat: action.seat, tone: action.scored ? 'good' : 'warn' });
+      rescore(g, action.seat, action.at);
+      break;
+    }
+    case 'SCORE_SECRET': {
+      const p = g.players[action.seat];
+      if (!p) break;
+      p.secrets.push(action.label.trim().slice(0, 60));
+      log(g, `${p.name} scores a secret objective${action.label.trim() ? `: ${action.label.trim()}` : ''}.`, { seat: action.seat, tone: 'good' });
+      rescore(g, action.seat, action.at);
+      break;
+    }
+    case 'UNSCORE_SECRET': {
+      const p = g.players[action.seat];
+      if (!p || action.index < 0 || action.index >= p.secrets.length) break;
+      p.secrets.splice(action.index, 1);
+      rescore(g, action.seat, action.at);
+      break;
+    }
+    case 'ADD_EXTRA': {
+      const p = g.players[action.seat];
+      const points = Math.round(action.points);
+      if (!p || !points) break;
+      const label = action.label.trim().slice(0, 60) || 'Other';
+      p.extras.push({ label, points });
+      log(g, `${p.name}: ${points > 0 ? '+' : ''}${points} for ${label}.`, { seat: action.seat, tone: points > 0 ? 'good' : 'warn' });
+      rescore(g, action.seat, action.at);
+      break;
+    }
+    case 'REMOVE_EXTRA': {
+      const p = g.players[action.seat];
+      if (!p || action.index < 0 || action.index >= p.extras.length) break;
+      p.extras.splice(action.index, 1);
+      rescore(g, action.seat, action.at);
+      break;
+    }
+    case 'ADD_LAW': {
+      const name = action.name.trim().slice(0, 60);
+      if (!name) break;
+      g.idSeq += 1;
+      g.laws.push({ id: `l${g.idSeq}`, name, note: action.note.trim().slice(0, 200) });
+      log(g, `Law passed: ${name}.`, { tone: 'info' });
+      break;
+    }
+    case 'REMOVE_LAW':
+      g.laws = g.laws.filter((l) => l.id !== action.id);
+      break;
     case 'SET_SPEAKER':
       if (g.speaker !== action.seat) {
         g.speaker = action.seat;
@@ -575,6 +645,26 @@ export function reduce(state: GameState, action: Action): GameState {
       break;
   }
   return g;
+}
+
+/** Recount a player's points after anything that touches them, and notice a win. */
+function rescore(g: GameState, seat: number, at: number, quiet = false) {
+  const p = g.players[seat];
+  const before = p.vp;
+  p.vp = scoreBreakdown(g, seat).total;
+  if (!quiet && p.vp !== before) {
+    log(g, `${p.name} is on ${p.vp} of ${g.vpTarget}.`, { seat, tone: p.vp > before ? 'good' : 'warn' });
+  }
+  if (p.vp >= g.vpTarget && g.phase !== 'finished') {
+    if (g.active != null) g.players[g.active].timeMs += clockStop(g, at);
+    g.phase = 'finished';
+    g.winner = seat;
+    g.active = null;
+    g.strategyPlay = null;
+    g.seating = null;
+    log(g, `${p.name} claims the throne!`, { seat, tone: 'good' });
+    fx(g, { kind: 'win', seat });
+  }
 }
 
 /** Moderator override: shove the game to the next logical step. */

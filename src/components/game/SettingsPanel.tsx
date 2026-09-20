@@ -42,6 +42,10 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <input type="checkbox" checked={s.primaryStage} onChange={(e) => { set({ primaryStage: e.target.checked }); onPrimaryStage(e.target.checked); }} />
         <span>Strategy cards: primary first, then secondaries</span>
       </label>
+      <label className="toggle" title="Scoring happens in the status phase, so that's when everyone wants to read the objectives">
+        <input type="checkbox" checked={s.autoScoreboard} onChange={(e) => set({ autoScoreboard: e.target.checked })} />
+        <span>Show the scoreboard during the status phase</span>
+      </label>
       <label className="toggle">
         <input type="checkbox" checked={s.explainLights} onChange={(e) => set({ explainLights: e.target.checked })} />
         <span>Explain each light under its button</span>

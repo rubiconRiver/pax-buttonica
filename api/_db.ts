@@ -20,6 +20,12 @@ export function ensureSchema(): Promise<void> {
       bytes bytea not null,
       created_at bigint not null
     )`;
+    await sql`create table if not exists tables (
+      code text primary key,
+      key text not null,
+      data jsonb not null,
+      updated_at bigint not null
+    )`;
   })();
   return ready;
 }

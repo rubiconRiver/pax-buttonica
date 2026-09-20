@@ -55,6 +55,6 @@ export function createGameStore(persistKey?: string): GameStore {
 }
 
 /** The real game survives reloads — TI4 sessions are long. */
-export const liveGame = createGameStore('pb.game.v2');
+export const liveGame = createGameStore('pb.game.v3');
 /** The demo is throwaway and never touches a game in progress. */
 export const demoGame = createGameStore();

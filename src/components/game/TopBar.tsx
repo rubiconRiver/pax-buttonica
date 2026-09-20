@@ -24,9 +24,10 @@ interface Props {
   dispatch(a: Action): void;
   onUndo(): void;
   onExit(): void;
+  onScoreboard(): void;
 }
 
-export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit }: Props) {
+export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreboard }: Props) {
   const settings = useStore(settingsStore);
   const hub = useStore(hubStatus);
   const room = useStore(roomStatus);
@@ -55,6 +56,9 @@ export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit }: Props)
 
       <div className="topbar__tools">
         {demo && <span className="chip chip--gold">Demo</span>}
+        <button type="button" className="btn btn--sm btn--gold" title="Objectives, points and laws, big enough to read from across the table (B)" onClick={() => { sfx.click(); onScoreboard(); }}>
+          Scoreboard
+        </button>
         <button
           type="button"
           className="btn btn--sm"

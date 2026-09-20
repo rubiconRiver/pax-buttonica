@@ -4,7 +4,8 @@
  * as the hardware standard, carried over a WebRTC data channel instead of ESP-NOW.
  */
 import type { LedMode } from '../engine/outputs';
-import type { SoundRef } from '../engine/types';
+import { colorById } from '../engine/data';
+import type { ExtraPoints, GameState, Law, Objective, SoundRef } from '../engine/types';
 
 /** Just enough of a profile to pick yourself out of a list. */
 export interface ProfileCard {
@@ -32,8 +33,36 @@ export type PhoneToHost =
   /** An uploaded sound travels to the host, which keeps it; phones never store clips. */
   | { t: 'clip'; slot: 'intro' | 'outro'; name: string; mime: string; data: ArrayBuffer };
 
+/** Everything a player might want to check from their seat: the public state of the game, nothing hidden. */
+export interface TableSnapshot {
+  round: number;
+  phase: string;
+  vpTarget: number;
+  active: number | null;
+  speaker: number;
+  custodiansRemoved: boolean;
+  ready: boolean[];
+  players: { name: string; color: string; faction: string; vp: number; cards: number[]; used: number[]; passed: boolean; secrets: string[]; extras: ExtraPoints[] }[];
+  objectives: Objective[];
+  laws: Law[];
+}
+
+export const snapshotOf = (g: GameState): TableSnapshot => ({
+  round: g.round,
+  phase: g.seating ? 'seating' : g.phase,
+  vpTarget: g.vpTarget,
+  active: g.active,
+  speaker: g.speaker,
+  custodiansRemoved: g.custodiansRemoved,
+  ready: g.ready,
+  players: g.players.map((p) => ({ name: p.name, color: colorById(p.color).led, faction: p.faction, vp: p.vp, cards: p.cards, used: p.usedCards, passed: p.passed, secrets: p.secrets, extras: p.extras })),
+  objectives: g.objectives,
+  laws: g.laws,
+});
+
 export type HostToPhone =
   | PhoneFrame
+  | { t: 'table'; table: TableSnapshot }
   | { t: 'profiles'; list: ProfileCard[] }
   | { t: 'me'; profile: MyProfile | null }
   | { t: 'oops'; message: string };

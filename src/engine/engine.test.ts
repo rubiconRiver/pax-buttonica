@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createGame, endTurnBlocker, initiativeOrder, pendingAcks, reduce, seatSpots, simDevice } from './engine';
+import { createGame, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice } from './engine';
 import { deriveOutputs } from './outputs';
 import type { Action, GameState, PlayerSetup } from './types';
 
@@ -246,5 +246,49 @@ describe('seat claiming', () => {
     expect(seatSpots(g)).toEqual([2, 3, 4, 5, 0, 1]);
     g = reduce(g, { type: 'END_TURN', at: 5200 });
     expect(g.players[5].timeMs).toBe(1200);
+  });
+});
+
+describe('objectives and scoring', () => {
+  const reveal = (name: string, stage: 1 | 2): Action => ({ type: 'REVEAL_OBJECTIVE', stage, name, text: 'Do the thing.', points: stage });
+
+  it('derives points from scored objectives, secrets and extras', () => {
+    let g = run(sixInAction(), reveal('Expand Borders', 1), reveal('Subdue the Galaxy', 2), reveal('Expand Borders', 1));
+    expect(g.objectives).toHaveLength(2); // the same card can't be revealed twice
+    const [one, two] = g.objectives;
+    g = run(
+      g,
+      { type: 'SCORE_OBJECTIVE', id: one.id, seat: 2, scored: true, at: 0 },
+      { type: 'SCORE_OBJECTIVE', id: two.id, seat: 2, scored: true, at: 0 },
+      { type: 'SCORE_OBJECTIVE', id: two.id, seat: 2, scored: true, at: 0 }, // twice is once
+      { type: 'SCORE_SECRET', seat: 2, label: 'Cut Supply Lines', at: 0 },
+      { type: 'ADD_EXTRA', seat: 2, label: 'Custodians of Mecatol Rex', points: 1, at: 0 },
+      { type: 'VP', seat: 2, delta: 1, at: 0 },
+    );
+    expect(g.players[2].vp).toBe(6);
+    expect(scoreBreakdown(g, 2)).toMatchObject({ fromPublics: 3, fromSecrets: 1, fromExtras: 2, total: 6 });
+
+    g = run(g, { type: 'SCORE_OBJECTIVE', id: two.id, seat: 2, scored: false, at: 0 }, { type: 'VP', seat: 2, delta: -1, at: 0 });
+    expect(g.players[2].vp).toBe(3);
+    expect(g.players[2].extras.map((e) => e.label)).toEqual(['Custodians of Mecatol Rex']);
+
+    g = reduce(g, { type: 'REMOVE_OBJECTIVE', id: one.id, at: 0 });
+    expect(g.players[2].vp).toBe(2);
+  });
+
+  it('ends the game when an objective takes someone to the target', () => {
+    let g = reduce(sixInAction(), reveal('Found a Golden Age', 2));
+    g = reduce(g, { type: 'ADD_EXTRA', seat: 1, label: 'Agenda', points: 8, at: 0 });
+    expect(g.phase).toBe('action');
+    g = reduce(g, { type: 'SCORE_OBJECTIVE', id: g.objectives[0].id, seat: 1, scored: true, at: 0 });
+    expect(g.phase).toBe('finished');
+    expect(g.winner).toBe(1);
+  });
+
+  it('keeps a list of laws', () => {
+    let g = run(sixInAction(), { type: 'ADD_LAW', name: 'Minister of War', note: 'P3' }, { type: 'ADD_LAW', name: ' ', note: '' });
+    expect(g.laws.map((l) => l.name)).toEqual(['Minister of War']);
+    g = reduce(g, { type: 'REMOVE_LAW', id: g.laws[0].id });
+    expect(g.laws).toHaveLength(0);
   });
 });

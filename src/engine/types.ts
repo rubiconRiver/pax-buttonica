@@ -29,8 +29,37 @@ export interface PlayerSetup {
   profileId?: string;
 }
 
+/** A public objective on the table, and who has scored it. */
+export interface Objective {
+  id: string;
+  /** 1 or 2 for the printed stages; 0 for something the table added itself. */
+  stage: 0 | 1 | 2;
+  name: string;
+  text: string;
+  points: number;
+  scoredBy: number[];
+  round: number;
+}
+
+export interface Law {
+  id: string;
+  name: string;
+  /** What it does, or who/what was elected: whatever the table wants to be reminded of. */
+  note: string;
+}
+
+export interface ExtraPoints {
+  label: string;
+  points: number;
+}
+
 export interface Player extends PlayerSetup {
+  /** Always the sum of scored objectives, secrets and extras; never edited directly. */
   vp: number;
+  /** Secret objectives this player has scored (their names, if the table bothered). */
+  secrets: string[];
+  /** Custodians, Imperial, Support for the Throne, agendas… and manual corrections. */
+  extras: ExtraPoints[];
   cards: number[];
   usedCards: number[];
   passed: boolean;
@@ -97,6 +126,9 @@ export interface GameState {
   /** Seat holding the Naalu "0" initiative token, if any. */
   zeroToken: number | null;
   custodiansRemoved: boolean;
+  objectives: Objective[];
+  laws: Law[];
+  idSeq: number;
   /** Strategy cards run in two beats: the player's primary first, then everyone's secondary. */
   primaryStage: boolean;
 
@@ -160,6 +192,15 @@ export type Action =
   | { type: 'VOTE_DONE'; at: number }
   | { type: 'ADVANCE'; at: number }
   | { type: 'VP'; seat: number; delta: number; at: number }
+  | { type: 'REVEAL_OBJECTIVE'; stage: 0 | 1 | 2; name: string; text: string; points: number }
+  | { type: 'REMOVE_OBJECTIVE'; id: string; at: number }
+  | { type: 'SCORE_OBJECTIVE'; id: string; seat: number; scored: boolean; at: number }
+  | { type: 'SCORE_SECRET'; seat: number; label: string; at: number }
+  | { type: 'UNSCORE_SECRET'; seat: number; index: number; at: number }
+  | { type: 'ADD_EXTRA'; seat: number; label: string; points: number; at: number }
+  | { type: 'REMOVE_EXTRA'; seat: number; index: number; at: number }
+  | { type: 'ADD_LAW'; name: string; note: string }
+  | { type: 'REMOVE_LAW'; id: string }
   | { type: 'SET_SPEAKER'; seat: number }
   | { type: 'SET_ZERO_TOKEN'; seat: number | null }
   | { type: 'SET_CUSTODIANS'; removed: boolean }

@@ -8,7 +8,7 @@ import { saveClip } from '../audio/clips';
 import { JINGLES } from '../audio/jingles';
 import { createStore } from '../state/createStore';
 import { createProfile, findProfile, patchProfile, profilesStore, sanitizePatch, type Profile } from '../state/profiles';
-import { CODE_ALPHABET, CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost } from './messages';
+import { CODE_ALPHABET, CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type TableSnapshot } from './messages';
 
 export interface Phone {
   dev: string;
@@ -100,6 +100,7 @@ function accept(conn: DataConnection) {
       conns.set(dev, conn);
       if (old && old !== conn) old.close();
       lastSent.delete(dev);
+      lastTable.delete(dev);
       tellProfiles(conn);
       identify(dev, typeof msg.profileId === 'string' ? msg.profileId : identities.get(dev) ?? null);
     } else if (!dev) {
@@ -177,6 +178,37 @@ export function closeRoom() {
 export function resumeRoom() {
   const code = localStorage.getItem(SAVED);
   if (code && !peer) void openRoom(code);
+}
+
+const lastTable = new Map<string, string>();
+
+const TABLE_KEY = 'pb.room.key.v1';
+let publishTimer = 0;
+let lastPublished = '';
+
+/** Also publish it through the site, so the table view works even when a phone can't reach this laptop directly. */
+function publishTable(json: string) {
+  const code = roomStatus.get().code;
+  if (!code || roomStatus.get().state !== 'open' || json === lastPublished) return;
+  window.clearTimeout(publishTimer);
+  publishTimer = window.setTimeout(() => {
+    let key = localStorage.getItem(TABLE_KEY);
+    if (!key) localStorage.setItem(TABLE_KEY, (key = crypto.randomUUID()));
+    fetch(`/api/table?code=${code}&key=${key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: json })
+      .then((r) => r.ok && (lastPublished = json))
+      .catch(() => {});
+  }, 1200);
+}
+
+/** The public state of the game, for the "Table" view on every phone. */
+export function syncTable(table: TableSnapshot) {
+  const key = JSON.stringify(table);
+  publishTable(key);
+  for (const [dev, conn] of conns) {
+    if (!conn.open || lastTable.get(dev) === key) continue;
+    lastTable.set(dev, key);
+    conn.send({ t: 'table', table } satisfies HostToPhone);
+  }
 }
 
 /** Send each connected phone its light. Only changes go over the wire. */
