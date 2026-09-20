@@ -16,6 +16,7 @@ npm run dev
 | `/` | Landing page: the pitch, a self-playing table, how it's wired |
 | `/demo` | Interactive demo with a guided tour and the **scenario lab** (jump to any situation) |
 | `/play` | A real game: setup, profiles, seat claiming. Survives a page reload |
+| `/me` | Set up your own profile (name, colour, entrance and exit sounds) at home, no game needed |
 | `/join` | A phone becomes a button: scan the QR from the *Phones* menu (setup screen or in a game), or type the room code. Players say who they are and edit their own profile and sounds from there |
 | `/button` | Concept drawings of the physical button: exploded view, size, target dimensions. Made for sharing |
 | `/bench` | Hardware test bench: connect the USB hub and poke real buttons one at a time |
@@ -33,12 +34,13 @@ npm run build   # typecheck + production build (deploys to Vercel as a static si
 ```
 src/engine/     Pure rules. reduce(state, action) → state; deriveOutputs(state) → one light per seat.
 src/hardware/   The wire protocol, and the Web Serial transport to the USB hub (untested — no hardware yet).
+api/            Vercel functions: profiles and uploaded clips in Neon Postgres (DATABASE_URL). No auth yet.
 src/remote/     Phones as buttons: WebRTC data channels via PeerJS's public broker. No server of ours involved.
 firmware/       ESP32-C3 sketches for the hub and the buttons. See docs/HARDWARE.md.
 src/audio/      WebAudio synth: interface sounds, jingles as note lists, uploaded clips (IndexedDB).
 src/components/ Device.tsx is the simulated button; components/game/ is the table.
 src/state/      Tiny stores: game (+undo, persisted), settings, profiles, demo seeding.
-docs/           BUTTON_STANDARD.md — the spec. HARDWARE.md — parts, wiring, flashing, bring-up.
+docs/           BUTTON_STANDARD.md — the spec. HARDWARE.md — parts, wiring, flashing, bring-up. SHOPPING.md — the cart.
 ```
 
 The important idea: **buttons are dumb.** They show the colour and mode they're told to and report `tap` / `double` / `hold`. Every rule lives in `src/engine`, so the simulator and real hardware can't drift apart — they're fed by the same function.
