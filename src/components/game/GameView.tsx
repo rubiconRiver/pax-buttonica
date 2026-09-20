@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { unlockAudio } from '../../audio/synth';
 import { seatSpots, simDevice, turnElapsed } from '../../engine/engine';
-import { cardByNumber } from '../../engine/data';
+import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { setInputHandler, syncOutputs } from '../../hardware/serial';
@@ -14,6 +14,7 @@ import { settingsStore } from '../../state/settings';
 import type { DeviceHandle } from '../Device';
 import { CenterPanel } from './CenterPanel';
 import { ScenarioLab } from './ScenarioLab';
+import { HexTable, type HomeSystem } from './HexTable';
 import { OpenSpot, Seat } from './Seat';
 import { SidePanel } from './SidePanel';
 import { TopBar } from './TopBar';
@@ -169,6 +170,16 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     });
   }, [game, outputs, reactions, room.phones, settings.holdMs, settings.flashMs]);
 
+  // Six players: each corner of the galaxy is somebody's home system.
+  const homes = useMemo<HomeSystem[] | undefined>(() => {
+    if (n !== 6) return undefined;
+    return Array.from({ length: 6 }, (_, spot) => {
+      const seat = spots.indexOf(spot);
+      const p = seat >= 0 ? game.players[seat] : null;
+      return { color: p ? colorById(p.color).led : '#5b6480', active: seat >= 0 && seat === game.active && !game.seating, passed: !!p?.passed };
+    });
+  }, [n, spots, game.players, game.active, game.seating]);
+
   const lastDenied = [...game.fx].reverse().find((f) => f.kind === 'denied' || f.kind === 'hint');
   const toast = lastDenied && lastDenied.id === game.fxSeq ? lastDenied : null;
 
@@ -183,8 +194,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       <main className="game__main">
         <div className="stage">
           <div className="table" data-phase={game.phase} style={{ '--n': n } as CSSProperties}>
-            <div className="table__surface" />
-            <div className="table__ring" />
+            <HexTable homes={homes} />
             {game.players.map((_, spot) => {
               const seat = spots.indexOf(spot);
               if (seat < 0) {

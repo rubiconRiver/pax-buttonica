@@ -1,14 +1,46 @@
-/** Seats sit on an ellipse, seat 0 at the bottom, continuing clockwise as seen on screen. */
+/**
+ * The table is a hexagon, like the galaxy: with six players, everyone sits at a
+ * corner, where their home system is. Seat 0 is at the bottom, continuing
+ * clockwise as seen on screen. Units are percentages of the table box.
+ */
+const RX = 42;
+const RY = 30;
+
+/** Corners of the table outline (a pointy-top hexagon, stretched to fit the screen). */
+export const TABLE_CORNERS: [number, number][] = Array.from({ length: 6 }, (_, k) => {
+  const a = Math.PI / 2 + (k * Math.PI) / 3;
+  return [Math.cos(a) * RX, Math.sin(a) * RY];
+});
+
+/** Where a ray from the centre at this angle crosses the table's edge. */
+function onOutline(angle: number): [number, number] {
+  const dx = Math.cos(angle) * RX;
+  const dy = Math.sin(angle) * RY;
+  let best = 1;
+  for (let k = 0; k < 6; k++) {
+    const [ax, ay] = TABLE_CORNERS[k];
+    const [bx, by] = TABLE_CORNERS[(k + 1) % 6];
+    // Solve centre + t·d = a + u·(b − a)
+    const ex = bx - ax;
+    const ey = by - ay;
+    const det = dx * -ey + ex * dy;
+    if (Math.abs(det) < 1e-9) continue;
+    const t = (ax * -ey + ex * ay) / det;
+    const u = (dx * ay - dy * ax) / det;
+    if (t > 0 && u >= -1e-6 && u <= 1 + 1e-6) best = Math.min(best, t);
+  }
+  return [dx * best, dy * best];
+}
+
 export function seatPosition(i: number, n: number) {
   const angle = Math.PI / 2 + (i * 2 * Math.PI) / n;
-  const cos = Math.cos(angle);
-  const sin = Math.sin(angle);
+  const [x, y] = onOutline(angle);
   return {
-    x: cos * 42,
-    y: sin * 30,
+    x,
+    y,
     /** Nameplates go on the outside of the table so they never collide with the centre. */
-    above: sin < -0.2,
-    pan: cos * 0.7,
+    above: Math.sin(angle) < -0.2,
+    pan: Math.cos(angle) * 0.7,
   };
 }
 

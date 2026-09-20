@@ -278,9 +278,13 @@ static void render() {
   // Hold-to-confirm: a white arc sweeps round the ring, so the player sees how long is left.
   const Button &big = buttons[0];
   if (big.down && !big.holdSent && now - big.downSince > TAP_MAX_MS) {
-    const float progress = (float)(now - big.downSince) / holdMs;
-    const int lit = (int)(progress * LED_COUNT);
-    for (int i = 0; i <= lit && i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 255, 255, 1));
+    // The leading pixel fades in rather than popping on, so even an 8-pixel ring reads as a smooth sweep.
+    const float progress = constrain((float)(now - big.downSince - TAP_MAX_MS) / (holdMs - TAP_MAX_MS), 0.0f, 1.0f);
+    const float head = progress * LED_COUNT;
+    for (int i = 0; i < LED_COUNT; i++) {
+      const float fill = constrain(head - i, 0.0f, 1.0f);
+      if (fill > 0) ring.setPixelColor(i, scaled(255, 255, 255, fill));
+    }
   }
 
   // One-shot reactions sit on top of everything.

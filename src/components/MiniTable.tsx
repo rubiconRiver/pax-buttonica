@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react';
-import { cardByNumber } from '../engine/data';
+import { cardByNumber, colorById } from '../engine/data';
 import { pendingAcks } from '../engine/engine';
 import { deriveOutputs } from '../engine/outputs';
 import type { GameState } from '../engine/types';
 import { useStore } from '../state/createStore';
 import { seedDemo } from '../state/demo';
 import { createGameStore } from '../state/game';
+import { HexTable } from './game/HexTable';
 import { Seat } from './game/Seat';
 import { useReactions } from './game/useReactions';
 import '../styles/game.css';
@@ -80,8 +81,7 @@ function MiniTableView({ game }: { game: GameState }) {
   return (
     <div className="mini">
       <div className="table mini__table">
-        <div className="table__surface" />
-        <div className="table__ring" />
+        <HexTable homes={game.players.map((p, seat) => ({ color: colorById(p.color).led, active: seat === game.active, passed: p.passed }))} />
         {game.players.map((p, seat) => (
           <Seat
             key={seat}

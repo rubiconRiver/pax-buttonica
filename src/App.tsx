@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Bench } from './pages/Bench';
+import { ButtonConcept } from './pages/ButtonConcept';
 import { Demo } from './pages/Demo';
 import { Join } from './pages/Join';
 import { Landing } from './pages/Landing';
@@ -21,6 +22,7 @@ export function App() {
       <Route path="/join/:code" element={<Join />} />
       <Route path="/standard" element={<Standard />} />
       <Route path="/hardware" element={<Standard doc="hardware" />} />
+      <Route path="/button" element={<ButtonConcept />} />
       <Route path="/bench" element={<Bench />} />
       <Route path="*" element={<Landing />} />
     </Routes>

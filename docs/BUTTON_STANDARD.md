@@ -132,7 +132,7 @@ To the device this is nothing special: it shows what it's told and reports a `ta
 
 ## Phones are buttons too
 
-Anyone without a physical button can use their phone: the host opens a room, the phone scans a QR code, and from then on it is a device like any other — it gets a light to show, and sends `tap`, `double` and `hold`. It claims a seat in the same ritual — or skips it: a phone whose owner has said who they are ("I'm Ana") goes straight to Ana's seat. From the same screen a player can change their own name, colour, and entrance and exit sounds, mid-game if they like; uploaded clips are sent to the host laptop and kept there. The transport is a WebRTC data channel rather than ESP-NOW, and the device id starts with `web-`; nothing else differs, and the rules engine can't tell them apart.
+Anyone without a physical button can use their phone: the host opens a room, the phone scans a QR code, and from then on it is a device like any other — it gets a light to show, and sends `tap`, `double` and `hold`. It claims a seat in the same ritual — or skips it: a phone whose owner has said who they are ("I'm Sarah") goes straight to Sarah's seat. From the same screen a player can change their own name, colour, and entrance and exit sounds, mid-game if they like; uploaded clips are sent to the host laptop and kept there. The transport is a WebRTC data channel rather than ESP-NOW, and the device id starts with `web-`; nothing else differs, and the rules engine can't tell them apart.
 
 ## Sound
 

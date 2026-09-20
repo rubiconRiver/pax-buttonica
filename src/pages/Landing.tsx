@@ -69,6 +69,7 @@ export function Landing() {
       <nav className="nav">
         <Link to="/" className="brand"><span className="brand__dot" /><span>Pax <b>Buttonica</b></span></Link>
         <div className="nav__links">
+          <Link to="/button">The button</Link>
           <a href="#lights">The lights</a>
           <a href="#wiring">How it's wired</a>
           <Link to="/standard">Button standard</Link>
@@ -167,6 +168,7 @@ export function Landing() {
           <p>One button and one light is a complete device. Want dedicated <b>strategy</b> and <b>pass</b> buttons? Add them — the app adapts to whatever your device says it has. The spec is a single page and the simulator is the reference implementation.</p>
           <span style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <Link to="/standard" className="btn">Read the standard</Link>
+            <Link to="/button" className="btn btn--ghost">See the button</Link>
             <Link to="/hardware" className="btn btn--ghost">Parts &amp; wiring</Link>
           </span>
         </article>
