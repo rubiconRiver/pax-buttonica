@@ -24,6 +24,8 @@
 * { box-sizing: border-box; }
 
 html, body, #root { height: 100%; }
+/* Glows may spill past the edge of a phone screen; the page must not scroll sideways for them. */
+#root { overflow-x: clip; }
 
 body {
   margin: 0;

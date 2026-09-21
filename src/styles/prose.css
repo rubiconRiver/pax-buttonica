@@ -1,7 +1,7 @@
 @import './game.css';
 
 .prose-page { max-width: 860px; margin: 0 auto; padding: 18px 22px 100px; }
-.prose-page .setup__head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 48px; }
+.prose-page .setup__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 48px; }
 .prose { font-size: 15.5px; line-height: 1.7; color: #c9d0e2; }
 .prose h1 { font-size: clamp(32px, 4.4vw, 50px); color: #fff; margin-bottom: 14px; }
 .prose h2 { font-size: 24px; color: #fff; margin: 52px 0 12px; padding-top: 22px; border-top: 1px solid var(--line); }

@@ -40,7 +40,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   const [shock, setShock] = useState(0);
   const [reaction, setReaction] = useState<string | null>(null);
   const t0 = useRef(0);
-  const lastTap = useRef(0);
+  const lastTap = useRef(-Infinity);
   const timers = useRef<number[]>([]);
   const stopCharge = useRef<() => void>(() => {});
   const live = useRef({ pressed: false, held: false });
@@ -99,7 +99,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
     // Taps are reported at once (so acknowledging never lags); a quick second one adds `double`.
     const now = performance.now();
     if (now - lastTap.current <= DOUBLE_MS) {
-      lastTap.current = 0;
+      lastTap.current = -Infinity;
       onInput?.('double');
     } else {
       lastTap.current = now;

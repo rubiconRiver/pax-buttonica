@@ -36,7 +36,10 @@ export function createGameStore(persistKey?: string): GameStore {
       const { game, past } = store.get();
       if (!game) return;
       const next = reduce(game, action);
-      const changed = core(next) !== core(game);
+      // Housekeeping the app does by itself (a renamed profile, a phone taking its owner's seat) is not an undo
+      // step: undoing it would only make the app do it again, and Undo would never get past it.
+      const housekeeping = action.type === 'UPDATE_PLAYER' || action.type === 'BIND';
+      const changed = !housekeeping && core(next) !== core(game);
       store.set({ game: next, past: changed ? [...past, game].slice(-MAX_UNDO) : past });
     },
     undo() {

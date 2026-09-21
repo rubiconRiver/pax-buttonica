@@ -94,9 +94,18 @@ function handle(msg: FromDevice) {
     case 'hub':
       hubStatus.set((s) => ({ ...s, hubFw: msg.fw }));
       break;
-    case 'hello':
+    case 'hello': {
+      // A hello is either a heartbeat or a button that has just (re)booted and remembers nothing.
+      // They look the same from here, so tell it everything again: settings now, its light on the next sync.
+      const known = hubStatus.get().devices.some((d) => d.dev === msg.dev);
+      lastFrames.delete(msg.dev);
       patch(msg.dev, { fw: msg.fw, caps: msg.caps, lost: false });
+      if (known) {
+        const { holdMs, flashMs } = settingsStore.get();
+        sendToDevice({ t: 'cfg', dev: msg.dev, hold: holdMs, flash: flashMs });
+      }
       break;
+    }
     case 'bat':
       patch(msg.dev, { mv: msg.mv });
       break;

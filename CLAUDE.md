@@ -20,6 +20,7 @@ Private GitHub repo: rubiconRiver/pax-buttonica. Owner: Garett (Canada; knows so
 ```bash
 npm run dev          # vite
 npm test             # vitest (engine)
+npm run e2e          # Playwright, the whole app in a browser (~2.5 min); see e2e/README.md
 npm run typecheck    # app + api
 npm run build
 npx --yes vercel@latest --prod --yes   # deploy (the installed vercel CLI fails on Node 24)
@@ -47,6 +48,7 @@ kicad-cli pcb drc pax-button.kicad_pcb     # must stay at 0 violations, 0 unconn
 - The standard button has no speaker; the laptop plays every sound.
 - The UI has to feel crisp and look like TI (chamfered frames, not bubbly). The site doubles as a recruiting demo.
 - Nothing on the hardware side has been flashed or manufactured yet. Say "compiles" or "passes DRC", never "works", until it has run on real parts.
+- Run `npm run test:all` before pushing app changes. A behaviour change needs its test changed or added in `e2e/`.
 - Garett's standing instruction: commit, push and redeploy when a round of changes is done.
 
 ## Working in parallel

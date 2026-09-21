@@ -1,10 +1,10 @@
 .setup { max-width: 1120px; margin: 0 auto; padding: 18px 22px 120px; }
-.setup__head { display: flex; justify-content: space-between; align-items: center; }
+.setup__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
 .setup__intro { margin: 44px 0 22px; display: grid; gap: 10px; max-width: 62ch; }
 .setup__intro h1 { font-size: clamp(32px, 4.4vw, 52px); }
 
 .setup__options { display: flex; flex-wrap: wrap; gap: 14px 34px; padding: 16px 18px; margin-bottom: 18px; }
-.opt { display: flex; align-items: center; gap: 12px; }
+.opt { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .opt__label { font: 700 11px/1 var(--font-d); letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
 .opt__note { font-size: 12px; color: var(--faint); }
 .opt .select { width: auto; min-width: 130px; }

@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { unlockAudio } from '../../audio/synth';
 import { seatSpots, simDevice, turnElapsed } from '../../engine/engine';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
-import { setInputHandler, syncOutputs } from '../../hardware/serial';
+import { hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
 import { assignIdentity, resumeRoom, roomStatus, setRoomHandlers, syncRoom, syncTable } from '../../remote/host';
 import { snapshotOf } from '../../remote/messages';
 import { IconClose } from '../Icons';
@@ -69,10 +69,12 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
   useGameAudio(game);
 
-  // Real buttons, when a hub is plugged in, mirror the simulated ones exactly.
+  // Real buttons, when a hub is plugged in, mirror the simulated ones exactly. A button that has only just
+  // spoken up (switched on late, fresh batteries) is told its light straight away, not at the next change.
+  const hubDevices = useSyncExternalStore(hubStatus.subscribe, () => hubStatus.get().devices);
   useEffect(() => {
     syncOutputs(game.bindings, outputs, game.seating ? UNCLAIMED : null);
-  }, [game.bindings, game.seating, outputs]);
+  }, [game.bindings, game.seating, outputs, hubDevices]);
   useEffect(() => {
     setInputHandler((dev, input) => dispatch({ type: 'DEVICE_INPUT', dev, input, at: Date.now() }));
     return () => setInputHandler(null);
