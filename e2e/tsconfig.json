@@ -10,5 +10,5 @@
     "types": ["node"],
     "typeRoots": ["../node_modules/@types"]
   },
-  "include": ["**/*.ts", "../playwright.config.ts"]
+  "include": ["**/*.ts", "../video/**/*.ts", "../playwright.config.ts", "../playwright.video.config.ts"]
 }
