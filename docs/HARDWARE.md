@@ -111,7 +111,7 @@ Wire traffic is shown at the bottom of the bench page, which is the first place 
 
 ## The shell — a brief for whoever is modelling it
 
-Nothing is designed yet. What the electronics need:
+A first model is in [`hardware/shell/`](../hardware/shell/README.md): ready-to-print STLs and the script that makes them. It has not been printed yet. It follows this brief, with one change: the top is a flat cap with a 45° shoulder, not a dome, so it prints without supports and diffuses evenly. What the electronics need:
 
 - **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a back-to-back 2×2 AA holder is about 58 × 32 × 30 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
 - **Dome:** translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.

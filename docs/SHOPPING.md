@@ -22,6 +22,12 @@ Checked on Amazon.ca on **2026-09-20**; prices and stock move, so treat them as 
 
 About **$277** before tax for all of it; about **$226** without the charger, wire and filament.
 
+## For the printed shell
+
+- M3 × 8 screws, socket-head or pan-head: about 14 a button, so 85 for six. Any M3 assortment kit covers it.
+- Double-sided foam tape (holds the battery holder in the base) and stick-on rubber feet, 10 mm.
+- The battery holder in the main list (item 3) is the one the base is modelled around. Measure it when it arrives and set `HOLDER` in `hardware/shell/make_shell.py` before printing the base.
+
 ## If you are ordering the custom carrier board
 
 - Boards: upload `hardware/pcb/pax-button-v0.2-gerbers.zip` at https://cart.jlcpcb.com/quote — roughly $70 landed for ten with express shipping (an estimate).
