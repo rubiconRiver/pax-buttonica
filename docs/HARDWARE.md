@@ -31,7 +31,7 @@ Roughly **$22–35 per button** including rechargeable cells (about **$11–20 i
 
 ## The tidy way: a custom carrier board
 
-`hardware/pcb/` holds a 70 mm round board that every part solders onto: ESP32 at the top, an MX-style keyboard switch dead centre, diode, capacitor, a three-hole connection for the LED ring and a screw terminal for the batteries, plus a spare solder hole beside every ESP32 pin. Upload `hardware/pcb/pax-button-gerbers.zip` to a board house; details, and two checks to make before soldering the ESP32, are in [`hardware/pcb/README.md`](../hardware/pcb/README.md). It passes KiCad's rule check; no board has been manufactured yet.
+`hardware/pcb/` holds a 70 mm round board that every part solders onto: ESP32 at the top, an MX-style keyboard switch dead centre, diode, capacitor, a three-hole connection for the LED ring and a screw terminal for the batteries, plus a spare solder hole beside every ESP32 pin. Upload `hardware/pcb/pax-button-v0.2-gerbers.zip` to a board house; details, and two checks to make before soldering the ESP32, are in [`hardware/pcb/README.md`](../hardware/pcb/README.md). It passes KiCad's rule check; no board has been manufactured yet.
 
 ### Putting a button together on the board
 
@@ -115,6 +115,11 @@ Nothing is designed yet. What the electronics need:
 
 - **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a back-to-back 2×2 AA holder is about 58 × 32 × 30 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
 - **Dome:** translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.
+- **Guide the dome; don't balance it.** A 65 mm dome perched on one small switch stem will rock and bind when it's hit off-centre, which is how everyone hits it. Give the dome a skirt that slides inside a collar in the base (about 0.3 mm clearance all round), and let the switch only *sense* the press and push the dome back up.
+- **A hard stop that isn't the switch.** People will slam this. The dome should bottom out on the base after about 3.5 mm, just before the switch does, so the shell takes the blow and the switch never does.
+- **Hold the board up from underneath.** Put a printed pillar under the middle of the board, directly below the switch, as well as the four M3 posts, so a slap can't flex the board.
+- **The ring sits above the switch, not around it.** An 8-LED ring's hole is too small to fit over the switch body, so it goes on a printed shelf about 12 mm above the board, clear of the switch and the ESP32, with the dome's plunger passing down through its hole (keep the plunger under 12 mm wide).
+- **Keep the batteries away from the antenna.** Leave 10 mm or more between the underside of the board and the battery cells; metal right under the antenna costs range.
 - **Light:** the LED ring faces up, at least 15–20 mm below the dome's inner surface, or you'll see twelve dots instead of a glow. A white-painted or foil-lined cavity helps a lot.
 - **Base:** heavy enough (or rubber-footed) not to skate when slapped. Room for the batteries and the ESP32 board, and nothing else: no speaker, no grille. A flat four-in-a-row AA holder is about 62 × 58 × 15 mm and needs a base over 90 mm; a back-to-back 2×2 holder is about 58 × 32 × 30 mm and fits the compact base.
 - **Access:** battery door, power switch reachable from outside, USB-C port reachable for reflashing.

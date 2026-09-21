@@ -150,7 +150,7 @@ function lines(c: Choices): Line[] {
       role: 'One round board per button that every part solders onto. No nest of wires.',
       explain: (
         <>
-          A 70 mm disc designed for this project: the ESP32 at the top with its USB port at the rim, the switch dead centre, the diode and capacitor in place, a three-hole connection for the LED ring and a screw terminal for the batteries. A spare solder hole sits beside every ESP32 pin, so extra buttons or a speaker can be added later. You upload one zip file from the project (<code>hardware/pcb/pax-button-gerbers.zip</code>) and they make it: 2 layers, 70 × 70 mm, 1.6 mm, green, fastest courier.
+          A 70 mm disc designed for this project: the ESP32 at the top with its USB port at the rim, the switch dead centre, the diode and capacitor in place, a three-hole connection for the LED ring and a screw terminal for the batteries. A spare solder hole sits beside every ESP32 pin, so extra buttons or a speaker can be added later. You upload one zip file from the project (<code>hardware/pcb/pax-button-v0.2-gerbers.zip</code>) and they make it: 2 layers, 70 × 70 mm, 1.6 mm, green, fastest courier.
         </>
       ),
       watch: <>The price is an estimate, including express shipping and the fees at the door. The design passes its rule check but no board has been made yet, so keep the perfboard fallback below until one works.</>,

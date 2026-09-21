@@ -93,7 +93,7 @@ board.Add(edge)
 # on the module. If a module turns out MIRRORED (5V on the left), solder it to
 # the BOTTOM of the board: flipping it swaps the rows back.
 ROW_X, PITCH, TOP_Y = 7.62, 2.54, -31.5
-RIGHT = ['+5V', 'GND', '+3V3', 'IO_A', 'SW_MAIN', 'IO_C', 'IO_D', 'IO_E']
+RIGHT = ['+5V', 'GND', '+3V3', 'VSENSE', 'SW_MAIN', 'IO_C', 'IO_D', 'IO_E']
 LEFT = ['IO5', 'IO6', 'IO7', 'IO8', 'IO9', 'LED_MCU', 'UART_A', 'UART_B']
 u1 = pcbnew.FOOTPRINT(board)
 u1.SetReference('U1'); u1.SetValue('ESP32-C3 SuperMini'); u1.SetPosition(P(0, TOP_Y + 3.5 * PITCH))
@@ -127,13 +127,13 @@ place('Button_Switch_Keyboard', 'SW_Cherry_MX_1.00u_PCB', 'SW1', 2.54, -5.08, 0,
 # ── power: battery → D1 → 5 V rail → module, LED connector, C1 ──────────────
 place('TerminalBlock_Phoenix', 'TerminalBlock_Phoenix_MKDS-1,5-2-5.08_1x02_P5.08mm_Horizontal', 'J1', -2.54, 28, 0, 'BATTERY 4xAA NiMH', {'1': 'VBAT', '2': 'GND'})
 place('Diode_THT', 'D_DO-41_SOD81_P10.16mm_Horizontal', 'D1', 7.62, 18.5, 180, '1N5817', {'1': '+5V', '2': 'VBAT'})
-place('Capacitor_THT', 'CP_Radial_D8.0mm_P3.50mm', 'C1', 20, 8, 0, '1000uF 16V', {'1': '+5V', '2': 'GND'})
+place('Capacitor_THT', 'CP_Radial_D8.0mm_P3.50mm', 'C1', 24.75, 12, 0, '1000uF 16V', {'1': '+5V', '2': 'GND'})
 place('Connector_PinHeader_2.54mm', 'PinHeader_1x03_P2.54mm_Vertical', 'J2', 28, -5.08, 0, 'LED RING', {'1': '+5V', '2': 'LED_DIN', '3': 'GND'})
 place('Connector_PinHeader_2.54mm', 'PinHeader_1x03_P2.54mm_Vertical', 'J3', -28, -2.54, 0, 'GND x3', {'1': 'GND', '2': 'GND', '3': 'GND'})
 
 track([(-2.54, 28), (-2.54, 18.5)], 'VBAT', 0.8)
 track([(7.62, 18.5), (14, 18.5), (17.5, 15), (17.5, 8), (17.5, -5.08), (17.5, -25), (13.5, -29), (13.5, -30.5), (12.5, -31.5), (ROW_X + PITCH, -31.5)], '+5V', 0.8)
-track([(17.5, 8), (20, 8)], '+5V', 0.8)
+track([(17.5, 12), (24.75, 12)], '+5V', 0.8)
 track([(17.5, -5.08), (28, -5.08)], '+5V', 0.8)
 
 # ── main switch → module ────────────────────────────────────────────────────
@@ -147,6 +147,14 @@ track([(-ROW_X - PITCH, -18.8), (-13, -16), (-13, -12)], 'LED_MCU', 0.3, B)
 track([(-13, -12), (-17, -10.2), (-17, -8.84)], 'LED_MCU', 0.3)
 track([(-17, -7.54), (-17, -6.2), (-13, -4.38)], 'LED_DIN', 0.3)
 track([(-13, -4.38), (-13, 9), (-9, 13), (9, 13), (13, 9), (13, -2.54), (28, -2.54)], 'LED_DIN', 0.3, B)
+
+# ── optional battery sensing: two 100k resistors halve the battery voltage for the ADC ─────
+RV = 'R_Axial_DIN0207_L6.3mm_D2.5mm_P5.08mm_Vertical'
+place('Resistor_THT', RV, 'R2', 20.5, -8, 90, '100k (optional)', {'1': 'VSENSE', '2': 'VBAT'})
+place('Resistor_THT', RV, 'R3', 24, -8, 90, '100k (optional)', {'1': 'VSENSE', '2': 'GND'})
+track([(20.5, -8), (24, -8)], 'VSENSE', 0.3, B)
+track([(20.5, -8), (15.2, -13.3), (15.2, -21), (12.4, -23.88), (ROW_X + PITCH, -23.88)], 'VSENSE', 0.3, B)
+track([(-2.54, 18.5), (0, 16), (15, 16), (19, 12), (19, 6), (24, 3.2), (30.4, 3.2), (30.4, -7), (27.5, -10.5), (22.5, -10.5), (20.5, -12.5), (20.5, -13.08)], 'VBAT', 0.4, B)
 
 # ── mounting holes ──────────────────────────────────────────────────────────
 for i, (x, y) in enumerate([(23, -19), (-23, -19), (23, 19), (-23, 19)]):
@@ -180,16 +188,21 @@ board.Add(keep)
 
 # ── silkscreen: say what everything is, for people who have never seen a PCB ─
 text('PAX BUTTONICA', 0, 14.9, 1.2, bold=True)
-text('button v0.1', 16, 27.5, 0.8)
+text('button v0.2', 16, 27.5, 0.8)
 text('BATTERY', -15, 24.6, 0.8); text('4xAA NiMH', -15, 26.0, 0.8)
 text('+', -7.2, 28, 1.5, bold=True); text('-', 7.2, 28, 1.5, bold=True)
-text('LED RING', 27.2, -8.6, 0.8)
+text('LED RING', 31.4, -2.54, 0.8, rot=90)
+text('R2 R3 100k:', 22.3, -16.6, 0.8); text('battery gauge', 22.3, -15.3, 0.8)
 text('5V', 24.9, -5.08, 0.8); text('DIN', 24.4, -2.54, 0.8); text('G', 25.3, 0, 0.8)
 text('GND', -28, 5.4, 0.8)
 text('R1 330R or', -21.5, -15.6, 0.8); text('keep JP1', -21.5, -14.3, 0.8)
 text('5V pin on the LEFT of your ESP32?', 0, 9.5, 0.8)
 text('Then solder it to the BACK of this board.', 0, 10.9, 0.8)
 text('ESP32 goes on this side if its 5V pin is on the left', 0, 9.6, 0.8, pcbnew.B_SilkS, mirror=True)
+# somewhere to write which button this is
+for (a, b) in [((-29, 11), (-14.5, 11)), ((-14.5, 11), (-14.5, 16.2)), ((-14.5, 16.2), (-29, 16.2)), ((-29, 16.2), (-29, 11))]:
+    line(a[0], a[1], b[0], b[1], pcbnew.B_SilkS)
+text('No.', -26.5, 12.4, 0.8, pcbnew.B_SilkS, mirror=True)
 
 pcbnew.ZONE_FILLER(board).Fill(board.Zones())
 out = os.path.join(HERE, 'pax-button.kicad_pcb')

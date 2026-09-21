@@ -19,6 +19,7 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 #include <Preferences.h>
+#include <esp_sleep.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 #include "config.h"
@@ -51,6 +52,7 @@ static char devId[13];
 static uint8_t hubMac[6];
 static bool hubKnown = false;
 static volatile uint8_t sendFails = 0;
+static volatile uint32_t lastContact = 0;  // last time the hub demonstrably existed
 static const uint8_t EVERYONE[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 static uint8_t ledR = 255, ledG = 255, ledB = 255;
@@ -126,8 +128,13 @@ static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int 
 
 static void onSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
   (void)info;
-  if (status == ESP_NOW_SEND_SUCCESS) sendFails = 0;
-  else if (sendFails < 255) sendFails++;
+  if (status == ESP_NOW_SEND_SUCCESS) {
+    sendFails = 0;
+    // A unicast is only "delivered" if the hub's radio acknowledged it; a broadcast proves nothing.
+    if (hubKnown) lastContact = millis();
+  } else if (sendFails < 255) {
+    sendFails++;
+  }
 }
 
 // ── Sound ───────────────────────────────────────────────────────────────────
@@ -334,6 +341,7 @@ static void handle(const Packet &p) {
     prefs.putBytes("hub", hubMac, 6);
   }
   sendFails = 0;
+  lastContact = millis();
 
   JsonDocument doc;
   if (deserializeJson(doc, p.text, p.len)) return;
@@ -416,6 +424,18 @@ static void serviceButtons() {
   }
 }
 
+// ── Sleep ───────────────────────────────────────────────────────────────────
+
+// Nobody is listening: stop burning batteries. A press of the big button restarts the chip.
+static void sleepUntilPressed() {
+  const int pin = BUTTON_PINS[0];
+  if (pin < 0 || pin > 5) return;  // only GPIO 0-5 can wake an ESP32-C3 from deep sleep
+  ring.clear();
+  ring.show();
+  esp_deep_sleep_enable_gpio_wakeup(1ULL << pin, ESP_GPIO_WAKEUP_GPIO_LOW);
+  esp_deep_sleep_start();
+}
+
 // ── Arduino ─────────────────────────────────────────────────────────────────
 
 void setup() {
@@ -475,6 +495,8 @@ void loop() {
     lastHello = now;
     sendHello();
   }
+
+  if (SLEEP_AFTER_MINUTES > 0 && now - lastContact > (uint32_t)SLEEP_AFTER_MINUTES * 60000UL && !buttons[0].down) sleepUntilPressed();
 
   serviceButtons();
   audioService();

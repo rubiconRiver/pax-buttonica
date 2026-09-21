@@ -4,7 +4,7 @@ A 70 mm round, two-layer board that every part of a button solders onto, so the 
 
 ![top](render-top.png)
 
-**Status: designed, rule-checked, never manufactured.** KiCad's design-rule check passes with no violations and nothing unconnected. No board has been made, and the ESP32 module's footprint was drawn from published dimensions, not from a module in hand. Order a small batch and test one before building six.
+**Revision 0.2. Status: designed, rule-checked, never manufactured.** (v0.1, the first one ordered, is the same board without R2/R3 and the number box, and with C1 nearer the middle; it works the same.) KiCad's design-rule check passes with no violations and nothing unconnected. No board has been made, and the ESP32 module's footprint was drawn from published dimensions, not from a module in hand. Order a small batch and test one before building six.
 
 ## What's on it
 
@@ -14,11 +14,13 @@ A 70 mm round, two-layer board that every part of a button solders onto, so the 
 | SW1 | MX-style keyboard switch | Dead centre. Any Cherry-MX-compatible switch, 3-pin or 5-pin. One side to ground, the other to the 5th pin on the module's power side. |
 | J1 | Battery, 4 × AA NiMH | A 5.08 mm screw terminal, or just solder the holder's leads into the holes. **+ is on the left.** |
 | D1 | 1N5817 diode | Reverse-polarity protection. Stripe to the right (marked K). |
-| C1 | 1000 µF capacitor | Beside the LED connector. Stripe (negative) away from the + mark. With a 12-LED ring, lay it on its side or fit it underneath so it clears the ring. |
+| C1 | 1000 µF capacitor | Near the rim, below the LED connector, where it clears both the 8-LED and the 50 mm 12-LED ring. Stripe (negative) away from the + mark. |
+| R2, R3 | 100 kΩ × 2, optional | A battery gauge: they halve the battery voltage for the ESP32 to read. Fit both and set `BATTERY_PIN` in the firmware (the fourth pin on the 5V side, usually 4); the test bench and the game then show each button's battery. Leave them off and nothing changes. |
 | J2 | LED ring | 5V · DIN · G. Solder the ring's three wires straight in, or fit a pin header. |
 | R1 / JP1 | 330 Ω, optional | JP1 is a jumper that is *already bridged* on the bare board, so with R1 left empty everything works. To use the resistor: fit R1 and cut the thin link between JP1's two pads. |
 | J3 | Three ground holes | For the other leg of any extra buttons. |
 | H1–H4 | M3 mounting holes | On a 46 × 38 mm rectangle. |
+| Back | "No." box | Somewhere to write which button this is. |
 
 The ground is a copper pour on both sides. There is no copper under the module's antenna.
 
@@ -33,7 +35,7 @@ Step by step in [`docs/HARDWARE.md`](../../docs/HARDWARE.md#putting-a-button-tog
 
 ## Ordering (JLCPCB, PCBWay and similar)
 
-Upload `pax-button-gerbers.zip`. The preview should show a round board with a square switch outline in the middle. Then:
+Upload `pax-button-v0.2-gerbers.zip`. The preview should show a round board with a square switch outline in the middle. Then:
 
 - 2 layers · 70 × 70 mm · quantity 5 or 10 (usually the same price)
 - 1.6 mm thick · **green** solder mask (other colours can add days) · HASL finish · 1 oz copper

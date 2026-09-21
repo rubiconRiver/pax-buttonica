@@ -35,8 +35,16 @@ static const int BUTTON_PINS[3] = {3, 5, 6};
 
 // ── Battery sense (optional) ────────────────────────────────────────────────
 // A 1:1 resistor divider from the battery pack to this ADC pin. -1 = not fitted.
+// On carrier board v0.2 with R2 and R3 (100k each) fitted, it is the FOURTH pin on the
+// module's 5V side: read the number printed there (usually 4, on some boards 0).
 #define BATTERY_PIN -1
 #define BATTERY_DIVIDER 2.0f
+
+// ── Falling asleep ──────────────────────────────────────────────────────────
+// If the hub hasn't been heard from for this long (laptop closed, game over, button left
+// switched on in a bag), go dark and sleep. Pressing the big button wakes it. 0 = never.
+// Needs the big button on GPIO 0-5, which it is on the carrier board.
+#define SLEEP_AFTER_MINUTES 10
 
 // ── Radio ───────────────────────────────────────────────────────────────────
 #define ESPNOW_CHANNEL 1

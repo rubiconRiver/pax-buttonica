@@ -77,6 +77,11 @@ export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreb
         <button type="button" className="btn btn--sm btn--icon" title={settings.sound ? 'Mute' : 'Unmute'} onClick={() => settingsStore.set((s) => ({ ...s, sound: !s.sound }))}>
           {settings.sound ? <IconSound /> : <IconMute />}
         </button>
+        {hub.connected && hub.devices.some((d) => d.mv != null && d.mv < 4400) && (
+          <span className="chip" style={{ borderColor: 'var(--danger)', color: '#ffd9de' }} title="Under about 4.4 V the cells are nearly empty. Swap them at the next break.">
+            Low battery: {hub.devices.filter((d) => d.mv != null && d.mv < 4400).map((d) => { const seat = game.bindings.indexOf(d.dev); return seat >= 0 ? game.players[seat].name : d.dev.slice(-4); }).join(', ')}
+          </span>
+        )}
         {serialSupported() && (
           <button type="button" className="btn btn--sm" aria-pressed={hub.connected} title="Connect the USB hub (experimental — no hardware exists yet)" onClick={() => void connectHub()}>
             <IconUsb /> {hub.connected ? `Hub · ${hub.devices.length}` : 'Hub'}
