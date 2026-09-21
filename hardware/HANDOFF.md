@@ -6,6 +6,10 @@ Where the physical side stands, for whoever (or whichever session) picks it up. 
 
 Game night is roughly the first days of October 2026. Six buttons and one hub have to work by then. Favour whatever gets working buttons on the table over elegance.
 
+## Direction change under way (2026-09-21)
+
+Garett is pricing a **no-solder build** in place of the carrier board: M5Stack AtomS3 Lite (ESP32-S3, so ESP-NOW and the wire protocol stay as they are) + M5 Mechanical Key Unit (clicky MX switch with an RGB LED, on a Grove cable) + a 20 cm 29-LED Grove strip wrapped round a printed drum for across-the-room brightness + Atomic PortABC base for the second socket. Power is his own NiMH AAs: 4×AA switched holder, 1N5817 in the red lead, a USB-C plug with screw terminals into the Atom. About $350 before tax for six and a hub. The tick-off order sheet is on the site at `/order.html` (`public/order.html`, a static page). **Nothing is ordered yet; he is holding the JLCPCB order.** If he goes ahead: button firmware needs AtomS3 Lite pin numbers, the shell body needs reworking round the key unit and drum (cap, bezel, hard stop and the AA plinth carry over), and the first unit must settle whether key and strip can share one socket through a Unit Hub or need the PortABC base. Everything under *Decided* below describes the soldered design, which becomes the fallback.
+
 ## Decided
 
 - **Button:** ESP32-C3 SuperMini, one MX-style clicky keyboard switch (Kailh BOX Jade or similar) under a guided dome, 8-LED WS2812 ring (12-LED 50 mm ring also fits), 4 × AA NiMH in a switched holder, 1N5817 reverse-polarity diode, 1000 µF across the LED supply. No speaker.
