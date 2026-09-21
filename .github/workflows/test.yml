@@ -13,7 +13,8 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      # Not `npm ci`: a lockfile written on a Mac lacks the optional Linux packages, and ci refuses to add them.
+      - run: npm install --no-audit --no-fund
       - run: npm run typecheck
       - run: npm test
       - run: npx playwright install --with-deps chromium
