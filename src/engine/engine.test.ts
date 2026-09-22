@@ -292,3 +292,56 @@ describe('objectives and scoring', () => {
     expect(g.laws).toHaveLength(0);
   });
 });
+
+describe('device identities', () => {
+  const setup = (profileIds: (string | undefined)[]) =>
+    createGame(
+      profileIds.map((profileId, i) => ({ name: `P${i}`, faction: `F${i}`, color: 'red', intro: { kind: 'none' }, outro: { kind: 'none' }, buttons: 1, profileId })),
+      { vpTarget: 10, speaker: 0, seating: true, code: 'TEST' },
+      0,
+    );
+
+  it('a device that names a seated player becomes their button, no ritual needed', () => {
+    let g = setup(['a', 'b', 'c']);
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-1', profileId: 'b', at: 1 });
+    expect(g.bindings).toEqual([null, 'web-1', null]);
+    expect(g.devices).toEqual({ 'web-1': 'b' });
+    expect(g.seating?.next).toBe(0);
+    // Claiming carries on past the seat that already has a button.
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'sim-0', input: 'tap', at: 2 });
+    expect(g.seating?.next).toBe(2);
+  });
+
+  it('a device that names nobody is remembered as asked, and a stranger is remembered too', () => {
+    let g = setup(['a', 'b', 'c']);
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-1', profileId: null, at: 1 });
+    expect(g.devices).toEqual({ 'web-1': null });
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-2', profileId: 'zed', at: 1 });
+    expect(g.devices['web-2']).toBe('zed');
+    expect(g.bindings).toEqual([null, null, null]);
+  });
+
+  it('claiming by pressing tells the game who the device is', () => {
+    let g = setup(['a', undefined, 'c']);
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'web-9', input: 'tap', at: 1 });
+    expect(g.bindings[0]).toBe('web-9');
+    expect(g.devices['web-9']).toBe('a');
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'web-8', input: 'tap', at: 2 });
+    expect(g.devices['web-8']).toBeUndefined();
+  });
+
+  it('switching player moves the device; leaving gives the seat up', () => {
+    let g = setup(['a', 'b', 'c']);
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-1', profileId: 'a', at: 1 });
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-1', profileId: 'c', at: 2 });
+    expect(g.bindings).toEqual([null, null, 'web-1']);
+    g = reduce(g, { type: 'IDENTIFY', dev: 'web-1', profileId: null, at: 3 });
+    expect(g.bindings).toEqual([null, null, null]);
+  });
+
+  it('every game has a code', () => {
+    const g = setup(['a']);
+    expect(g.code).toBe('TEST');
+    expect(createGame(setup(['a']).players, { vpTarget: 10, speaker: 0 }, 0).code).toMatch(/^[A-HJ-KM-NP-Z2-9]{4}$/);
+  });
+});

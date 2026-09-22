@@ -20,7 +20,6 @@ export default defineConfig({
   webServer: {
     command: `npm run dev -- --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}`,
-    env: { E2E_FAKE_PEER: '1' },
     reuseExistingServer: true,
     timeout: 60_000,
   },

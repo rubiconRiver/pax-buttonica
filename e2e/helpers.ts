@@ -16,8 +16,8 @@ const IGNORED_CONSOLE = [
 /**
  * Every test gets:
  *  - a clock that only moves when the test says so: a two-second hold takes no time at all, and is exactly two seconds;
- *  - no network beyond the dev server: /api answers "offline" (exactly what Vite dev does in spirit),
- *    the PeerJS broker and Google Fonts are blocked;
+ *  - no network beyond the dev server: /api answers "offline" (exactly what Vite dev does in spirit)
+ *    unless a test installs FakeApi, and Google Fonts are blocked;
  *  - a tripwire: any uncaught exception or console.error fails the test.
  */
 export const test = base.extend<{ problems: string[] }>({
@@ -27,7 +27,6 @@ export const test = base.extend<{ problems: string[] }>({
     await context.clock.install({ time: t0 });
     await context.clock.pauseAt(t0 + 1000);
     await context.route('**/api/**', (r) => r.fulfill({ status: 503, contentType: 'text/plain', body: 'offline' }));
-    await context.route(/peerjs\.com/, (r) => r.abort());
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
     await use(context);
   },

@@ -5,7 +5,6 @@ import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
-import { assignIdentity, resumeRoom, roomStatus, setRoomHandlers, syncRoom, syncTable } from '../../remote/host';
 import { snapshotOf } from '../../remote/messages';
 import { IconClose } from '../Icons';
 import { Scoreboard } from './Scoreboard';
@@ -53,7 +52,6 @@ interface Props {
 export function GameView({ store, game, demo = false, onExit }: Props) {
   const { past } = useStore(store);
   const settings = useStore(settingsStore);
-  const room = useStore(roomStatus);
   const profiles = useStore(profilesStore);
   const [tour, setTour] = useState(demo);
   const [board, setBoard] = useState<'closed' | 'open' | 'auto'>('closed');
@@ -80,28 +78,6 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     return () => setInputHandler(null);
   }, [dispatch]);
 
-  // Phones are buttons too: same inputs in, same lights out.
-  useEffect(() => {
-    setRoomHandlers((dev, input) => dispatch({ type: 'DEVICE_INPUT', dev, input, at: Date.now() }), null);
-    resumeRoom();
-    return () => setRoomHandlers(null, null);
-  }, [dispatch]);
-
-  // A phone whose owner has said who they are takes that player's seat, no ritual needed.
-  // The other way round too: claim a seat by pressing, and the phone learns whose profile it's holding.
-  useEffect(() => {
-    for (const phone of room.phones) {
-      const seat = phone.profileId ? game.players.findIndex((p) => p.profileId === phone.profileId) : -1;
-      if (seat >= 0 && game.bindings[seat] !== phone.dev) {
-        dispatch({ type: 'BIND', seat, dev: phone.dev, at: Date.now() });
-        return; // one change per pass; the effect runs again with the new state
-      }
-      const held = game.bindings.indexOf(phone.dev);
-      const owner = held >= 0 ? game.players[held].profileId : undefined;
-      if (!phone.profileId && owner) assignIdentity(phone.dev, owner);
-    }
-  }, [room.phones, game.players, game.bindings, dispatch]);
-
   // Someone changed their entrance music mid-game: it applies from their next turn.
   useEffect(() => {
     game.players.forEach((p, seat) => {
@@ -111,11 +87,6 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       if (!same) dispatch({ type: 'UPDATE_PLAYER', seat, patch: { name: saved.name, intro: saved.intro, outro: saved.outro } });
     });
   }, [profiles, game.players, dispatch]);
-
-  // Everyone's phone gets the public state of the game, for the "Table" view.
-  useEffect(() => {
-    syncTable(table);
-  }, [table, room.phones]);
 
   // Scoring happens in the status phase, so that's when the scoreboard goes up on its own…
   const phaseKey = game.seating ? 'seating' : game.phase;
@@ -174,24 +145,6 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   }, [game.fxSeq]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const reactions = useReactions(game);
-
-  useEffect(() => {
-    syncRoom((dev) => {
-      const seat = game.bindings.indexOf(dev);
-      const o = seat >= 0 ? outputs[seat] : game.seating ? UNCLAIMED : { color: '#ffffff', mode: 'off' as const, reason: 'Waiting for the next seat claiming' };
-      return {
-        t: 'state',
-        name: seat >= 0 ? game.players[seat].name : null,
-        color: o.color,
-        mode: o.mode,
-        reason: o.reason,
-        calling: game.seating ? game.players[game.seating.next].name : null,
-        holdMs: settings.holdMs,
-        flashMs: settings.flashMs,
-        react: seat >= 0 ? reactions[seat] : null,
-      };
-    });
-  }, [game, outputs, reactions, room.phones, settings.holdMs, settings.flashMs]);
 
   // Six players: each corner of the galaxy is somebody's home system.
   const homes = useMemo<HomeSystem[] | undefined>(() => {

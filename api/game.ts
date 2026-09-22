@@ -1,11 +1,14 @@
 /**
- * The game in progress, kept on the site as well as in the host's browser, so it survives a cleared browser and can
- * be picked up on another laptop.
+ * A game in progress. The host laptop is the authority (it runs the rules); this is the durable copy everyone
+ * else reads: phones, the table view, a laptop picking the game up.
  *
- *   PUT    /api/game?key=…              { game, code? }  the host's copy; the key is the browser's secret
- *   GET    /api/game?key=…              → { game, code, updatedAt }
- *   GET    /api/game?code=ABCD&key=…    pick a game up by its room code: it now belongs to this key
- *   DELETE /api/game?key=…              the game ended
+ *   GET    /api/game?code=ABCD[&after=N]     → { seq, record, updatedAt }, or 204 if nothing changed since N
+ *   GET    /api/game?key=…                   → { games: [{ code, seq, updatedAt, players, round }] }   this host's games
+ *   PUT    /api/game?code=ABCD&key=…  {record}  the host's copy. The first writer's key owns the code.
+ *   POST   /api/game?code=ABCD&key=…&claim=1  → pick the game up: from now on it belongs to this key
+ *   DELETE /api/game?code=ABCD&key=…         the game ended
+ *
+ * A record is { state, settings }: the engine's whole state, plus the few settings phones need (hold time, blink).
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { CODE, KEY, ensureSchema, sql } from './_db.js';
@@ -17,55 +20,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
   try {
     await ensureSchema();
+    const code = String(req.query.code ?? '').toUpperCase();
     const key = String(req.query.key ?? '');
-    if (!KEY.test(key)) return res.status(400).json({ error: 'Bad key.' });
     const now = Date.now();
+    if (code && !CODE.test(code)) return res.status(400).json({ error: 'Bad code.' });
+    if (key && !KEY.test(key)) return res.status(400).json({ error: 'Bad key.' });
 
-    if (req.method === 'GET') {
-      const code = String(req.query.code ?? '').toUpperCase();
-      if (code) {
-        if (!CODE.test(code)) return res.status(400).json({ error: 'Bad code.' });
-        // Picking up from another laptop: the newest game that had this room code changes hands.
-        const [row] = await sql`select key, data, updated_at from games where code = ${code} and updated_at > ${now - STALE_MS} order by updated_at desc limit 1`;
-        if (!row) return res.status(404).json({ error: 'No game with that code.' });
-        if (row.key !== key) {
-          await sql`delete from games where key = ${key}`;
-          await sql`delete from games where key = ${row.key}`;
-          await sql`insert into games (key, code, data, updated_at) values (${key}, ${code}, ${JSON.stringify(row.data)}::jsonb, ${now})`;
-          // The room and the published table come along, so phones keep working without a new code.
-          await sql`update rooms set key = ${key} where code = ${code}`;
-          await sql`update tables set key = ${key} where code = ${code}`;
-        }
-        return res.status(200).json({ game: (row.data as { game: unknown }).game, code, updatedAt: Number(row.updated_at) });
-      }
-      const [row] = await sql`select code, data, updated_at from games where key = ${key}`;
-      if (!row || Number(row.updated_at) < now - STALE_MS) return res.status(404).json({ error: 'No saved game.' });
-      return res.status(200).json({ game: (row.data as { game: unknown }).game, code: row.code, updatedAt: Number(row.updated_at) });
+    if (req.method === 'GET' && !code) {
+      if (!key) return res.status(400).json({ error: 'Code or key needed.' });
+      const rows = await sql`select code, seq, record, updated_at from game_states where host_key = ${key} and updated_at > ${now - STALE_MS} order by updated_at desc limit 5`;
+      return res.status(200).json({
+        games: rows.map((r) => {
+          const state = (r.record as { state: { players: { name: string }[]; round: number; phase: string } }).state;
+          return { code: r.code, seq: Number(r.seq), updatedAt: Number(r.updated_at), players: state.players.map((p) => p.name), round: state.round, phase: state.phase };
+        }),
+      });
     }
 
+    if (req.method === 'GET') {
+      const [row] = await sql`select seq, record, updated_at from game_states where code = ${code}`;
+      if (!row || Number(row.updated_at) < now - STALE_MS) return res.status(404).json({ error: 'No game with that code.' });
+      const after = Number(req.query.after);
+      if (Number.isFinite(after) && Number(row.seq) <= after) return res.status(204).end();
+      return res.status(200).json({ seq: Number(row.seq), record: row.record, updatedAt: Number(row.updated_at) });
+    }
+
+    if (!code || !key) return res.status(400).json({ error: 'Code and key needed.' });
+
     if (req.method === 'PUT') {
-      const b = req.body as { game?: unknown; code?: unknown } | null;
-      const body = JSON.stringify({ game: b?.game ?? null });
-      if (!b || typeof b !== 'object' || !b.game || typeof b.game !== 'object' || body.length > MAX_BYTES) return res.status(400).json({ error: 'Bad game.' });
-      const code = typeof b.code === 'string' && CODE.test(b.code.toUpperCase()) ? b.code.toUpperCase() : null;
-      if (code) {
-        // The room code says which laptop the game belongs to now; a laptop it was picked up from may not overwrite it.
-        const [room] = await sql`select key from rooms where code = ${code}`;
-        if (room && room.key !== key) return res.status(403).json({ error: 'This game was picked up on another laptop.' });
-      }
-      await sql`delete from games where updated_at < ${now - STALE_MS}`;
-      await sql`
-        insert into games (key, code, data, updated_at) values (${key}, ${code}, ${body}::jsonb, ${now})
-        on conflict (key) do update set code = excluded.code, data = excluded.data, updated_at = excluded.updated_at`;
-      return res.status(200).json({ ok: true, updatedAt: now });
+      const record = req.body as { state?: unknown; settings?: unknown } | null;
+      const body = JSON.stringify(record ?? null);
+      if (!record || typeof record !== 'object' || !record.state || typeof record.state !== 'object' || body.length > MAX_BYTES) return res.status(400).json({ error: 'Bad record.' });
+      if (Math.random() < 0.02) await sql`delete from game_states where updated_at < ${now - STALE_MS}`;
+      const rows = await sql`
+        insert into game_states (code, host_key, seq, record, updated_at) values (${code}, ${key}, 1, ${body}::jsonb, ${now})
+        on conflict (code) do update set seq = game_states.seq + 1, record = excluded.record, updated_at = excluded.updated_at
+        where game_states.host_key = excluded.host_key or game_states.updated_at < ${now - STALE_MS}
+        returning seq`;
+      if (!rows.length) return res.status(403).json({ error: 'This game belongs to another laptop.' });
+      return res.status(200).json({ ok: true, seq: Number(rows[0].seq) });
+    }
+
+    if (req.method === 'POST' && req.query.claim) {
+      const [row] = await sql`select seq, record, updated_at from game_states where code = ${code}`;
+      if (!row || Number(row.updated_at) < now - STALE_MS) return res.status(404).json({ error: 'No game with that code.' });
+      await sql`update game_states set host_key = ${key} where code = ${code}`;
+      return res.status(200).json({ seq: Number(row.seq), record: row.record, updatedAt: Number(row.updated_at) });
     }
 
     if (req.method === 'DELETE') {
-      await sql`delete from games where key = ${key}`;
+      await sql`delete from game_states where code = ${code} and host_key = ${key}`;
+      await sql`delete from game_actions where code = ${code}`;
       return res.status(200).json({ ok: true });
     }
 
-    res.setHeader('Allow', 'GET, PUT, DELETE');
+    res.setHeader('Allow', 'GET, PUT, POST, DELETE');
     return res.status(405).json({ error: 'Method not allowed.' });
   } catch (err) {
     console.error(err);

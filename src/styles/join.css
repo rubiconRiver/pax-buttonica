@@ -61,3 +61,4 @@
 .join__tabs button[aria-pressed='true'] { color: #231503; background: linear-gradient(#ffd47c, #e9a02b); }
 .join--table { justify-content: flex-start; align-items: stretch; text-align: left; touch-action: auto; user-select: auto; -webkit-user-select: auto; gap: 14px; }
 .join--table .join__tabs { align-self: center; margin-top: auto; }
+.who-list__item[data-here] { border-color: var(--gold); }

@@ -2,10 +2,10 @@ import type { BrowserContext, Locator, Page } from '@playwright/test';
 import { HOLD_MS, expect } from './helpers';
 
 /**
- * A player's phone: another tab in the same browser, talking to the laptop tab through the fake PeerJS transport.
- * Tabs share localStorage, so each phone keeps its own identity (device id, "who am I") in its sessionStorage instead.
+ * A player's phone: another tab in the same browser, reading the game off the (fake) site and posting presses.
+ * Tabs share localStorage, so each phone keeps its own identity (device id, "who am I") in sessionStorage instead.
  */
-export async function openPhone(context: BrowserContext, code: string, { mobile = true, directLink = true, identity = {} as Record<string, string> } = {}): Promise<Phone> {
+export async function openPhone(context: BrowserContext, code: string, { mobile = true, identity = {} as Record<string, string> } = {}): Promise<Phone> {
   const page = await context.newPage();
   if (mobile) await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
@@ -15,10 +15,31 @@ export async function openPhone(context: BrowserContext, code: string, { mobile 
     Storage.prototype.setItem = function (k, v) { return setItem.call(own(this, k), k, v); };
     Storage.prototype.removeItem = function (k) { return removeItem.call(own(this, k), k); };
   });
-  if (!directLink) await page.addInitScript(() => sessionStorage.setItem('fake-peer-dead', '1'));
   await page.addInitScript((id) => Object.entries(id).forEach(([k, v]) => sessionStorage.setItem(k, v)), identity);
   await page.goto(`/join/${code}`);
   return new Phone(page);
+}
+
+/** The game's code, from the top bar. */
+export async function gameCode(host: Page): Promise<string> {
+  const pill = host.locator('.topbar').getByRole('button', { name: /^[A-Z2-9]{4} · \d+$/ });
+  await expect(pill).toBeVisible();
+  return (await pill.innerText()).split(' ')[0].trim();
+}
+
+/**
+ * Time has to pass for the site to carry a message: the host reads its inbox and writes the game, the phone
+ * reads it. Three rounds cover a message and its answer whichever order the two pages happen to run in.
+ * All tabs in a context share one clock, so it is advanced once per round, in small steps so fetches settle.
+ */
+export async function tick(pages: Page[], rounds = 3) {
+  const clock = pages[0].clock;
+  for (let i = 0; i < rounds; i++) {
+    await clock.fastForward(600);
+    await pages[0].waitForTimeout(80);
+    await clock.fastForward(500);
+    await pages[0].waitForTimeout(80);
+  }
 }
 
 export class Phone {
@@ -39,8 +60,11 @@ export class Phone {
   get who(): Locator {
     return this.page.locator('.join__who');
   }
+  get link(): Locator {
+    return this.page.locator('.join__link');
+  }
   async iAm(name: string) {
-    await this.page.locator('.who-list__item', { hasText: name }).click();
+    await this.page.locator('.who-list__item', { hasText: new RegExp(`^\\s*${name}\\s*$`) }).click();
   }
   async tap() {
     await this.page.clock.fastForward(450);
@@ -60,16 +84,6 @@ export class Phone {
   async expectLight(mode: string) {
     await expect(this.light).toHaveAttribute('data-mode', mode);
   }
-}
-
-/** Open a room from the laptop's Phones menu and return its code. */
-export async function openRoom(host: Page): Promise<string> {
-  await host.getByRole('button', { name: 'Phones', exact: true }).click();
-  await host.getByRole('button', { name: 'Open a room' }).click();
-  await expect(host.locator('.popover--phones .eyebrow')).toHaveText('Scan, or type the code');
-  const code = (await host.locator('.room__code').innerText()).trim();
-  await host.keyboard.press('Escape');
-  return code;
 }
 
 /** A tenth of a second of 440 Hz: a real, decodable WAV small enough to build by hand. */

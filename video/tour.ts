@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type Frame, type FrameLocator, type Locator, type Page } from '@playwright/test';
+import { FakeApi } from '../e2e/api';
 import { inject } from './inject';
 
 /**
@@ -80,7 +81,8 @@ test('record the tour', async ({ browser, baseURL }) => {
     recordVideo: { dir: join(OUT, 'raw'), size: { width: 1920, height: 1080 } },
   });
   await context.addInitScript(inject);
-  await context.route('**/api/**', (r) => r.fulfill({ status: 503, contentType: 'text/plain', body: 'offline' }));
+  // The site, stood in for: the phones read the game and post presses through it.
+  await new FakeApi().install(context);
   const page = await context.newPage();
   await page.goto('/video/stage.html');
   const stage = {
@@ -103,11 +105,9 @@ test('record the tour', async ({ browser, baseURL }) => {
   await host.ui.locator('.setup__options select').selectOption('0');
   await host.press(host.ui.getByRole('button', { name: /Begin round one/ }));
   await host.ui.locator('.center', { hasText: 'Claim your seat' }).waitFor();
-  await host.press(host.ui.getByRole('button', { name: 'Phones', exact: true }));
-  await host.press(host.ui.getByRole('button', { name: 'Open a room' }));
-  await host.ui.locator('.popover--phones .eyebrow', { hasText: 'Scan' }).waitFor();
-  const code = (await host.ui.locator('.room__code').innerText()).trim();
-  await host.frame.locator('body').press('Escape');
+  const pill = host.ui.locator('.topbar').getByRole('button', { name: /^[A-Z2-9]{4} · \d+$/ });
+  const code = (await pill.innerText()).split(' ')[0].trim();
+  await beat(page, 400);
   await page.evaluate(([c]) => Promise.all([(window as any).stage.addPhone('a', 'phone-sarah', "Sarah's phone", `/join/${c}`), (window as any).stage.addPhone('b', 'phone-kyle', "Kyle's phone", `/join/${c}`)]), [code]);
   const sarah = new Actor(page, 'phone-sarah');
   const kyle = new Actor(page, 'phone-kyle');
@@ -127,11 +127,14 @@ test('record the tour', async ({ browser, baseURL }) => {
   await beat(page, 1400);
 
   await stage.caption('No button?', "Your phone is one. <b>Sarah</b> and <b>Kyle</b> scan the code on the screen and say who they are.");
+  await host.click(pill);
   await stage.showPhone('a');
   await stage.showPhone('b');
   await beat(page, 2200);
   await sarah.click(sarah.ui.locator('.who-list__item', { hasText: 'Sarah' }));
-  await beat(page, 1500);
+  await beat(page, 1200);
+  await host.frame.locator('body').press('Escape');
+  await beat(page, 600);
   await host.click(host.ui.locator('.seat--open .dev__dome').first());
   await beat(page, 900);
   await host.click(host.ui.locator('.seat--open .dev__dome').first());

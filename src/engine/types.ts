@@ -118,6 +118,8 @@ export interface LogEntry {
 }
 
 export interface GameState {
+  /** Four letters, read aloud across the table. The game's name on the site. */
+  code: string;
   phase: Phase;
   round: number;
   vpTarget: number;
@@ -157,6 +159,11 @@ export interface GameState {
    * are "sim-0", "sim-1"…; real ones use their hardware id.
    */
   bindings: (string | null)[];
+  /**
+   * Who each device's owner has said they are (a profile id), or null for "nobody in particular".
+   * A device the game has never heard from has no entry, which is how a phone knows to ask.
+   */
+  devices: Record<string, string | null>;
   /** Seat claiming in progress: players press their buttons in seat order. */
   seating: { next: number; resume: boolean } | null;
 
@@ -173,6 +180,8 @@ export interface GameState {
 
 export type Action =
   | { type: 'INPUT'; seat: number; input: DeviceInput; at: number }
+  /** A device's owner says who they are. If that person is at the table, the device becomes their button. */
+  | { type: 'IDENTIFY'; dev: string; profileId: string | null; at: number }
   | { type: 'DEVICE_INPUT'; dev: string; input: DeviceInput; at: number }
   | { type: 'START_SEATING'; at: number }
   | { type: 'BIND'; seat: number; dev: string; at: number }
@@ -210,6 +219,8 @@ export type Action =
 export interface GameOptions {
   vpTarget: number;
   speaker: number;
+  /** The game's code, shown on screen; phones and other laptops find the game by it. Chosen at random if left out. */
+  code?: string;
   primaryStage?: boolean;
   /** Begin with the seat-claiming ritual instead of pre-assigned simulated buttons. */
   seating?: boolean;

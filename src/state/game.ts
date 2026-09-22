@@ -1,4 +1,4 @@
-import { createGame, reduce } from '../engine/engine';
+import { createGame, newCode, reduce } from '../engine/engine';
 import type { Action, GameOptions, GameState, PlayerSetup } from '../engine/types';
 import { createStore, type Store } from './createStore';
 
@@ -24,6 +24,9 @@ export function createGameStore(persistKey?: string): GameStore {
     const slot = raw as GameSlot;
     // Never replay old sounds after a reload.
     if (slot?.game) slot.game.fx = [];
+    // Games saved before codes and device identities existed.
+    if (slot?.game && !slot.game.code) slot.game.code = newCode();
+    if (slot?.game && !slot.game.devices) slot.game.devices = {};
     return { game: slot?.game ?? null, past: slot?.past ?? [] };
   });
 
@@ -38,7 +41,7 @@ export function createGameStore(persistKey?: string): GameStore {
       const next = reduce(game, action);
       // Housekeeping the app does by itself (a renamed profile, a phone taking its owner's seat) is not an undo
       // step: undoing it would only make the app do it again, and Undo would never get past it.
-      const housekeeping = action.type === 'UPDATE_PLAYER' || action.type === 'BIND';
+      const housekeeping = action.type === 'UPDATE_PLAYER' || action.type === 'BIND' || action.type === 'IDENTIFY';
       const changed = !housekeeping && core(next) !== core(game);
       store.set({ game: next, past: changed ? [...past, game].slice(-MAX_UNDO) : past });
     },

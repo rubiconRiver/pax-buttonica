@@ -25,7 +25,8 @@ export function Me() {
     return (
       <WhoAreYou
         eyebrow={sync === 'offline' ? 'Offline: changes stay on this device for now' : 'Pax Buttonica'}
-        profiles={profiles.map((p) => ({ id: p.id, name: p.name, color: p.color }))}
+        profiles={profiles}
+        first={id ? [id] : []}
         onPick={become}
         onCreate={(name) => {
           const existing = profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
@@ -42,7 +43,7 @@ export function Me() {
       <p className="muted">That's you sorted. Next game night, scan the code on the big screen and your phone already knows who you are.</p>
       <Link to="/" className="btn btn--sm btn--ghost">Back to the site</Link>
       <ProfileSheet
-        me={{ id: me.id, name: me.name, color: me.color, intro: me.intro, outro: me.outro }}
+        me={me}
         oops={oops}
         onEdit={(patch) => { setOops(null); patchProfile(me.id, patch); }}
         onClip={async (slot, file) => {

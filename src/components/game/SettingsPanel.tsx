@@ -1,11 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
 import { settingsStore } from '../../state/settings';
-import { saveStatus } from '../../state/gameSync';
+import { syncStatus } from '../../remote/sync';
 
 export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo }: { onClose(): void; onExit(): void; onReseat(): void; onPrimaryStage(on: boolean): void; demo: boolean }) {
   const s = useStore(settingsStore);
-  const saved = useStore(saveStatus);
+  const saved = useStore(syncStatus).site;
   const ref = useRef<HTMLDivElement>(null);
   const set = (patch: Partial<typeof s>) => settingsStore.set((prev) => ({ ...prev, ...patch }));
 
@@ -57,7 +57,7 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
       </button>
       {!demo && (
         <p className="muted settings__save" data-state={saved} title="A copy of the game goes to the site a second after every change, so it can be picked up on another laptop with the room code">
-          {saved === 'saved' ? 'Saved to the site' : saved === 'saving' ? 'Saving to the site…' : saved === 'offline' ? 'Not reaching the site: the game is only in this browser' : saved === 'taken' ? 'Picked up on another laptop: this copy no longer saves' : 'Kept in this browser'}
+          {saved === 'saved' ? 'Saved to the site' : saved === 'saving' ? 'Saving to the site…' : saved === 'offline' ? 'Not reaching the site: the game is only in this browser' : saved === 'taken' ? 'Picked up on another laptop: this copy no longer saves' : 'Saving to the site…'}
         </p>
       )}
       <button type="button" className="btn btn--sm btn--danger" onClick={onExit}>

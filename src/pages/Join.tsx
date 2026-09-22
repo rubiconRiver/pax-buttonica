@@ -1,18 +1,29 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import type { DataConnection, Peer } from 'peerjs';
+import { saveClip } from '../audio/clips';
 import { JINGLES } from '../audio/jingles';
 import { playSound, unlockAudio, type Playing } from '../audio/synth';
 import { Device } from '../components/Device';
 import { Scoreboard } from '../components/game/Scoreboard';
+import { useReactions } from '../components/game/useReactions';
 import { IconClose, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
-import type { SoundRef } from '../engine/types';
-import { CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, cleanCode, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type ProfileCard, type RelayPhone, type TableSnapshot } from '../remote/messages';
-import { uploadClipFile } from '../audio/clips';
+import { CODE_LENGTH, cleanCode } from '../engine/engine';
+import { UNCLAIMED, deriveOutputs, type DeviceOutput } from '../engine/outputs';
+import type { GameState, SoundRef } from '../engine/types';
+import type { GameRecord } from '../remote/sync';
+import { snapshotOf } from '../remote/messages';
+import { useStore } from '../state/createStore';
+import { createProfile, patchProfile, profilesStore, type Profile } from '../state/profiles';
 import '../styles/setup.css';
 import '../styles/game.css';
 import '../styles/join.css';
+
+/**
+ * Your phone as a button. The phone reads the whole game off the site and works out its own light with the
+ * same code the host uses; presses go back through the site's inbox. Nothing here decides anything about
+ * the game: the host laptop does that.
+ */
 
 function deviceId(): string {
   const key = 'pb.phone.dev';
@@ -24,153 +35,75 @@ function deviceId(): string {
   return id;
 }
 
-/** 'direct' is the WebRTC link; 'site' is polling /api/room; 'lost' means neither is answering. */
-type Link = 'connecting' | 'direct' | 'site' | 'lost';
 export const WHO = 'pb.phone.profile';
-const SITE_POLL_MS = 1000;
-const SITE_HELLO_MS = 15_000;
+export const MAX_CLIP_TRANSFER = 4 * 1024 * 1024;
+const POLL_MS = 800;
+const HELLO_MS = 15_000;
+const MISSES_BEFORE_LOST = 5;
 
-function useRoom(code: string | null) {
-  const [direct, setDirect] = useState(false);
-  const [site, setSite] = useState<'trying' | 'up' | 'down'>('trying');
-  /** Once anything has worked, a quiet spell is "reconnecting", not "connecting". */
-  const [ever, setEver] = useState(false);
-  const [frame, setFrame] = useState<PhoneFrame | null>(null);
-  const [profiles, setProfiles] = useState<ProfileCard[]>([]);
-  /** undefined = the host hasn't told us yet; null = nobody in particular. */
-  const [me, setMe] = useState<MyProfile | null | undefined>(undefined);
-  const [oops, setOops] = useState<string | null>(null);
-  const [table, setTable] = useState<TableSnapshot | null>(null);
-  const conn = useRef<DataConnection | null>(null);
-  const directRef = useRef(false);
-  const seenOops = useRef(0);
+type Link = 'connecting' | 'connected' | 'lost' | 'nogame';
+type Outbound = { type: 'input'; input: 'tap' | 'double' | 'hold' } | { type: 'identify'; profileId: string | null } | { type: 'hello' };
 
-  const learn = (profile: MyProfile | null) => {
-    setMe(profile);
-    // Remember who we are, so tomorrow's game doesn't have to ask.
-    if (profile) localStorage.setItem(WHO, profile.id);
-  };
+function useGame(code: string) {
+  const [link, setLink] = useState<Link>('connecting');
+  const [record, setRecord] = useState<GameRecord | null>(null);
+  const seq = useRef(0);
+  const misses = useRef(0);
+  const pollSoon = useRef(0);
 
-  // The direct link. It comes up when the network allows; until then the site carries everything.
-  useEffect(() => {
-    if (!code) return;
-    let peer: Peer | null = null;
-    let dead = false;
-    let retry = 0;
-
-    const dial = () => {
-      if (dead || !peer || peer.destroyed) return;
-      const c = peer.connect(ROOM_PREFIX + code, { reliable: true });
-      conn.current = c;
-      c.on('open', () => {
-        directRef.current = true;
-        setDirect(true);
-        setEver(true);
-        c.send({ t: 'hello', dev: deviceId(), profileId: localStorage.getItem(WHO) } satisfies PhoneToHost);
-      });
-      c.on('data', (raw) => {
-        const msg = raw as HostToPhone;
-        if (msg?.t === 'state') setFrame(msg);
-        else if (msg?.t === 'profiles') setProfiles(msg.list);
-        else if (msg?.t === 'table') setTable(msg.table);
-        else if (msg?.t === 'oops') setOops(msg.message);
-        else if (msg?.t === 'me') learn(msg.profile);
-      });
-      const redial = () => {
-        if (dead || conn.current !== c) return;
-        directRef.current = false;
-        setDirect(false);
-        window.clearTimeout(retry);
-        retry = window.setTimeout(dial, 2000);
-      };
-      c.on('close', redial);
-      c.on('error', redial);
-      // A dial that never completes (the network has no path) is given up on, and tried again later.
-      window.setTimeout(() => {
-        if (conn.current === c && !c.open && !dead) {
-          c.close();
-          redial();
-        }
-      }, 20_000);
-    };
-
-    void import('peerjs').then(({ Peer: PeerCtor }) => {
-      if (dead) return;
-      peer = new PeerCtor();
-      peer.on('open', dial);
-      peer.on('disconnected', () => peer && !peer.destroyed && peer.reconnect());
-      // The host isn't there (yet, or any more): keep knocking.
-      peer.on('error', () => {
-        if (dead) return;
-        directRef.current = false;
-        setDirect(false);
-        window.clearTimeout(retry);
-        retry = window.setTimeout(dial, 2500);
-      });
-    });
-
-    return () => {
-      dead = true;
-      directRef.current = false;
-      window.clearTimeout(retry);
-      peer?.destroy();
-    };
+  const look = useCallback(async () => {
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const res = await fetch(`/api/game?code=${code}&after=${seq.current}`);
+      if (res.status === 204) {
+        misses.current = 0;
+        setLink('connected');
+        return;
+      }
+      if (res.status === 404) return setLink('nogame');
+      if (!res.ok || !(res.headers.get('content-type') ?? '').includes('json')) throw new Error(String(res.status));
+      const body = (await res.json()) as { seq: number; record: GameRecord };
+      misses.current = 0;
+      seq.current = body.seq;
+      setRecord(body.record);
+      setLink('connected');
+    } catch {
+      if (++misses.current >= MISSES_BEFORE_LOST) setLink('lost');
+    }
   }, [code]);
 
-  const post = (msg: PhoneToHost) =>
-    fetch(`/api/room?code=${code}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: deviceId(), ...msg }) })
-      .then((r) => r.ok)
-      .catch(() => false);
-
-  // Through the site: say hello now and then, and read what the host has left for us.
   useEffect(() => {
-    if (!code) return;
     let live = true;
-    let misses = 0;
-    const hello = () => !directRef.current && void post({ t: 'hello', dev: deviceId(), profileId: localStorage.getItem(WHO) });
-    const look = async () => {
-      if (directRef.current || document.visibilityState !== 'visible') return;
-      try {
-        const res = await fetch(`/api/room?code=${code}&dev=${deviceId()}`);
-        if (!live) return;
-        if (!res.ok || !(res.headers.get('content-type') ?? '').includes('json')) throw new Error(String(res.status));
-        const room = (await res.json()) as { table: TableSnapshot | null; profiles: ProfileCard[]; phone: RelayPhone | null };
-        misses = 0;
-        setSite('up');
-        setEver(true);
-        setProfiles(room.profiles);
-        if (room.table) setTable(room.table);
-        if (room.phone?.state) setFrame(room.phone.state);
-        if (room.phone && 'me' in room.phone) learn(room.phone.me ?? null);
-        if (room.phone?.oops && room.phone.oops.seq > seenOops.current) {
-          seenOops.current = room.phone.oops.seq;
-          setOops(room.phone.oops.message);
-        }
-      } catch {
-        if (live && ++misses >= 3) setSite('down');
-      }
-    };
-    hello();
     void look();
-    const t1 = window.setInterval(look, SITE_POLL_MS);
-    const t2 = window.setInterval(hello, SITE_HELLO_MS);
+    const t = window.setInterval(() => live && void look(), POLL_MS);
     return () => {
       live = false;
-      window.clearInterval(t1);
-      window.clearInterval(t2);
+      window.clearInterval(t);
+      window.clearTimeout(pollSoon.current);
     };
-  }, [code]);
+  }, [look]);
 
-  const say = (msg: PhoneToHost) => {
-    if (conn.current?.open) conn.current.send(msg);
-    else void post(msg);
-  };
-  const forget = () => {
-    localStorage.removeItem(WHO);
-    say({ t: 'leave' });
-  };
-  const link: Link = direct ? 'direct' : site === 'up' ? 'site' : site === 'down' || ever ? 'lost' : 'connecting';
-  return { link, frame, table, profiles, me, oops, clearOops: () => setOops(null), say, forget };
+  const say = useCallback(
+    (msg: Outbound) => {
+      void fetch(`/api/actions?code=${code}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: deviceId(), ...msg }) })
+        .then(() => {
+          // The host answers within about a second; look a little sooner than the next scheduled poll.
+          window.clearTimeout(pollSoon.current);
+          pollSoon.current = window.setTimeout(() => void look(), 600);
+        })
+        .catch(() => {});
+    },
+    [code, look],
+  );
+
+  // Presence: so the host can count the phones in the room.
+  useEffect(() => {
+    say({ type: 'hello' });
+    const t = window.setInterval(() => document.visibilityState === 'visible' && say({ type: 'hello' }), HELLO_MS);
+    return () => window.clearInterval(t);
+  }, [say]);
+
+  return { link, record, say };
 }
 
 /** Keep the phone awake while it's being a button. */
@@ -200,7 +133,7 @@ export function Join() {
       <div className="join join--ask">
         <div className="eyebrow">Pax Buttonica</div>
         <h1>Your phone is the button</h1>
-        <p className="muted">Type the room code from the big screen.</p>
+        <p className="muted">Type the game's code from the big screen.</p>
         <form onSubmit={(e) => { e.preventDefault(); if (typed.length === CODE_LENGTH) navigate(`/join/${typed}`); }}>
           <input
             className="join__code"
@@ -211,47 +144,51 @@ export function Join() {
             autoCapitalize="characters"
             autoComplete="off"
             spellCheck={false}
-            aria-label="Room code"
+            aria-label="Game code"
           />
           <button type="submit" className="btn btn--gold btn--lg" disabled={typed.length !== CODE_LENGTH}>Join the table</button>
         </form>
       </div>
     );
   }
-  return <PhoneButton code={code} />;
+  // A new code is a new game: nothing from the last one carries over.
+  return <PhoneButton key={code} code={code} />;
 }
 
+const OFF: DeviceOutput = { color: '#ffffff', mode: 'off', reason: '' };
+
 function PhoneButton({ code }: { code: string }) {
-  const { link, frame, table, profiles, me, oops, clearOops, say, forget } = useRoom(code);
+  const { link, record, say } = useGame(code);
+  const profiles = useStore(profilesStore);
   const [view, setView] = useState<'button' | 'table'>('button');
-  const [anonymous, setAnonymous] = useState(() => sessionStorage.getItem('pb.phone.anon') === '1');
   const [editing, setEditing] = useState(false);
-  const [oopsLocal, setOopsLocal] = useState<string | null>(null);
-  const send = (e: 'tap' | 'double' | 'hold') => say({ t: 'btn', e });
+  const [oops, setOops] = useState<string | null>(null);
+  /** null: not decided yet (follows the game); true: showing the question; false: answered or skipped. */
+  const [asking, setAsking] = useState<boolean | null>(null);
   const [size, setSize] = useState(280);
   const lastMode = useRef<string | null>(null);
-  const connected = link === 'direct' || link === 'site';
+  const dev = deviceId();
+  const connected = link === 'connected';
   useWakeLock(connected);
 
-  // The table view also arrives through the site, so it works even if this phone can't reach the laptop directly.
-  const [polled, setPolled] = useState<TableSnapshot | null>(null);
-  useEffect(() => {
-    if (view !== 'table') return;
-    let live = true;
-    const look = () =>
-      fetch(`/api/table?code=${code}`)
-        .then((r) => (r.ok && (r.headers.get('content-type') ?? '').includes('json') ? r.json() : null))
-        .then((j) => live && j?.table && setPolled(j.table as TableSnapshot))
-        .catch(() => {});
-    void look();
-    const timer = window.setInterval(look, 4000);
-    return () => {
-      live = false;
-      window.clearInterval(timer);
-    };
-  }, [view, code]);
-  const shown = connected && table ? table : polled ?? table;
+  const game: GameState | null = record?.state ?? null;
+  const seat = game ? game.bindings.indexOf(dev) : -1;
+  const known = game ? dev in game.devices : false;
+  const meId = game?.devices[dev] ?? null;
+  const me = meId ? profiles.find((p) => p.id === meId) : undefined;
+  const outputs = useMemo(() => (game ? deriveOutputs(game) : []), [game]);
+  const reactions = useReactions(game ?? EMPTY);
+  const output = seat >= 0 ? outputs[seat] : game?.seating ? UNCLAIMED : OFF;
+  const table = useMemo(() => (game ? snapshotOf(game) : null), [game]);
 
+  // The question is asked once per game: the first time this phone shows up in a game that doesn't know it.
+  useEffect(() => {
+    if (game && asking === null) setAsking(!known);
+  }, [game, known, asking]);
+  // Remember who we are, so the profile page and the next game's list know.
+  useEffect(() => {
+    if (meId) localStorage.setItem(WHO, meId);
+  }, [meId]);
 
   useEffect(() => {
     const fit = () => setSize(Math.round(Math.min(window.innerWidth * 0.82, window.innerHeight * 0.5, 460)));
@@ -262,22 +199,40 @@ function PhoneButton({ code }: { code: string }) {
 
   // A buzz in the pocket when the button starts asking for attention.
   useEffect(() => {
-    const mode = frame?.mode ?? null;
+    const mode = output.mode;
     if (mode !== lastMode.current && (mode === 'pulse' || mode === 'flash')) navigator.vibrate?.(mode === 'flash' ? [120, 80, 120] : 200);
     lastMode.current = mode;
-  }, [frame?.mode]);
+  }, [output.mode]);
 
-  const live = connected && frame;
+  const become = (id: string) => {
+    setAsking(false);
+    say({ type: 'identify', profileId: id });
+  };
 
-  if (connected && me === null && !anonymous) {
+  if (link === 'nogame') {
+    return (
+      <div className="join join--ask">
+        <div className="eyebrow">Pax Buttonica</div>
+        <h1>No game with that code</h1>
+        <p className="muted">Check the four letters on the big screen. Codes are retired when a game ends.</p>
+        <a href="/join" className="btn btn--sm btn--ghost">Type another code</a>
+      </div>
+    );
+  }
+
+  if (connected && game && asking) {
     return (
       <WhoAreYou
         profiles={profiles}
-        onPick={(id) => say({ t: 'iam', id })}
-        onCreate={(name) => say({ t: 'create', name })}
+        first={[...game.players.map((p) => p.profileId).filter((x): x is string => !!x), localStorage.getItem(WHO) ?? '']}
+        onPick={become}
+        onCreate={(name) => {
+          const existing = profiles.find((p) => p.name.toLowerCase() === name.toLowerCase());
+          become((existing ?? createProfile(name)).id);
+        }}
         onSkip={() => {
-          sessionStorage.setItem('pb.phone.anon', '1');
-          setAnonymous(true);
+          setAsking(false);
+          say({ type: 'identify', profileId: null });
         }}
       />
     );
@@ -293,72 +248,74 @@ function PhoneButton({ code }: { code: string }) {
   if (view === 'table') {
     return (
       <div className="join join--table">
-        {shown ? <Scoreboard table={shown} /> : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game to start…</p>}
+        {table ? <Scoreboard table={table} /> : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game…</p>}
         {tabs}
       </div>
     );
   }
 
+  const live = connected && !!game;
+  const name = seat >= 0 ? game!.players[seat].name : null;
+  const calling = game?.seating ? game.players[game.seating.next].name : null;
+
   return (
     <div
       className="join"
       onPointerDownCapture={unlockAudio}
-      style={{ '--pc': live ? frame.color : '#8d97af', '--flash-ms': `${frame?.flashMs ?? 2000}ms` } as CSSProperties}
+      style={{ '--pc': live ? output.color : '#8d97af', '--flash-ms': `${record?.settings.flashMs ?? 2000}ms` } as CSSProperties}
     >
       <header className="join__top">
         {me ? (
           <button type="button" className="btn btn--sm" onClick={() => setEditing(true)}>{me.name} · profile</button>
         ) : (
-          <button type="button" className="btn btn--sm btn--ghost" onClick={() => { sessionStorage.removeItem('pb.phone.anon'); setAnonymous(false); }}>Who are you?</button>
+          <button type="button" className="btn btn--sm btn--ghost" onClick={() => setAsking(true)}>Who are you?</button>
         )}
-        <span className="join__link" data-link={link} title={link === 'site' ? 'Through the site: about a second behind. A direct link to the laptop is tried in the background.' : undefined}>
-          {link === 'direct' ? 'Connected' : link === 'site' ? 'Connected via the site' : link === 'lost' ? 'Reconnecting…' : 'Connecting…'}
-        </span>
+        <span className="join__link" data-link={link}>{link === 'connected' ? 'Connected' : link === 'lost' ? 'Reconnecting…' : 'Connecting…'}</span>
       </header>
 
-      <div className="join__who">
-        {live ? (frame.name ?? me?.name ?? (frame.calling ? 'Unclaimed' : 'Spectating')) : ' '}
-      </div>
+      <div className="join__who">{live ? (name ?? me?.name ?? (calling ? 'Unclaimed' : 'Spectating')) : ' '}</div>
 
       <Device
-        color={live ? frame.color : '#ffffff'}
-        mode={live ? frame.mode : 'off'}
+        color={live ? output.color : '#ffffff'}
+        mode={live ? output.mode : 'off'}
         size={size}
-        holdMs={frame?.holdMs ?? 2000}
+        holdMs={record?.settings.holdMs ?? 2000}
         label="Your button"
-        react={live ? frame.react : null}
-        onInput={(input) => (input === 'tap' || input === 'double' || input === 'hold') && send(input)}
+        react={live && seat >= 0 ? reactions[seat] : null}
+        onInput={(input) => (input === 'tap' || input === 'double' || input === 'hold') && say({ type: 'input', input })}
       />
 
       <p className="join__why">
         {!live
-          ? connected ? 'Waiting for the game to start…' : 'Looking for the table…'
-          : frame.calling && !frame.name
-            ? <>Now calling <b>{frame.calling}</b>. If that's you, press.</>
-            : !frame.name && me
+          ? 'Looking for the table…'
+          : calling && !name
+            ? <>Now calling <b>{calling}</b>. If that's you, press.</>
+            : !name && me
               ? "You're not seated in this game."
-              : frame.reason}
+              : output.reason}
       </p>
-      <p className="join__help">Room {code} · Tap: done · Double-tap: strategy card · Hold: end turn</p>
+      <p className="join__help">Game {code} · Tap: done · Double-tap: strategy card · Hold: end turn</p>
       {tabs}
 
       {editing && me && (
         <ProfileSheet
           me={me}
-          oops={oops ?? oopsLocal}
-          onEdit={(patch) => { clearOops(); setOopsLocal(null); say({ t: 'edit', patch }); }}
-          onClip={async (slot, file, data) => {
-            clearOops();
-            const name = file.name.replace(/\.[^.]+$/, '');
-            if (link === 'direct') return say({ t: 'clip', slot, name, mime: file.type, data });
-            // Through the site: put the clip where the laptop will look for it, then just point at it.
+          oops={oops}
+          onEdit={(patch) => { setOops(null); patchProfile(me.id, patch); }}
+          onClip={async (slot, file) => {
             try {
-              say({ t: 'clip', slot, name, id: await uploadClipFile(file) });
+              setOops(null);
+              patchProfile(me.id, { [slot]: { kind: 'clip', ...(await saveClip(file)) } });
             } catch (err) {
-              setOopsLocal((err as Error).message);
+              setOops((err as Error).message);
             }
           }}
-          onSwitch={() => { setEditing(false); forget(); }}
+          onSwitch={() => {
+            setEditing(false);
+            localStorage.removeItem(WHO);
+            say({ type: 'identify', profileId: null });
+            setAsking(true);
+          }}
           onClose={() => setEditing(false)}
         />
       )}
@@ -366,23 +323,28 @@ function PhoneButton({ code }: { code: string }) {
   );
 }
 
-export function WhoAreYou({ profiles, onPick, onCreate, onSkip, eyebrow = 'Connected' }: { profiles: ProfileCard[]; onPick(id: string): void; onCreate(name: string): void; onSkip?(): void; eyebrow?: string }) {
+const EMPTY = { players: [], fx: [] } as unknown as GameState;
+
+export function WhoAreYou({ profiles, first = [], onPick, onCreate, onSkip, eyebrow = 'Connected' }: { profiles: Profile[]; first?: string[]; onPick(id: string): void; onCreate(name: string): void; onSkip?(): void; eyebrow?: string }) {
   const [name, setName] = useState('');
+  // The people at this table first, then everyone else who has ever saved a profile.
+  const rank = (p: Profile) => (first.includes(p.id) ? 0 : 1);
+  const list = [...profiles].sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name));
   return (
     <div className="join join--ask">
       <div className="eyebrow">{eyebrow}</div>
       <h1>Who are you?</h1>
-      {profiles.length > 0 && (
+      {list.length > 0 && (
         <div className="who-list">
-          {profiles.map((p) => (
-            <button key={p.id} type="button" className="btn who-list__item" style={{ '--pc': colorById(p.color).led } as CSSProperties} onClick={() => onPick(p.id)}>
+          {list.map((p) => (
+            <button key={p.id} type="button" className="btn who-list__item" data-here={rank(p) === 0 || undefined} style={{ '--pc': colorById(p.color).led } as CSSProperties} onClick={() => onPick(p.id)}>
               <i /> {p.name}
             </button>
           ))}
         </div>
       )}
       <form onSubmit={(e) => { e.preventDefault(); if (name.trim()) onCreate(name.trim()); }}>
-        <p className="muted">{profiles.length ? 'Not on the list?' : 'Nobody here yet. Be the first.'}</p>
+        <p className="muted">{list.length ? 'Not on the list?' : 'Nobody here yet. Be the first.'}</p>
         <input className="input join__name" value={name} maxLength={14} placeholder="Your name" onChange={(e) => setName(e.target.value)} aria-label="Your name" />
         <button type="submit" className="btn btn--gold" disabled={!name.trim()}>That's me</button>
       </form>
@@ -394,10 +356,10 @@ export function WhoAreYou({ profiles, onPick, onCreate, onSkip, eyebrow = 'Conne
 let preview: Playing | null = null;
 
 export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
-  me: MyProfile;
+  me: Pick<Profile, 'id' | 'name' | 'color' | 'intro' | 'outro'>;
   oops: string | null;
   onEdit(patch: { name?: string; color?: string; intro?: SoundRef; outro?: SoundRef }): void;
-  onClip(slot: 'intro' | 'outro', file: File, data: ArrayBuffer): void;
+  onClip(slot: 'intro' | 'outro', file: File): void;
   onSwitch(): void;
   onClose(): void;
 }) {
@@ -440,14 +402,14 @@ export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
           type="file"
           accept="audio/*"
           hidden
-          onChange={async (e) => {
+          onChange={(e) => {
             const f = e.target.files?.[0];
             e.target.value = '';
             if (!f) return;
             if (!f.type.startsWith('audio/')) return setError('That is not an audio file.');
             if (f.size > MAX_CLIP_TRANSFER) return setError('Keep clips under 4 MB. Trim it to the good part.');
             setError(null);
-            onClip(which, f, await f.arrayBuffer());
+            onClip(which, f);
           }}
         />
       </div>

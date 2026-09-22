@@ -7,7 +7,7 @@ import { useStore } from '../../state/createStore';
 import { settingsStore } from '../../state/settings';
 import { IconPhone, IconGear, IconLock, IconMute, IconPause, IconPlay, IconSound, IconUndo, IconUsb } from '../Icons';
 import { PhonesPanel } from './PhonesPanel';
-import { roomStatus } from '../../remote/host';
+import { syncStatus } from '../../remote/sync';
 import { SettingsPanel } from './SettingsPanel';
 
 const PHASES: { id: Phase; label: string }[] = [
@@ -30,7 +30,7 @@ interface Props {
 export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreboard }: Props) {
   const settings = useStore(settingsStore);
   const hub = useStore(hubStatus);
-  const room = useStore(roomStatus);
+  const sync = useStore(syncStatus);
   const [showSettings, setShowSettings] = useState(false);
   const [showPhones, setShowPhones] = useState(false);
 
@@ -87,12 +87,14 @@ export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreb
             <IconUsb /> {hub.connected ? `Hub · ${hub.devices.length}` : 'Hub'}
           </button>
         )}
-        <div className="popover-anchor">
-          <button type="button" className="btn btn--sm" aria-pressed={showPhones || room.state === 'open'} title="Let players use their phones as buttons" onClick={() => { sfx.click(); setShowPhones((v) => !v); }}>
-            <IconPhone /> {room.state === 'open' ? `${room.code} · ${room.phones.length}` : 'Phones'}
-          </button>
-          {showPhones && <PhonesPanel onClose={() => setShowPhones(false)} />}
-        </div>
+        {!demo && (
+          <div className="popover-anchor">
+            <button type="button" className="btn btn--sm" aria-pressed={showPhones} title="The game's code. Phones join with it, and it's how another laptop picks the game up." onClick={() => { sfx.click(); setShowPhones((v) => !v); }}>
+              <IconPhone /> {game.code} · {sync.phones.length}
+            </button>
+            {showPhones && <PhonesPanel game={game} onClose={() => setShowPhones(false)} />}
+          </div>
+        )}
         <div className="popover-anchor">
           <button type="button" className="btn btn--sm btn--icon" aria-pressed={showSettings} title="Settings" onClick={() => { sfx.click(); setShowSettings((v) => !v); }}>
             <IconGear />

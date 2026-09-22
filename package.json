@@ -18,7 +18,6 @@
     "@neondatabase/serverless": "^1.1.0",
     "@types/node": "^26.6.2",
     "marked": "^18.0.13",
-    "peerjs": "^1.5.5",
     "qrcode": "^1.5.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

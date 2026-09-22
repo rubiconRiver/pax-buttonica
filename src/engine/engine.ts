@@ -13,6 +13,17 @@ export const simDevice = (spot: number) => `sim-${spot}`;
 
 // ── Construction ────────────────────────────────────────────────────────────
 
+/** No 0/O, 1/I/L: codes get read aloud across a table. */
+export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const CODE_LENGTH = 4;
+export const cleanCode = (raw: string) =>
+  raw.toUpperCase().split('').filter((ch) => CODE_ALPHABET.includes(ch)).join('').slice(0, CODE_LENGTH);
+export const newCode = () => {
+  const bytes = new Uint8Array(CODE_LENGTH);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join('');
+};
+
 export function createGame(setups: PlayerSetup[], options: GameOptions, at: number): GameState {
   const players: Player[] = setups.map((s) => ({
     ...s,
@@ -27,6 +38,7 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
   }));
   const naalu = players.findIndex((p) => p.faction === NAALU);
   const g: GameState = {
+    code: options.code ?? newCode(),
     phase: 'strategy',
     round: 0,
     vpTarget: options.vpTarget,
@@ -49,6 +61,7 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     agenda: null,
     winner: null,
     bindings: players.map((_, i) => (options.seating ? null : simDevice(i))),
+    devices: {},
     seating: options.seating ? { next: 0, resume: false } : null,
     clockStartedAt: null,
     clockBanked: 0,
@@ -433,6 +446,8 @@ function claim(g: GameState, dev: string, at: number) {
   if (!s || g.bindings.includes(dev)) return;
   const seat = s.next;
   g.bindings[seat] = dev;
+  // Claiming by pressing is also an answer to "who are you?", if that player has a saved profile.
+  if (g.players[seat].profileId) g.devices[dev] = g.players[seat].profileId!;
   log(g, `${g.players[seat].name} claims seat ${seat + 1}.`, { seat });
   fx(g, { kind: 'claim', seat });
   advanceSeating(g, at);
@@ -451,9 +466,20 @@ function bind(g: GameState, seat: number, dev: string, at: number) {
   if (seat < 0 || seat >= g.players.length || g.bindings[seat] === dev) return;
   g.bindings = g.bindings.map((b) => (b === dev ? null : b));
   g.bindings[seat] = dev;
+  if (g.players[seat].profileId) g.devices[dev] = g.players[seat].profileId!;
   log(g, `${g.players[seat].name} joins on their own device.`, { seat });
   fx(g, { kind: 'claim', seat });
   advanceSeating(g, at);
+}
+
+function identify(g: GameState, dev: string, profileId: string | null, at: number) {
+  g.devices[dev] = profileId;
+  const seat = profileId ? g.players.findIndex((p) => p.profileId === profileId) : -1;
+  if (seat >= 0 && g.bindings[seat] !== dev) bind(g, seat, dev, at);
+  else if (seat < 0 && profileId === null) {
+    // "Nobody in particular": the device gives up any seat it held.
+    if (g.bindings.includes(dev)) g.bindings = g.bindings.map((b) => (b === dev ? null : b));
+  }
 }
 
 function finishSeating(g: GameState, at: number) {
@@ -494,6 +520,9 @@ export function reduce(state: GameState, action: Action): GameState {
     }
     case 'BIND':
       bind(g, action.seat, action.dev, action.at);
+      break;
+    case 'IDENTIFY':
+      identify(g, action.dev.slice(0, 40), action.profileId, action.at);
       break;
     case 'UPDATE_PLAYER': {
       const p = g.players[action.seat];

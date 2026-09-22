@@ -10,7 +10,7 @@ Private GitHub repo: rubiconRiver/pax-buttonica. Owner: Garett (Canada; knows so
 |---|---|
 | `src/engine/` | Pure rules engine (`reduce`, `deriveOutputs`), vitest tests |
 | `src/` (rest) | Vite + React + TS app: simulated buttons, demo, play, scoreboard, phones-as-buttons |
-| `api/` | Vercel functions on Neon Postgres (profiles, clips, table). No auth yet, by choice |
+| `api/` | Vercel functions on Neon Postgres: `game` (the record, by code), `actions` (phones' inbox), `profiles`, `clips`. No auth yet, by choice |
 | `docs/` | `BUTTON_STANDARD.md` (wire protocol), `HARDWARE.md` (build guide), `SHOPPING.md`; the first two are rendered on the site at `/standard` and `/hardware` |
 | `e2e/`, `video/` | Playwright browser tests, and the scripted recording of the demo video |
 | `firmware/` | Arduino sketches: `hub/`, `button/` (+ `config.h`) |
@@ -47,6 +47,7 @@ kicad-cli pcb drc pax-button.kicad_pcb     # must stay at 0 violations, 0 unconn
 ## Ground rules
 
 - Game logic lives in the web app. Hub and buttons stay dumb: report presses, show what they're told.
+- The host laptop (the `/play` screen) is the only authority; the site holds a copy of the game (one record per game, named by its four-letter code) that it rewrites after every change. Phones read that record and derive their own light with the engine; presses go back through the inbox. No WebRTC. Only `/play` runs the sync: another tab in the same browser must never act as a second host.
 - The standard button has no speaker; the laptop plays every sound.
 - The UI has to feel crisp and look like TI (chamfered frames, not bubbly). The site doubles as a recruiting demo.
 - Nothing on the hardware side has been flashed or manufactured yet. Say "compiles" or "passes DRC", never "works", until it has run on real parts.

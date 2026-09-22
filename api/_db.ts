@@ -4,55 +4,61 @@ export const sql = neon(process.env.DATABASE_URL!);
 
 let ready: Promise<void> | null = null;
 
-/** Creates the tables on first use; after that it's a resolved promise per warm function. */
+/**
+ * Creates the tables on first use; after that it's a resolved promise per warm function.
+ *
+ * Many functions start cold at once when phones are polling, and Postgres's `create table if not exists` is not
+ * safe to race: the losers fail with "duplicate key … pg_type_typname_nsp_index" even though the table is there.
+ * So the whole thing runs under an advisory lock, in one transaction, and a lost race is treated as success.
+ */
 export function ensureSchema(): Promise<void> {
-  ready ??= (async () => {
-    await sql`create table if not exists profiles (
+  ready ??= createSchema().catch((err: { code?: string }) => {
+    if (err?.code === '23505' || err?.code === '42P07') return; // somebody else created it first: fine
+    ready = null; // a real failure is retried by the next request
+    throw err;
+  });
+  return ready;
+}
+
+async function createSchema() {
+  await sql.transaction((tx) => [
+    tx`select pg_advisory_xact_lock(7233661)`,
+    tx`create table if not exists profiles (
       id text primary key,
       data jsonb not null,
       updated_at bigint not null,
       deleted boolean not null default false
-    )`;
-    await sql`create table if not exists clips (
+    )`,
+    tx`create table if not exists clips (
       id text primary key,
       name text not null,
       mime text not null,
       bytes bytea not null,
       created_at bigint not null
-    )`;
-    await sql`create table if not exists tables (
+    )`,
+    // The game in progress: one record per game, written by its host after every change. The code is the
+    // game's name: phones, the table view and other laptops all find it by that.
+    tx`create table if not exists game_states (
       code text primary key,
-      key text not null,
-      data jsonb not null,
+      host_key text not null,
+      seq bigint not null default 0,
+      record jsonb not null,
       updated_at bigint not null
-    )`;
-    // Phones as buttons, when they can't reach the laptop directly: the host writes each phone's light here and
-    // reads presses back out of the inbox.
-    await sql`create table if not exists rooms (
-      code text primary key,
-      key text not null,
-      data jsonb not null,
-      updated_at bigint not null
-    )`;
-    await sql`create table if not exists room_inbox (
+    )`,
+    tx`create index if not exists game_states_host on game_states (host_key, updated_at)`,
+    // Presses and answers from phones, waiting for the host to read them.
+    tx`create table if not exists game_actions (
       seq bigserial primary key,
       code text not null,
       data jsonb not null,
       at bigint not null
-    )`;
-    await sql`create index if not exists room_inbox_code_seq on room_inbox (code, seq)`;
-    // A game in progress, so a laptop that loses its browser data (or a different laptop) can pick it up.
-    await sql`create table if not exists games (
-      key text primary key,
-      code text,
-      data jsonb not null,
-      updated_at bigint not null
-    )`;
-  })();
-  return ready;
+    )`,
+    tx`create index if not exists game_actions_code_seq on game_actions (code, seq)`,
+  ]);
 }
+
 
 export const ID = /^[A-Za-z0-9-]{8,40}$/;
 export const CODE = /^[A-Z0-9]{4}$/;
-/** The host browser's secret: whoever holds it owns the room, the table and the saved game. */
+/** The host browser's secret: whoever holds it owns the game record. */
 export const KEY = /^[A-Za-z0-9-]{16,64}$/;
