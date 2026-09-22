@@ -110,7 +110,7 @@ interface Inbound {
 
 async function read() {
   const game = liveGame.get().game;
-  if (!game || document.visibilityState !== 'visible' || syncStatus.get().site === 'taken') return;
+  if (!game || syncStatus.get().site === 'taken') return;
   try {
     const res = await apiJson<{ actions: { seq: number; data: Inbound; at: number }[] }>(`/api/actions?code=${game.code}&key=${hostKey()}&after=${readAfter}`);
     if (!res) return;

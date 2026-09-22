@@ -76,10 +76,14 @@ function useGame(code: string) {
     let live = true;
     void look();
     const t = window.setInterval(() => live && void look(), POLL_MS);
+    // Back from a pocket: catch up at once rather than at the next tick.
+    const onVisible = () => document.visibilityState === 'visible' && void look();
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
       live = false;
       window.clearInterval(t);
       window.clearTimeout(pollSoon.current);
+      document.removeEventListener('visibilitychange', onVisible);
     };
   }, [look]);
 
