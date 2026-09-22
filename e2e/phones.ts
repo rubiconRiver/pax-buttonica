@@ -5,7 +5,7 @@ import { HOLD_MS, expect } from './helpers';
  * A player's phone: another tab in the same browser, talking to the laptop tab through the fake PeerJS transport.
  * Tabs share localStorage, so each phone keeps its own identity (device id, "who am I") in its sessionStorage instead.
  */
-export async function openPhone(context: BrowserContext, code: string, { mobile = true } = {}): Promise<Phone> {
+export async function openPhone(context: BrowserContext, code: string, { mobile = true, directLink = true, identity = {} as Record<string, string> } = {}): Promise<Phone> {
   const page = await context.newPage();
   if (mobile) await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
@@ -15,12 +15,18 @@ export async function openPhone(context: BrowserContext, code: string, { mobile 
     Storage.prototype.setItem = function (k, v) { return setItem.call(own(this, k), k, v); };
     Storage.prototype.removeItem = function (k) { return removeItem.call(own(this, k), k); };
   });
+  if (!directLink) await page.addInitScript(() => sessionStorage.setItem('fake-peer-dead', '1'));
+  await page.addInitScript((id) => Object.entries(id).forEach(([k, v]) => sessionStorage.setItem(k, v)), identity);
   await page.goto(`/join/${code}`);
   return new Phone(page);
 }
 
 export class Phone {
   constructor(readonly page: Page) {}
+  /** What makes this phone itself (device id, who it is), to hand to a new tab standing in for the same phone. */
+  identity(): Promise<Record<string, string>> {
+    return this.page.evaluate(() => Object.fromEntries(Object.keys(sessionStorage).filter((k) => k.startsWith('pb.phone.')).map((k) => [k, sessionStorage.getItem(k)!])));
+  }
   get light(): Locator {
     return this.page.locator('.dev');
   }

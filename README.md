@@ -37,7 +37,7 @@ npm run build   # typecheck + production build (deploys to Vercel as a static si
 src/engine/     Pure rules. reduce(state, action) → state; deriveOutputs(state) → one light per seat.
 src/hardware/   The wire protocol, and the Web Serial transport to the USB hub (untested — no hardware yet).
 api/            Vercel functions: profiles and uploaded clips in Neon Postgres (DATABASE_URL). No auth yet.
-src/remote/     Phones as buttons: WebRTC data channels via PeerJS's public broker. No server of ours involved.
+src/remote/     Phones as buttons: through the site (api/room.ts, polling) and, when the network allows, a direct WebRTC channel.
 firmware/       ESP32-C3 sketches for the hub and the buttons. See docs/HARDWARE.md.
 hardware/pcb/   The button's carrier board: generator script, KiCad file, renders and the zip a board house needs.
 src/audio/      WebAudio synth: interface sounds, jingles as note lists, uploaded clips (IndexedDB).

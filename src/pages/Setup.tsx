@@ -12,6 +12,8 @@ import { useStore } from '../state/createStore';
 import { resumeRoom, roomStatus } from '../remote/host';
 import { createProfile, deleteProfile, patchProfile, profilesStore } from '../state/profiles';
 import { syncStatus } from '../state/profileSync';
+import { fetchSavedGame, pickUpGame, type SavedGame } from '../state/gameSync';
+import { cleanCode, CODE_LENGTH } from '../remote/messages';
 import '../styles/setup.css';
 
 const ALL_FACTIONS = FACTION_GROUPS.flatMap((g) => g.factions);
@@ -33,7 +35,7 @@ function initialSeats(n: number): PlayerSetup[] {
   return seats;
 }
 
-export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: GameOptions): void }) {
+export function Setup({ onStart, onResume }: { onStart(players: PlayerSetup[], options: GameOptions): void; onResume?(saved: SavedGame): void }) {
   const profiles = useStore(profilesStore);
   const room = useStore(roomStatus);
   const sync = useStore(syncStatus);
@@ -51,6 +53,25 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
   };
 
   useEffect(resumeRoom, []);
+
+  // A game this browser saved to the site (its own data may have been cleared), or one to fetch from another laptop.
+  const [saved, setSaved] = useState<SavedGame | null>(null);
+  const [pickup, setPickup] = useState('');
+  const [pickupNote, setPickupNote] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void fetchSavedGame().then((g) => live && g?.game && setSaved(g));
+    return () => {
+      live = false;
+    };
+  }, []);
+  const pickUp = async () => {
+    setPickupNote('Looking…');
+    const g = await pickUpGame(pickup);
+    if (!g?.game) return setPickupNote('No game with that code.');
+    setPickupNote(null);
+    onResume?.(g);
+  };
 
   // ...and the other direction: a player changing their sounds from their phone shows up here.
   useEffect(() => {
@@ -118,6 +139,26 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
         <h1>Who's at the table?</h1>
         <p className="muted">Pick a saved player for each seat, or type a new name. Open <b>Phones</b> and players can add themselves and choose their own entrance and exit sounds, now or mid-game. Seat players clockwise, the way you're actually sitting. Next, everyone claims a button. Until real ones exist, the number keys <kbd>1</kbd>–<kbd>8</kbd> press the on-screen ones.</p>
       </div>
+
+      {onResume && (
+        <div className="setup__saved panel" data-has={saved ? '' : undefined}>
+          {saved ? (
+            <>
+              <span>
+                <b>A game is saved on the site:</b> {saved.game.players.map((p) => p.name).join(', ')} · round {saved.game.round} · saved {new Date(saved.updatedAt).toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+              </span>
+              <button type="button" className="btn btn--sm btn--gold" onClick={() => onResume(saved)}>Resume it</button>
+            </>
+          ) : (
+            <span className="muted">Playing on a different laptop than last time? Pick the game up with its room code.</span>
+          )}
+          <form className="setup__pickup" onSubmit={(e) => { e.preventDefault(); if (pickup.length === CODE_LENGTH) void pickUp(); }}>
+            <input className="input" value={pickup} onChange={(e) => setPickup(cleanCode(e.target.value))} placeholder="Room code" aria-label="Room code of a game on another laptop" autoCapitalize="characters" autoComplete="off" spellCheck={false} />
+            <button type="submit" className="btn btn--sm" disabled={pickup.length !== CODE_LENGTH}>Pick up</button>
+            {pickupNote && <span className="muted">{pickupNote}</span>}
+          </form>
+        </div>
+      )}
 
       <div className="setup__options panel">
         <div className="opt">

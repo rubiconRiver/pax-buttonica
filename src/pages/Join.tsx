@@ -8,7 +8,8 @@ import { Scoreboard } from '../components/game/Scoreboard';
 import { IconClose, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import type { SoundRef } from '../engine/types';
-import { CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, cleanCode, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type ProfileCard, type TableSnapshot } from '../remote/messages';
+import { CODE_LENGTH, MAX_CLIP_TRANSFER, ROOM_PREFIX, cleanCode, type HostToPhone, type MyProfile, type PhoneFrame, type PhoneToHost, type ProfileCard, type RelayPhone, type TableSnapshot } from '../remote/messages';
+import { uploadClipFile } from '../audio/clips';
 import '../styles/setup.css';
 import '../styles/game.css';
 import '../styles/join.css';
@@ -23,11 +24,17 @@ function deviceId(): string {
   return id;
 }
 
-type Link = 'connecting' | 'connected' | 'lost';
+/** 'direct' is the WebRTC link; 'site' is polling /api/room; 'lost' means neither is answering. */
+type Link = 'connecting' | 'direct' | 'site' | 'lost';
 export const WHO = 'pb.phone.profile';
+const SITE_POLL_MS = 1000;
+const SITE_HELLO_MS = 15_000;
 
 function useRoom(code: string | null) {
-  const [link, setLink] = useState<Link>('connecting');
+  const [direct, setDirect] = useState(false);
+  const [site, setSite] = useState<'trying' | 'up' | 'down'>('trying');
+  /** Once anything has worked, a quiet spell is "reconnecting", not "connecting". */
+  const [ever, setEver] = useState(false);
   const [frame, setFrame] = useState<PhoneFrame | null>(null);
   const [profiles, setProfiles] = useState<ProfileCard[]>([]);
   /** undefined = the host hasn't told us yet; null = nobody in particular. */
@@ -35,7 +42,16 @@ function useRoom(code: string | null) {
   const [oops, setOops] = useState<string | null>(null);
   const [table, setTable] = useState<TableSnapshot | null>(null);
   const conn = useRef<DataConnection | null>(null);
+  const directRef = useRef(false);
+  const seenOops = useRef(0);
 
+  const learn = (profile: MyProfile | null) => {
+    setMe(profile);
+    // Remember who we are, so tomorrow's game doesn't have to ask.
+    if (profile) localStorage.setItem(WHO, profile.id);
+  };
+
+  // The direct link. It comes up when the network allows; until then the site carries everything.
   useEffect(() => {
     if (!code) return;
     let peer: Peer | null = null;
@@ -47,7 +63,9 @@ function useRoom(code: string | null) {
       const c = peer.connect(ROOM_PREFIX + code, { reliable: true });
       conn.current = c;
       c.on('open', () => {
-        setLink('connected');
+        directRef.current = true;
+        setDirect(true);
+        setEver(true);
         c.send({ t: 'hello', dev: deviceId(), profileId: localStorage.getItem(WHO) } satisfies PhoneToHost);
       });
       c.on('data', (raw) => {
@@ -56,23 +74,26 @@ function useRoom(code: string | null) {
         else if (msg?.t === 'profiles') setProfiles(msg.list);
         else if (msg?.t === 'table') setTable(msg.table);
         else if (msg?.t === 'oops') setOops(msg.message);
-        else if (msg?.t === 'me') {
-          setMe(msg.profile);
-          // Remember who we are, so tomorrow's game doesn't have to ask.
-          if (msg.profile) localStorage.setItem(WHO, msg.profile.id);
-        }
+        else if (msg?.t === 'me') learn(msg.profile);
       });
       const redial = () => {
         if (dead || conn.current !== c) return;
-        setLink('lost');
+        directRef.current = false;
+        setDirect(false);
         window.clearTimeout(retry);
         retry = window.setTimeout(dial, 2000);
       };
       c.on('close', redial);
       c.on('error', redial);
+      // A dial that never completes (the network has no path) is given up on, and tried again later.
+      window.setTimeout(() => {
+        if (conn.current === c && !c.open && !dead) {
+          c.close();
+          redial();
+        }
+      }, 20_000);
     };
 
-    setLink('connecting');
     void import('peerjs').then(({ Peer: PeerCtor }) => {
       if (dead) return;
       peer = new PeerCtor();
@@ -81,7 +102,8 @@ function useRoom(code: string | null) {
       // The host isn't there (yet, or any more): keep knocking.
       peer.on('error', () => {
         if (dead) return;
-        setLink('lost');
+        directRef.current = false;
+        setDirect(false);
         window.clearTimeout(retry);
         retry = window.setTimeout(dial, 2500);
       });
@@ -89,18 +111,65 @@ function useRoom(code: string | null) {
 
     return () => {
       dead = true;
+      directRef.current = false;
       window.clearTimeout(retry);
       peer?.destroy();
     };
   }, [code]);
 
+  const post = (msg: PhoneToHost) =>
+    fetch(`/api/room?code=${code}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: deviceId(), ...msg }) })
+      .then((r) => r.ok)
+      .catch(() => false);
+
+  // Through the site: say hello now and then, and read what the host has left for us.
+  useEffect(() => {
+    if (!code) return;
+    let live = true;
+    let misses = 0;
+    const hello = () => !directRef.current && void post({ t: 'hello', dev: deviceId(), profileId: localStorage.getItem(WHO) });
+    const look = async () => {
+      if (directRef.current || document.visibilityState !== 'visible') return;
+      try {
+        const res = await fetch(`/api/room?code=${code}&dev=${deviceId()}`);
+        if (!live) return;
+        if (!res.ok || !(res.headers.get('content-type') ?? '').includes('json')) throw new Error(String(res.status));
+        const room = (await res.json()) as { table: TableSnapshot | null; profiles: ProfileCard[]; phone: RelayPhone | null };
+        misses = 0;
+        setSite('up');
+        setEver(true);
+        setProfiles(room.profiles);
+        if (room.table) setTable(room.table);
+        if (room.phone?.state) setFrame(room.phone.state);
+        if (room.phone && 'me' in room.phone) learn(room.phone.me ?? null);
+        if (room.phone?.oops && room.phone.oops.seq > seenOops.current) {
+          seenOops.current = room.phone.oops.seq;
+          setOops(room.phone.oops.message);
+        }
+      } catch {
+        if (live && ++misses >= 3) setSite('down');
+      }
+    };
+    hello();
+    void look();
+    const t1 = window.setInterval(look, SITE_POLL_MS);
+    const t2 = window.setInterval(hello, SITE_HELLO_MS);
+    return () => {
+      live = false;
+      window.clearInterval(t1);
+      window.clearInterval(t2);
+    };
+  }, [code]);
+
   const say = (msg: PhoneToHost) => {
     if (conn.current?.open) conn.current.send(msg);
+    else void post(msg);
   };
   const forget = () => {
     localStorage.removeItem(WHO);
     say({ t: 'leave' });
   };
+  const link: Link = direct ? 'direct' : site === 'up' ? 'site' : site === 'down' || ever ? 'lost' : 'connecting';
   return { link, frame, table, profiles, me, oops, clearOops: () => setOops(null), say, forget };
 }
 
@@ -157,10 +226,12 @@ function PhoneButton({ code }: { code: string }) {
   const [view, setView] = useState<'button' | 'table'>('button');
   const [anonymous, setAnonymous] = useState(() => sessionStorage.getItem('pb.phone.anon') === '1');
   const [editing, setEditing] = useState(false);
+  const [oopsLocal, setOopsLocal] = useState<string | null>(null);
   const send = (e: 'tap' | 'double' | 'hold') => say({ t: 'btn', e });
   const [size, setSize] = useState(280);
   const lastMode = useRef<string | null>(null);
-  useWakeLock(link === 'connected');
+  const connected = link === 'direct' || link === 'site';
+  useWakeLock(connected);
 
   // The table view also arrives through the site, so it works even if this phone can't reach the laptop directly.
   const [polled, setPolled] = useState<TableSnapshot | null>(null);
@@ -179,7 +250,7 @@ function PhoneButton({ code }: { code: string }) {
       window.clearInterval(timer);
     };
   }, [view, code]);
-  const shown = link === 'connected' && table ? table : polled ?? table;
+  const shown = connected && table ? table : polled ?? table;
 
 
   useEffect(() => {
@@ -196,9 +267,9 @@ function PhoneButton({ code }: { code: string }) {
     lastMode.current = mode;
   }, [frame?.mode]);
 
-  const live = link === 'connected' && frame;
+  const live = connected && frame;
 
-  if (link === 'connected' && me === null && !anonymous) {
+  if (connected && me === null && !anonymous) {
     return (
       <WhoAreYou
         profiles={profiles}
@@ -240,7 +311,9 @@ function PhoneButton({ code }: { code: string }) {
         ) : (
           <button type="button" className="btn btn--sm btn--ghost" onClick={() => { sessionStorage.removeItem('pb.phone.anon'); setAnonymous(false); }}>Who are you?</button>
         )}
-        <span className="join__link" data-link={link}>{link === 'connected' ? 'Connected' : link === 'lost' ? 'Reconnecting…' : 'Connecting…'}</span>
+        <span className="join__link" data-link={link} title={link === 'site' ? 'Through the site: about a second behind. A direct link to the laptop is tried in the background.' : undefined}>
+          {link === 'direct' ? 'Connected' : link === 'site' ? 'Connected via the site' : link === 'lost' ? 'Reconnecting…' : 'Connecting…'}
+        </span>
       </header>
 
       <div className="join__who">
@@ -259,7 +332,7 @@ function PhoneButton({ code }: { code: string }) {
 
       <p className="join__why">
         {!live
-          ? link === 'connected' ? 'Waiting for the game to start…' : 'Looking for the table…'
+          ? connected ? 'Waiting for the game to start…' : 'Looking for the table…'
           : frame.calling && !frame.name
             ? <>Now calling <b>{frame.calling}</b>. If that's you, press.</>
             : !frame.name && me
@@ -272,9 +345,19 @@ function PhoneButton({ code }: { code: string }) {
       {editing && me && (
         <ProfileSheet
           me={me}
-          oops={oops}
-          onEdit={(patch) => { clearOops(); say({ t: 'edit', patch }); }}
-          onClip={(slot, file, data) => { clearOops(); say({ t: 'clip', slot, name: file.name.replace(/\.[^.]+$/, ''), mime: file.type, data }); }}
+          oops={oops ?? oopsLocal}
+          onEdit={(patch) => { clearOops(); setOopsLocal(null); say({ t: 'edit', patch }); }}
+          onClip={async (slot, file, data) => {
+            clearOops();
+            const name = file.name.replace(/\.[^.]+$/, '');
+            if (link === 'direct') return say({ t: 'clip', slot, name, mime: file.type, data });
+            // Through the site: put the clip where the laptop will look for it, then just point at it.
+            try {
+              say({ t: 'clip', slot, name, id: await uploadClipFile(file) });
+            } catch (err) {
+              setOopsLocal((err as Error).message);
+            }
+          }}
           onSwitch={() => { setEditing(false); forget(); }}
           onClose={() => setEditing(false)}
         />

@@ -30,8 +30,22 @@ export type PhoneToHost =
   | { t: 'create'; name: string }
   | { t: 'leave' }
   | { t: 'edit'; patch: { name?: string; color?: string; intro?: SoundRef; outro?: SoundRef } }
-  /** An uploaded sound travels to the host, which keeps it; phones never store clips. */
-  | { t: 'clip'; slot: 'intro' | 'outro'; name: string; mime: string; data: ArrayBuffer };
+  /** An uploaded sound: over the direct link the bytes come along; through the site the phone uploads it first and sends the id. */
+  | { t: 'clip'; slot: 'intro' | 'outro'; name: string; mime?: string; data?: ArrayBuffer; id?: string };
+
+/** What the host leaves for one phone on the site, when the phone can't reach the laptop directly. */
+export interface RelayPhone {
+  state?: PhoneFrame;
+  /** undefined: the host hasn't said yet. */
+  me?: MyProfile | null;
+  oops?: { seq: number; message: string };
+}
+
+export interface RelayRoom {
+  table: TableSnapshot | null;
+  profiles: ProfileCard[];
+  phones: Record<string, RelayPhone>;
+}
 
 /** Everything a player might want to check from their seat: the public state of the game, nothing hidden. */
 export interface TableSnapshot {

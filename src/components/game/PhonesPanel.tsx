@@ -41,13 +41,19 @@ export function PhonesPanel({ onClose }: { onClose(): void }) {
         </>
       ) : (
         <>
-          <div className="eyebrow">{room.state === 'open' ? 'Scan, or type the code' : 'Opening…'}</div>
+          <div className="eyebrow">Scan, or type the code</div>
           <div className="room__code">{room.code}</div>
-          {qr && room.state === 'open' && <img className="room__qr" src={qr} alt={`QR code for ${url}`} />}
+          {qr && <img className="room__qr" src={qr} alt={`QR code for ${url}`} />}
           {url && <div className="room__url">{url.replace(/^https?:\/\//, '')}</div>}
           <div className="room__note">
-            <b>{room.phones.length}</b> phone{room.phones.length === 1 ? '' : 's'} connected. A phone that says who it is takes that player's seat by itself; anyone else claims one at the next seat claiming.
-            {room.error && <div style={{ color: 'var(--danger)' }}>{room.error}</div>}
+            <b>{room.phones.length}</b> phone{room.phones.length === 1 ? '' : 's'} connected
+            {room.phones.length > 0 && <> ({room.phones.filter((p) => p.via === 'direct').length} direct, {room.phones.filter((p) => p.via === 'site').length} via the site)</>}.
+            A phone that says who it is takes that player's seat by itself; anyone else claims one at the next seat claiming.
+          </div>
+          <div className="room__note room__ways" title="Phones use the site (about a second behind) and switch to a direct link to this laptop when the network allows it">
+            <span data-on={room.site || undefined}>Via the site: {room.site ? 'ready' : 'not reachable'}</span>
+            <span data-on={room.direct || undefined}>Direct link: {room.direct ? 'ready' : 'waiting'}</span>
+            {room.error && <span style={{ color: 'var(--danger)' }}>{room.error}</span>}
           </div>
           <button type="button" className="btn btn--sm btn--danger" onClick={closeRoom}>Close the room</button>
         </>

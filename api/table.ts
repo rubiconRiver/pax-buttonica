@@ -7,10 +7,8 @@
  *   GET /api/table?code=ABCD         → { table, updatedAt }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { ensureSchema, sql } from './_db.js';
+import { CODE, KEY, ensureSchema, sql } from './_db.js';
 
-const CODE = /^[A-Z0-9]{4}$/;
-const KEY = /^[A-Za-z0-9-]{16,64}$/;
 const MAX_BYTES = 60_000;
 const STALE_MS = 3 * 24 * 60 * 60 * 1000;
 

@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
+import { startGameSync } from './state/gameSync';
 import { startProfileSync } from './state/profileSync';
 import { settingsStore } from './state/settings';
 
@@ -12,6 +13,7 @@ applyFlash();
 settingsStore.subscribe(applyFlash);
 
 startProfileSync();
+startGameSync();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

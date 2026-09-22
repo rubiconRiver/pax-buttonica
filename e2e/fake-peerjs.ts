@@ -68,10 +68,16 @@ export class Peer extends Emitter {
     conn.open = false;
     conn.emit('close');
   }
+  /** Both the dead-dial timer and the never-opened case land here, so `close` fires exactly once. */
 
   connect(to: string, _options?: unknown) {
     const conn = new DataConnection(this, crypto.randomUUID(), to);
     this.conns.set(conn.connectionId, conn);
+    // A tab with this flag is on a network where WebRTC never finds a path: signalling works, nothing follows.
+    if (sessionStorage.getItem('fake-peer-dead')) {
+      conn.dialTimer = window.setTimeout(() => this.drop(conn), 4000);
+      return conn;
+    }
     this.post({ k: 'connect', to, from: this.id, conn: conn.connectionId });
     // Nobody picked up: the real library reports this on the peer, not the connection.
     conn.dialTimer = window.setTimeout(() => {

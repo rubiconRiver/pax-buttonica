@@ -83,3 +83,9 @@
 .setup__sync[data-state='synced'] { color: var(--ok); }
 .setup__sync[data-state='offline'] { color: var(--gold); }
 .setup__problems { font-size: 13px; color: #ff9aa7; }
+
+.setup__saved { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 12px 18px; margin-bottom: 14px; font-size: 13.5px; }
+.setup__saved[data-has] { border-color: var(--gold); }
+.setup__saved > span { flex: 1 1 320px; }
+.setup__pickup { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.setup__pickup .input { width: 110px; text-transform: uppercase; letter-spacing: 0.2em; font-family: var(--font-d); }

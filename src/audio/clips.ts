@@ -78,6 +78,17 @@ export async function uploadPending() {
   }
 }
 
+/** Straight to the site, for a phone whose laptop it can't reach directly. Returns the clip's id. */
+export async function uploadClipFile(file: File): Promise<string> {
+  if (!file.type.startsWith('audio/')) throw new Error('That is not an audio file.');
+  if (file.size > MAX_CLIP_BYTES) throw new Error('Keep clips under 4 MB. Trim it to the good part.');
+  const id = crypto.randomUUID();
+  const name = file.name.replace(/\.[^.]+$/, '');
+  const res = await fetch(`/api/clips?id=${id}&name=${encodeURIComponent(name)}`, { method: 'POST', headers: { 'Content-Type': file.type }, body: file }).catch(() => null);
+  if (!res?.ok || !(res.headers.get('content-type') ?? '').includes('json')) throw new Error('The clip could not be uploaded. Try again when you have signal.');
+  return id;
+}
+
 /** This browser's copy if it has one; otherwise fetch it from the database and keep it. */
 export async function loadClip(id: string): Promise<Blob | undefined> {
   const local = await tx<Blob | undefined>('readonly', (s) => s.get(id));
