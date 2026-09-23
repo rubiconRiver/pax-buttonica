@@ -1,5 +1,7 @@
 # Shopping list — six buttons, one hub, spares
 
+> **Superseded for the current build.** The no-solder M5Stack build's list, with links and quantities, is on the site at `/order.html`. Everything below is the soldered ESP32-C3 build, kept as the fallback.
+
 > The interactive version, with quantities that follow the number of buttons and an explanation of every part, is on the site at `/parts`.
 
 Checked on Amazon.ca on **2026-09-20**; prices and stock move, so treat them as a snapshot. Everything listed showed "In Stock" with delivery within a week. This is the speakerless standard build from [HARDWARE.md](HARDWARE.md).

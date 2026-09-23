@@ -1,6 +1,8 @@
 # Building the buttons
 
-**Status: a plan, not a proven build.** The firmware in `firmware/` compiles for the ESP32-C3 but has never been flashed onto a board. The wiring below follows the parts' datasheets, not a working prototype. Build **one hub and one button first**, prove them on the [test bench](/bench), then buy parts for the rest. Prices are rough and in CAD.
+**Status: a plan, not a proven build.** The firmware in `firmware/` compiles but has never been flashed onto a board. Build **one hub and one button first**, prove them on the [test bench](/bench), then buy parts for the rest. Prices are rough and in CAD.
+
+> **The current plan is a no-solder button** made of M5Stack parts that plug together: an **AtomS3 Lite** (ESP32-S3, USB-C), a **Mechanical Key Unit** (clicky switch with an LED), a **NeoHEX** 37-LED board, and a PortABC base or a 1-to-3 splitter so both can share the Atom's socket. Power is four NiMH AAs in a switched holder, through a diode and a USB-C plug with screw terminals, into the Atom. The hub is a bare AtomS3 Lite on a USB-C cable. The tick-off order sheet with links is at [/order.html](/order.html); firmware notes are in `firmware/README.md`; the printed shell is in `hardware/shell/`. Everything below the shell brief describes the soldered ESP32-C3 build, which is now the fallback.
 
 ## What you're building
 
@@ -111,7 +113,7 @@ Wire traffic is shown at the bottom of the bench page, which is the first place 
 
 ## The shell — a brief for whoever is modelling it
 
-A first model is in [`hardware/shell/`](../hardware/shell/README.md): ready-to-print STLs and the script that makes them. It has not been printed yet. It follows this brief, with one change: the top is a flat cap with a 45° shoulder, not a dome, so it prints without supports and diffuses evenly. What the electronics need:
+A model is in [`hardware/shell/`](../hardware/shell/README.md): ready-to-print STLs and the script that makes them, built round the plug-together M5Stack parts (see the top of this page). It has not been printed yet. It follows this brief, with one change: the top is a flat cap with a 45° shoulder, not a dome, so it prints without supports and diffuses evenly. What the electronics need:
 
 - **Size: compact.** Table space in a six-player game is scarce, so the standard button is small — think a **60–70 mm dome on an 85–90 mm base**, not a Staples Easy Button. The part that sets the floor is the battery holder: a back-to-back 2×2 AA holder is about 58 × 32 × 30 mm. If that's still too big, the honest options are a holder that stands the cells upright, 3×AAA (fine for the electronics, roughly a third of the runtime), or giving up AAs for a single rechargeable lithium cell.
 - **Dome:** translucent white (natural PETG or thin white PLA, 1.2–1.6 mm wall diffuses well). It *is* the button: it should travel 3–4 mm and bottom out on a plunger over the microswitch, with a return spring or printed flexures. A satisfying press matters more than anything else here.

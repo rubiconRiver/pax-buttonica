@@ -6,13 +6,17 @@ Where the physical side stands, for whoever (or whichever session) picks it up. 
 
 Game night is roughly the first days of October 2026. Six buttons and one hub have to work by then. Favour whatever gets working buttons on the table over elegance.
 
-## Direction change under way (2026-09-21)
+## The no-solder build (ordered 2026-09-22)
 
-Garett is pricing a **no-solder build** in place of the carrier board: M5Stack AtomS3 Lite (ESP32-S3, so ESP-NOW and the wire protocol stay as they are) + M5 Mechanical Key Unit (clicky MX switch with an RGB LED, on a Grove cable) + a 20 cm 29-LED Grove strip wrapped round a printed drum for across-the-room brightness + Atomic PortABC base for the second socket. Power is his own NiMH AAs: 4×AA switched holder, 1N5817 in the red lead, a USB-C plug with screw terminals into the Atom. About $350 before tax for six and a hub. The tick-off order sheet is on the site at `/order.html` (`public/order.html`, a static page). **Nothing is ordered yet; he is holding the JLCPCB order.** If he goes ahead: button firmware needs AtomS3 Lite pin numbers, the shell body needs reworking round the key unit and drum (cap, bezel, hard stop and the AA plinth carry over), and the first unit must settle whether key and strip can share one socket through a Unit Hub or need the PortABC base. Everything under *Decided* below describes the soldered design, which becomes the fallback.
+Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for the first test unit **1 × Mechanical Key Unit, 1 × NeoHEX 37-LED board, 1 × PortABC base**. Power is his own NiMH AAs: an Adafruit 830 switched 4×AA holder, a 1N5817 in the red lead, Wago 221 clips, a USB-C plug with screw terminals into the Atom. Still to order once the first unit lights up: 5 more keys, hexes and holders, the Wagos and diodes, a Unit Hub splitter, the USB-C screw plugs (Amazon), M3 screws, feet. The soldered carrier-board design is now the fallback; the JLCPCB order was not placed.
+
+- Firmware: `config.h` has a board selector, default `BOARD_ATOMS3_LITE`. Hex on Port A / the Atom's socket (yellow = G2), key on Port B, switch on white. Until the base's pin sticker is read, every pin Port B could be is treated as the big button. Both boards compile.
+- Shell v0.2 (`hardware/shell/make_shell.py`): built round the M5 parts; every one of their sizes is marked MEASURE. Clash check clean, never printed. The Atom's USB-C faces out through a window so flashing needs no disassembly.
+- Order sheet with links: `/order.html` on the site.
 
 ## Decided
 
-- **Button:** ESP32-C3 SuperMini, one MX-style clicky keyboard switch (Kailh BOX Jade or similar) under a guided dome, 8-LED WS2812 ring (12-LED 50 mm ring also fits), 4 × AA NiMH in a switched holder, 1N5817 reverse-polarity diode, 1000 µF across the LED supply. No speaker.
+- **Button (soldered fallback):** ESP32-C3 SuperMini, one MX-style clicky keyboard switch (Kailh BOX Jade or similar) under a guided dome, 8-LED WS2812 ring (12-LED 50 mm ring also fits), 4 × AA NiMH in a switched holder, 1N5817 reverse-polarity diode, 1000 µF across the LED supply. No speaker.
 - **Hub:** a bare ESP32-C3 on USB, relaying newline-delimited JSON at 115200 between ESP-NOW and Web Serial. Reports per-button RSSI.
 - **Carrier board v0.2** (`hardware/pcb/`): 70 mm round, 2-layer, breakout hole beside every module pin, optional R2/R3 battery divider, optional R1 behind pre-bridged JP1. DRC clean. Garett is ordering it from JLCPCB (2 layers, 1.6 mm, green, HASL, no assembly, 24 h build, express DDP courier, about US$41).
 - **Fallback:** perfboard plus a KW12 microswitch, parts already on the shopping list, until a carrier board is proven.
@@ -31,7 +35,7 @@ Garett is pricing a **no-solder build** in place of the carrier board: M5Stack A
 
 ## Open work, roughly in order
 
-- First-power checklist for when the parts arrive: flash hub, flash one button on a breadboard, pair, run `/bench`.
-- The shell: first test print and fit (cap slide, return force, USB slot height), then the plinth once a real battery holder has been measured. A shelf for the 50 mm ring if he goes that way.
+- First-power checklist for the DigiKey box (about 2026-09-24): flash the hub Atom, `/bench`; flash a button Atom with the key on its own socket, then the hex; read the PortABC sticker and pin `BIG_BUTTON_PINS` down; measure every M5 part and the holder, update `make_shell.py`, print one shell.
+- Shell: print `fit_test` and the cap now; body, bridge and plinth after measuring.
 - A hub enclosure, or at least strain relief for the USB cable.
 - Later: a sleep/poll scheme for battery life, clip caching on the button, a fully assembled v2 board (SMD LEDs, level shifter, LED power switch) after game night.
