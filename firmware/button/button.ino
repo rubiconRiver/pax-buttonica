@@ -5,8 +5,9 @@
  * reports tap / double / hold. (It can also play note lists, if you fit a speaker.) It knows nothing
  * about Twilight Imperium.
  *
- * Board: ESP32-C3. Libraries: Adafruit NeoPixel, ArduinoJson (v7).
- *   arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc firmware/button
+ * Boards (pick one in config.h). Libraries: Adafruit NeoPixel, ArduinoJson (v7).
+ *   M5Stack AtomS3 Lite:  arduino-cli compile -b esp32:esp32:m5stack_atoms3 firmware/button
+ *   ESP32-C3 SuperMini:   arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc firmware/button
  * Pins and options: config.h
  *
  * UNTESTED ON HARDWARE. It compiles; nobody has flashed it yet.
@@ -20,6 +21,7 @@
 #include <esp_wifi.h>
 #include <Preferences.h>
 #include <esp_sleep.h>
+#include <driver/rtc_io.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 #include "config.h"
@@ -46,7 +48,11 @@ enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY };
 enum Wave { WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAW, WAVE_SINE };
 
 static Adafruit_NeoPixel ring(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
+#if STATUS_LED_PIN >= 0
+static Adafruit_NeoPixel statusLed(1, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
+#endif
 static Preferences prefs;
+static const int BIG_BUTTON_PIN_COUNT = sizeof(BIG_BUTTON_PINS) / sizeof(BIG_BUTTON_PINS[0]);
 
 static char devId[13];
 static uint8_t hubMac[6];
@@ -310,6 +316,10 @@ static void render() {
     else if (show) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, colour);
   }
   ring.show();
+#if STATUS_LED_PIN >= 0
+  statusLed.setPixelColor(0, ring.getPixelColor(0));
+  statusLed.show();
+#endif
 }
 
 // ── Messages from the host ──────────────────────────────────────────────────
@@ -389,11 +399,18 @@ static void handle(const Packet &p) {
 
 // ── Buttons ─────────────────────────────────────────────────────────────────
 
+// The big button may be wired to any of several pins (see config.h); an unconnected pin, pulled up, reads high.
+static bool bigButtonDown() {
+  for (int i = 0; i < BIG_BUTTON_PIN_COUNT; i++)
+    if (digitalRead(BIG_BUTTON_PINS[i]) == LOW) return true;
+  return false;
+}
+
 static void serviceButtons() {
   const uint32_t now = millis();
   for (int i = 0; i < BUTTON_COUNT; i++) {
     Button &b = buttons[i];
-    const bool raw = digitalRead(BUTTON_PINS[i]) == LOW;
+    const bool raw = i == 0 ? bigButtonDown() : digitalRead(BUTTON_PINS[i]) == LOW;
     if (raw != b.raw) {
       b.raw = raw;
       b.rawSince = now;
@@ -428,11 +445,31 @@ static void serviceButtons() {
 
 // Nobody is listening: stop burning batteries. A press of the big button restarts the chip.
 static void sleepUntilPressed() {
-  const int pin = BUTTON_PINS[0];
-  if (pin < 0 || pin > 5) return;  // only GPIO 0-5 can wake an ESP32-C3 from deep sleep
+  uint64_t mask = 0;
+  for (int i = 0; i < BIG_BUTTON_PIN_COUNT; i++) {
+    const int pin = BIG_BUTTON_PINS[i];
+#if CONFIG_IDF_TARGET_ESP32C3
+    if (pin >= 0 && pin <= 5) mask |= 1ULL << pin;   // only GPIO 0-5 can wake a C3 from deep sleep
+#else
+    if (pin >= 0 && rtc_gpio_is_valid_gpio((gpio_num_t)pin)) {
+      rtc_gpio_pullup_en((gpio_num_t)pin);            // keep the pull-up alive while asleep
+      rtc_gpio_pulldown_dis((gpio_num_t)pin);
+      mask |= 1ULL << pin;
+    }
+#endif
+  }
+  if (!mask) return;
   ring.clear();
   ring.show();
-  esp_deep_sleep_enable_gpio_wakeup(1ULL << pin, ESP_GPIO_WAKEUP_GPIO_LOW);
+#if STATUS_LED_PIN >= 0
+  statusLed.clear();
+  statusLed.show();
+#endif
+#if CONFIG_IDF_TARGET_ESP32C3
+  esp_deep_sleep_enable_gpio_wakeup(mask, ESP_GPIO_WAKEUP_GPIO_LOW);
+#else
+  esp_sleep_enable_ext1_wakeup(mask, ESP_EXT1_WAKEUP_ANY_LOW);
+#endif
   esp_deep_sleep_start();
 }
 
@@ -440,11 +477,17 @@ static void sleepUntilPressed() {
 
 void setup() {
   Serial.begin(115200);
-  for (int i = 0; i < BUTTON_COUNT; i++) pinMode(BUTTON_PINS[i], INPUT_PULLUP);
+  for (int i = 0; i < BIG_BUTTON_PIN_COUNT; i++) pinMode(BIG_BUTTON_PINS[i], INPUT_PULLUP);
+  for (int i = 1; i < BUTTON_COUNT; i++) pinMode(BUTTON_PINS[i], INPUT_PULLUP);
 
   ring.begin();
   ring.clear();
   ring.show();
+#if STATUS_LED_PIN >= 0
+  statusLed.begin();
+  statusLed.clear();
+  statusLed.show();
+#endif
 
 #if defined(AUDIO_I2S)
   i2s.setPins(I2S_BCLK_PIN, I2S_LRC_PIN, I2S_DIN_PIN);

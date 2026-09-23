@@ -7,8 +7,9 @@
  * back up the serial port as a line. The hub never looks inside a message
  * beyond finding "dev".
  *
- * Board: ESP32-C3 (e.g. "Super Mini"). Build with USB CDC On Boot enabled:
- *   arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc firmware/hub
+ * Board: any ESP32 with native USB. Build with USB CDC On Boot enabled:
+ *   M5Stack AtomS3 Lite:  arduino-cli compile -b esp32:esp32:m5stack_atoms3 firmware/hub
+ *   ESP32-C3 SuperMini:   arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc firmware/hub
  *
  * UNTESTED ON HARDWARE. It compiles; nobody has flashed it yet.
  */
