@@ -281,7 +281,9 @@ def bought_parts(pressed=False):
     return {
         'key': cbox(0, KEY_Y0 + KEY_BODY[1] / 2, 0, *KEY_BODY) + cbox(0, KEY_Y0 - KEY_PLUG / 2, 2, 8, KEY_PLUG, 4)
                - union(cyl(4.85, 10, sx * KEY_HOLES[0] / 2, KEY_Y0 + KEY_HOLES[1], -1) for sx in (-1, 1)),
-        'keycap': cbox(0, 0, KEY_BODY[2], KEYCAP[0], KEYCAP[0], KEYCAP[1] - PRELOAD + dz),
+        'keycap': Manifold.batch_hull([cbox(0, 0, KEY_BODY[2], 14, 14, 0.01),                       # switch housing, then the tapered cap
+                                       cbox(0, 0, KEYCAP_TOP - KEYCAP_H, KEYCAP[0], KEYCAP[0], 0.01),
+                                       cbox(0, 0, KEYCAP_TOP - PRELOAD + dz - 0.01, KEYCAP_TOP_W, KEYCAP_TOP_W, 0.01)]),
         'hex': hexboard,
         'atom': box(ATOM_X0, -ATOM[1] / 2, 0, *ATOM),
         'splitter': cbox(ATOM_X0 + ATOM[0] - SPLITTER[0] / 2, 0, ATOM[2], *SPLITTER),
