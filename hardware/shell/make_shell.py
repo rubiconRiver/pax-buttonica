@@ -6,10 +6,8 @@ Generates the Pax Buttonica button shell for the no-solder build: printable STLs
 
 What goes inside (all M5Stack, all plug-together; sizes from M5's dimension drawings):
   Key Unit   on the body floor, keycap on the axis, dropped onto two pegs that fit its mounting holes
-  saddle     a printed cup over the keycap with a wide brim, so the cap can press the key from outside
-             the hex's sockets
-  NeoHEX     rides INSIDE the cap on four snap legs, LEDs up against the diffuser, sockets down.
-             The legs continue below it and press the saddle's brim.
+  NeoHEX     drops into a four-legged cage, LEDs up, sockets down; the cage pushes up into the cap's
+             ceiling and ends in a cup that sits over the keycap. Nothing inside is loose.
   AtomS3     lying flat against the +x wall with its USB-C in a window: the battery plug (or the
              laptop) plugs in from OUTSIDE, so flashing needs no disassembly
   splitter   a Grove 1-to-3 (Unit Hub) taped on the Atom, so key and hex share its socket
@@ -19,7 +17,7 @@ Five printed parts, none of which needs supports:
   plinth  hex base with the battery pocket underneath. Depends only on the holder.
   body    hex turret: floor, key pegs, Atom bay, USB window, four screw posts.
   cap     the part you hit, with the hex cage hanging from its ceiling.
-  saddle  the cup over the keycap.
+  cage    four legs that clip round the hex and end in the cup over the keycap; pushes up into the cap.
   bezel   screws onto the body over the cap: guides the skirt, holds the flange in.
 
 A slap goes cap flange -> top of the body wall -> plinth -> table. The keycap only ever sees
@@ -88,11 +86,13 @@ LEAD_GROOVE_W = 6.0      # the battery leads run up the outside of the +x flat i
 # ── the cage in the cap, and the saddle ─────────────────────────────────────
 LED_GAP = 9.0            # hex LEDs to the underside of the diffuser
 CAGE_ANGLES = (60, 120, 240, 300)   # legs at these flat centres; the side sockets open at 0 and 180
-CAGE_LEG = (5.0, 3.0)    # leg width (tangential) and radial thickness
+CAGE_LEG = (5.0, 2.5)    # leg width (tangential) and radial thickness: thin enough to flex for the snap lips
 CAGE_R0 = HEX_FLAT / 2 + 0.6        # inner face of the legs
-LIP = 0.9                # snap lip under the board
+LIP = 0.7                # snap lips above and below the board
 PAD_T = 2.5              # the pusher pads at the bottom of the legs
 SADDLE_WALL = 1.5
+SOCKET_H = 6.0           # bosses on the cap's ceiling that the cage's leg tops push into
+SOCKET_FIT = 0.15        # clearance per side in those sockets: a firm push fit; a dab of glue if it isn't
 SADDLE_BRIM_R = 18.0
 SADDLE_T = 2.0           # brim / roof thickness
 
@@ -235,32 +235,42 @@ def cap():
         (inner_r, FLANGE_BOTTOM), (inner_r, inner_shoulder_z),
         (inner_r - (INNER_TOP - inner_shoulder_z), INNER_TOP), (0, INNER_TOP)])
     w, t = CAGE_LEG
-    legs = []
+    bosses = []
     for a in CAGE_ANGLES:
-        # the leg: from the ceiling down to the pad, standing just outside the board's flat
-        leg = box(CAGE_R0, -w / 2, PAD_BOTTOM, t, w, INNER_TOP + 0.01 - PAD_BOTTOM)
-        # a stop above the board and a snap lip below it, so the board clicks in from underneath
-        leg += box(CAGE_R0 - 2.0, -w / 2, HEX_TOP + 0.3, 2.01, w, INNER_TOP + 0.01 - (HEX_TOP + 0.3))
+        boss = box(CAGE_R0 - 2.5, -w / 2 - 2.5, INNER_TOP - SOCKET_H, t + 5, w + 5, SOCKET_H + 0.01)
+        boss -= box(CAGE_R0 - SOCKET_FIT, -w / 2 - SOCKET_FIT, INNER_TOP - SOCKET_H - 1, t + 2 * SOCKET_FIT, w + 2 * SOCKET_FIT, SOCKET_H + 0.4)   # pocket, 0.6 of ceiling left
+        bosses.append(boss.rotate([0, 0, a]))
+    return shell + union(bosses)
+
+
+# ── cage: carries the hex under the cap and ends in the cup over the keycap ──
+def cage():
+    w, t = CAGE_LEG
+    top = INNER_TOP - 0.8                     # leg tops sit in the cap's sockets, 0.8 below the ceiling
+    depth = 6.0
+    parts = []
+    for a in CAGE_ANGLES:
+        leg = box(CAGE_R0, -w / 2, PAD_BOTTOM, t, w, top - PAD_BOTTOM)
+        # a stop above the board and a snap lip below it, so the board clicks in from above... no: drops in from the top
+        # before the cage goes into the cap, and the lip keeps it from falling out
+        # snap lips above and below the board: it clicks in from the top with the legs flexing, and can't fall out
         leg += Manifold.batch_hull([box(CAGE_R0 - LIP, -w / 2, HEX_BOTTOM - 0.3 - LIP, LIP + 0.01, w, 0.01),
                                     box(CAGE_R0 - 0.01, -w / 2, HEX_BOTTOM - 0.3 - LIP * 2.2, 0.02, w, LIP * 2.2 + 0.01)])
-        # the pusher pad, reaching inward over the saddle's brim
+        leg += Manifold.batch_hull([box(CAGE_R0 - LIP, -w / 2, HEX_TOP + 0.3, LIP + 0.01, w, 0.01),
+                                    box(CAGE_R0 - 0.01, -w / 2, HEX_TOP + 0.3 - 0.01, 0.02, w, LIP * 2.2 + 0.01)])
+        # the pad, reaching inward to the brim
         leg += box(SADDLE_BRIM_R - 3.5, -w / 2, PAD_BOTTOM, CAGE_R0 + t - (SADDLE_BRIM_R - 3.5), w, PAD_T)
-        legs.append(leg.rotate([0, 0, a]))
-    return shell + union(legs)
-
-
-# ── saddle: a cup over the keycap with a brim for the cage to press ─────────
-def saddle():
-    """A tapered cup that follows the keycap, plus a brim for the cage's pads."""
-    depth = 6.0
-    def sq(w, z):
-        return cbox(0, 0, z, w, w, 0.01)
-    w_bottom = KEYCAP_TOP_W + (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE   # keycap width where the cup's rim lands
+        parts.append(leg.rotate([0, 0, a]))
+    # the brim and the tapered cup, in one with the legs
+    def sq(wd, z):
+        return cbox(0, 0, z, wd, wd, 0.01)
+    w_bottom = KEYCAP_TOP_W + (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE
     w_top = KEYCAP_TOP_W + 2 * PART_CLEARANCE
-    cavity = Manifold.batch_hull([sq(w_bottom, KEYCAP_TOP - depth - 1), sq(w_bottom, KEYCAP_TOP - depth), sq(w_top, KEYCAP_TOP)])
-    outer = Manifold.batch_hull([sq(w_bottom + 2 * SADDLE_WALL, KEYCAP_TOP - depth), sq(w_top + 2 * SADDLE_WALL, KEYCAP_TOP + SADDLE_T)])
-    brim = cyl(2 * SADDLE_BRIM_R, SADDLE_T, z=KEYCAP_TOP, seg=SEG)
-    return outer + brim - cavity
+    brim = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG)
+    cup = Manifold.batch_hull([sq(w_bottom + 2 * SADDLE_WALL, KEYCAP_TOP - depth - PRELOAD), sq(w_top + 2 * SADDLE_WALL, PAD_BOTTOM + 0.01)])
+    cavity = Manifold.batch_hull([sq(w_bottom, KEYCAP_TOP - depth - PRELOAD - 1), sq(w_bottom, KEYCAP_TOP - depth - PRELOAD), sq(w_top, KEYCAP_TOP - PRELOAD)])
+    parts += [brim, cup]
+    return union(parts) - cavity
 
 
 # ── plinth (built hanging under the body) ───────────────────────────────────
@@ -346,8 +356,8 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'saddle': saddle(), 'bezel': bezel()}
-    flipped = {'plinth', 'cap', 'saddle'}     # flat face on the bed
+    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel()}
+    flipped = {'plinth', 'cap'}               # flat face on the bed; the cage prints cup-down, legs up
     os.makedirs(os.path.join(HERE, 'stl'), exist_ok=True)
 
     print(f'plinth {PLINTH_F:.0f} mm across flats, turret {TURRET_F:.0f} mm, '
@@ -363,9 +373,9 @@ if __name__ == '__main__':
     clashes = 0
     for pressed in (False, True):
         state = {**printed, **bought_parts(pressed)}
-        state['saddle'] = state['saddle'].translate([0, 0, -PRELOAD - (TRAVEL if pressed else 0)])   # it rides on the keycap
         if pressed:
             state['cap'] = state['cap'].translate([0, 0, -TRAVEL])
+            state['cage'] = state['cage'].translate([0, 0, -TRAVEL])
         names = list(state)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -375,7 +385,7 @@ if __name__ == '__main__':
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
 
-    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'saddle': '#8a8a92', 'cap': '#ffffff',
+    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8', 'holder': '#15151a'}
     everything = {**printed, **bought_parts()}
     section_svg(everything, colours, os.path.join(HERE, 'section-front.svg'), 'xz')

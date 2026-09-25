@@ -13,8 +13,7 @@ This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U0
 ## What's where
 
 - **Key Unit** on the body floor, dropped onto two pegs that fit its own mounting holes, keycap on the axis. Its cable leaves toward −y.
-- **Saddle:** a printed cup that sits over the red keycap, with a 36 mm brim. It's what the cap presses, because the hex's sockets fill the middle of the board and a central plunger has nowhere to land.
-- **NeoHEX** clips into a four-legged cage hanging from the cap's ceiling, LEDs up, 12 mm under the diffuser, sockets down. Push it up from below until the legs' lips click over its edge. The legs continue below the board and end in pads that rest on the saddle's brim. Press the cap: cap, hex and pads move together and press the saddle onto the keycap. The hex's cable loops down from its underside socket to the splitter.
+- **Cage:** four legs with a cup at the bottom. The hex clicks into the legs from the top (LEDs up, sockets down), then the cage pushes up into four sockets on the cap's ceiling. The cup sits over the red keycap; press the cap and the whole cap-cage-hex moves together and the cup presses the key. The cup's brim keeps the press clear of the hex's sockets. The hex's cable loops down from its underside socket to the splitter.
 - **AtomS3 Lite** lies flat against the +x wall with its USB-C in a **window through the wall**. The battery's USB-C plug, or the laptop's cable, plugs in from outside. The splitter is taped on top of it.
 - **AA holder** in a pocket under the plinth, cover and switch facing the table. Its leads cross the pocket's roof, come up through a slot beside the turret and run up a groove in the outside of the +x flat to the plug.
 
@@ -24,12 +23,12 @@ This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U0
 |---|---|---|
 | `body.stl` | black | The turret: floor, key pegs, Atom bay, the USB window and lead groove, four screw posts, and a 36 mm inner collar the cap's skirt slides over (the real guide; open where the Atom and the key's cable are). |
 | `cap.stl` | white / translucent | What you hit, with the hex cage hanging inside. The top is 1.2 mm thick, which is the diffuser. Print with 4 walls. |
-| `saddle.stl` | any | The cup over the keycap. |
+| `cage.stl` | any | Four legs the hex clicks into, ending in a cup that sits over the keycap. Pushes up into sockets in the cap. Nothing inside the button is loose. |
 | `bezel.stl` | black | A 9 mm ring that screws down over the cap: a cone inside holds the cap's flange in and its bore steadies the top of the skirt. |
 | `plinth.stl` | black | The base. Battery pocket underneath. **Sized from Adafruit's listing for the 830 holder; measure yours first.** |
 | `fit_test.stl` | any | Two thin rings, a quick print: a slice of the bezel's bore and a slice of the cap's skirt. The small ring should slide freely in the big one without rattling. If not, change `SLIDE_CLEARANCE`. |
 
-Every STL is already turned the way it prints: cap, saddle and plinth are upside down, flat face on the bed. **No supports on anything.** The cap's cage legs print as four short towers on its underside.
+Every STL is already turned the way it prints: cap and plinth are upside down, flat face on the bed; the cage prints cup-down, legs up. **No supports on anything.**
 
 ## How the press works
 
@@ -48,9 +47,8 @@ Designed round a PC-case screw kit. **Bezel:** three of the brass **M3 6+6 stand
 ## Assembly
 
 1. **Body:** drop the Key Unit onto its pegs, socket toward −y. Atom into its bay with the USB-C in the window, splitter taped on top. Key cable → splitter → Atom.
-2. **Saddle** over the keycap.
-3. **Cap:** push the hex up into the cage from below until it clicks, LEDs toward the diffuser. Plug its cable into an underside socket and lead it out past a leg.
-4. Lower the cap over the body, hex cable to the splitter, pads onto the saddle's brim. **Bezel** over it, three screws.
+2. **Cage:** click the hex down into the legs, LEDs up. Plug its cable into an underside socket and lead it out past a leg. Push the cage's legs up into the cap's sockets until they seat (a dab of glue if loose).
+3. Lower the cap over the body, cup onto the keycap, hex cable to the splitter. **Bezel** over it, three standoffs.
 5. **Plinth:** holder in the pocket with foam tape, leads through the slot and up the groove; four screws up into the posts.
 
 ## Changing it
