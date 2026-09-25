@@ -266,7 +266,10 @@ def cage():
         return cbox(0, 0, z, wd, wd, 0.01)
     w_bottom = KEYCAP_TOP_W + (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE
     w_top = KEYCAP_TOP_W + 2 * PART_CLEARANCE
-    brim = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG)
+    # the brim's underside is a 45-degree cone down to the cup's base, so it prints cup-down without supports
+    cup_base = KEYCAP_TOP - depth - PRELOAD
+    brim = Manifold.batch_hull([cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG),
+                                cyl(2 * SADDLE_BRIM_R - 2 * (PAD_BOTTOM - cup_base), 0.01, z=cup_base, seg=SEG)])
     cup = Manifold.batch_hull([sq(w_bottom + 2 * SADDLE_WALL, KEYCAP_TOP - depth - PRELOAD), sq(w_top + 2 * SADDLE_WALL, PAD_BOTTOM + 0.01)])
     cavity = Manifold.batch_hull([sq(w_bottom, KEYCAP_TOP - depth - PRELOAD - 1), sq(w_bottom, KEYCAP_TOP - depth - PRELOAD), sq(w_top, KEYCAP_TOP - PRELOAD)])
     parts += [brim, cup]
