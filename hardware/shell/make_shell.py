@@ -56,7 +56,9 @@ SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
 KEY_BODY = (24.0, 40.0, 8.0)    # Key Unit case: x, y, z. Socket on its -y end.
 KEY_CAP_FROM_SOCKET = 28.0      # keycap centre from the socket end
 KEY_HOLES = (16.0, 12.0)        # two 4.85 mm holes: this far apart, this far from the socket end
-KEYCAP = (18.0, 16.3)           # keycap width, and height above the case (top at 24.3)
+KEYCAP = (18.0, 16.3)           # keycap width at its base, and height above the case (top at 24.3)
+KEYCAP_TOP_W = 13.0             # the keycap's flat top (it tapers, OEM-profile style)         MEASURE
+KEYCAP_H = 9.0                  # the keycap itself, base to top                              MEASURE
 KEY_PLUG = 8.0                  # how far the cable's plug sticks out past the socket end  MEASURE
 HEX_FLAT = 31.0                 # board across the flats; ears reach 36 tip to tip
 HEX_EAR_R = 16.0                # ear hole centres from the middle (2 mm holes)
@@ -236,11 +238,16 @@ def cap():
 
 # ── saddle: a cup over the keycap with a brim for the cage to press ─────────
 def saddle():
-    inner = KEYCAP[0] + 2 * PART_CLEARANCE
+    """A tapered cup that follows the keycap, plus a brim for the cage's pads."""
     depth = 6.0
-    cup = cbox(0, 0, KEYCAP_TOP - depth, inner + 2 * SADDLE_WALL, inner + 2 * SADDLE_WALL, depth + SADDLE_T)
-    cup += cyl(2 * SADDLE_BRIM_R, SADDLE_T, z=KEYCAP_TOP, seg=SEG)
-    return cup - cbox(0, 0, KEYCAP_TOP - depth - 1, inner, inner, depth + 1)
+    def sq(w, z):
+        return cbox(0, 0, z, w, w, 0.01)
+    w_bottom = KEYCAP[0] - (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE   # keycap width where the cup's rim lands
+    w_top = KEYCAP_TOP_W + 2 * PART_CLEARANCE
+    cavity = Manifold.batch_hull([sq(w_bottom, KEYCAP_TOP - depth - 1), sq(w_bottom, KEYCAP_TOP - depth), sq(w_top, KEYCAP_TOP)])
+    outer = Manifold.batch_hull([sq(w_bottom + 2 * SADDLE_WALL, KEYCAP_TOP - depth), sq(w_top + 2 * SADDLE_WALL, KEYCAP_TOP + SADDLE_T)])
+    brim = cyl(2 * SADDLE_BRIM_R, SADDLE_T, z=KEYCAP_TOP, seg=SEG)
+    return outer + brim - cavity
 
 
 # ── plinth (built hanging under the body) ───────────────────────────────────
