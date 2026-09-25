@@ -27,8 +27,8 @@ static const int BUTTON_PINS[3] = {-1, -1, -1};            // unused on this boa
 static const int BIG_BUTTON_PINS[] = {1, 8};               // any of these low = button 0 pressed
 // Where the hex is plugged in. The printed shell uses a Unit Hub splitter on the Atom's own socket;
 // the bench rig uses the PortABC base. Pick one.
-#define HEX_ON_ATOM_SOCKET    // the Atom's own socket, or a splitter / the hex's OUT chain on it: data on G2
-// #define HEX_ON_PORT_A      // PortABC base, Port A: data on G38
+#define HEX_ON_PORT_A         // PortABC base, Port A: data on G38   (the bench rig, until the splitters arrive)
+// #define HEX_ON_ATOM_SOCKET // the Atom's own socket, or a splitter on it: data on G2   (the finished shell)
 #if defined(HEX_ON_ATOM_SOCKET)
 #define LED_PIN 2
 #else
