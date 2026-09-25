@@ -43,8 +43,9 @@ static I2SClass i2s;
 
 // ── State ───────────────────────────────────────────────────────────────────
 
-enum Mode { MODE_OFF, MODE_DIM, MODE_SOLID, MODE_PULSE, MODE_FLASH, MODE_RAINBOW };
-enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY };
+enum Mode { MODE_OFF, MODE_DIM, MODE_SOLID, MODE_PULSE, MODE_FLASH, MODE_RAINBOW,
+            MODE_RIPPLE_OUT, MODE_RIPPLE_IN, MODE_RINGS, MODE_SPIN, MODE_SPARKLE, MODE_WAVE, MODE_HEARTBEAT };
+enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE };
 enum Wave { WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAW, WAVE_SINE };
 
 static Adafruit_NeoPixel ring(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -66,6 +67,8 @@ static Mode mode = MODE_OFF;
 static uint32_t modeSince = 0;
 static uint32_t holdMs = 2000;
 static uint32_t flashMs = 2000;
+static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
+static uint32_t pressedAt = 0;     // for the press blip
 
 static Overlay overlay = FX_NONE;
 static uint32_t overlaySince = 0;
@@ -241,12 +244,45 @@ static const uint16_t SND_CONFIRM[][2] = {{60, 70}, {72, 70}, {79, 160}};
 
 // ── Light ───────────────────────────────────────────────────────────────────
 
+// Where each pixel sits: a ring number (0 = centre) and an angle (0..1) round the board.
+// The NeoHEX is 37 pixels in rows of 4,5,6,7,6,5,4; any other board is treated as one ring.
+#define RINGS 4
+static uint8_t ringOf[LED_COUNT];
+static float angOf[LED_COUNT];
+
+static void mapPixels() {
+#if LED_COUNT == 37
+  static const uint8_t rows[7] = {4, 5, 6, 7, 6, 5, 4};
+  int i = 0;
+  for (int r = 0; r < 7; r++) {
+    for (int k = 0; k < rows[r]; k++) {
+      const int c = HEX_SERPENTINE && (r % 2) ? rows[r] - 1 - k : k;
+      const float x = c - (rows[r] - 1) / 2.0f;
+      const float y = (r - 3) * 0.8660254f;
+      const float d = sqrtf(x * x + y * y);
+      ringOf[i] = (uint8_t)min((int)(d + 0.5f), RINGS - 1);
+      angOf[i] = (atan2f(y, x) / (2.0f * PI)) + 0.5f;
+      i++;
+    }
+  }
+#else
+  for (int i = 0; i < LED_COUNT; i++) {
+    ringOf[i] = RINGS - 1;
+    angOf[i] = (float)i / LED_COUNT;
+  }
+#endif
+}
+
 static void setOverlay(Overlay fx) {
   overlay = fx;
   overlaySince = millis();
 }
 
-// How bright the LED is right now, 0..1, for the current mode. Mirrors the simulator's CSS.
+static uint32_t period(uint32_t fallback) { return periodMs ? periodMs : fallback; }
+static float frac(float v) { return v - floorf(v); }
+static float smooth(float p) { return 0.5f - 0.5f * cosf(p * 2.0f * PI); }   // 0..1..0 over p = 0..1
+
+// How bright the whole button is right now, 0..1, for the uniform modes. Mirrors the simulator's CSS.
 static float luminance(uint32_t now) {
   const uint32_t t = now - modeSince;
   switch (mode) {
@@ -255,8 +291,8 @@ static float luminance(uint32_t now) {
     case MODE_SOLID: return 1;
     case MODE_RAINBOW: return 1;
     case MODE_PULSE: {
-      const float p = (t % 1700) / 1700.0f;
-      return 0.34f + 0.66f * (0.5f - 0.5f * cosf(p * 2.0f * PI));
+      const uint32_t T = period(1700);
+      return 0.34f + 0.66f * smooth((t % T) / (float)T);
     }
     case MODE_FLASH: {
       // on 0-38%, fade to 50%, dark to 88%, fade back up
@@ -266,36 +302,97 @@ static float luminance(uint32_t now) {
       if (p < 0.88f) return 0.05f;
       return 0.05f + (p - 0.88f) / 0.12f * 0.95f;
     }
+    case MODE_HEARTBEAT: {
+      const uint32_t T = period(1300);
+      const float ms = t % T;
+      float b = 0;
+      if (ms < 140) b = smooth(ms / 140.0f);
+      else if (ms >= 220 && ms < 400) b = 0.7f * smooth((ms - 220) / 180.0f);
+      return DIM_LEVEL + (1 - DIM_LEVEL) * b;
+    }
+    default: return 1;
   }
-  return 0;
 }
 
+// Brightness of one pixel for the modes that move across the board.
+static float pixelLuminance(int i, uint32_t now) {
+  const uint32_t t = now - modeSince;
+  const int r = ringOf[i];
+  switch (mode) {
+    case MODE_RIPPLE_OUT:
+    case MODE_RIPPLE_IN: {
+      // a bright front travels through the rings and leaves a fading tail behind it
+      const uint32_t T = period(1400);
+      const float head = (t % T) / (float)T * RINGS;
+      const int ring = mode == MODE_RIPPLE_OUT ? r : RINGS - 1 - r;
+      const float behind = frac((head - ring) / RINGS);         // 0 just after the front passes, 1 just before
+      const float tail = (1 - behind) * (1 - behind);
+      return DIM_LEVEL + (1 - DIM_LEVEL) * tail;
+    }
+    case MODE_RINGS: {
+      // one more ring lights up every step; when they are all lit the board holds, then starts again
+      const uint32_t T = period(4000);
+      const uint32_t step = T / (RINGS + 1);
+      const int lit = (t % T) / step;                                  // 0..RINGS
+      const float fade = min(1.0f, ((t % T) % step) / 250.0f);        // each new ring fades in over 250 ms
+      if (r < lit) return 1;
+      if (r == lit && lit < RINGS) return DIM_LEVEL + (1 - DIM_LEVEL) * fade;
+      return DIM_LEVEL;
+    }
+    case MODE_SPIN: {
+      // a comet runs round the board; the centre pixel stays dim
+      const uint32_t T = period(1000);
+      if (r == 0) return DIM_LEVEL;
+      const float head = (t % T) / (float)T;
+      const float d = frac(head - angOf[i]);
+      const float b = max(0.0f, 1 - d * 2.5f);
+      return DIM_LEVEL + (1 - DIM_LEVEL) * b * b;
+    }
+    case MODE_SPARKLE: {
+      // every pixel twinkles on its own schedule
+      const uint32_t T = period(900);
+      const float phase = frac(i * 0.618034f);
+      const float s = sinf((t / (float)T + phase) * 2.0f * PI);
+      const float b = s > 0 ? s * s * s * s : 0;
+      return 0.25f + 0.75f * b;
+    }
+    case MODE_WAVE: {
+      // the pulse, but each ring runs a little behind the one inside it
+      const uint32_t T = period(1700);
+      return 0.25f + 0.75f * smooth(frac((t % T) / (float)T - r * 0.12f));
+    }
+    default: return luminance(now);
+  }
+}
+
+// Gamma-correct the colour, then scale it. Correcting after scaling crushed "dim" to nothing.
 static uint32_t scaled(uint8_t r, uint8_t g, uint8_t b, float level) {
   level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS;
-  return ring.gamma32(ring.Color((uint8_t)(r * level), (uint8_t)(g * level), (uint8_t)(b * level)));
+  return ring.Color((uint8_t)(ring.gamma8(r) * level), (uint8_t)(ring.gamma8(g) * level), (uint8_t)(ring.gamma8(b) * level));
 }
 
 static void render() {
   const uint32_t now = millis();
-  const float lum = luminance(now);
 
   for (int i = 0; i < LED_COUNT; i++) {
     if (mode == MODE_RAINBOW) {
-      const uint16_t hue = (uint16_t)((now * 30UL) + (uint32_t)i * 65536UL / LED_COUNT);
+      const uint16_t hue = (uint16_t)((now * 30UL) + (uint32_t)(angOf[i] * 65536.0f));
       ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * MAX_BRIGHTNESS))));
     } else {
+      float lum = pixelLuminance(i, now);
+      // a short brightening the instant the button goes down, so the press feels answered before the radio has spoken
+      if (PRESS_BLIP_MS && pressedAt && now - pressedAt < PRESS_BLIP_MS) lum = min(1.0f, lum + 0.35f);
       ring.setPixelColor(i, scaled(ledR, ledG, ledB, lum));
     }
   }
 
-  // Hold-to-confirm: a white arc sweeps round the ring, so the player sees how long is left.
+  // Hold-to-confirm: the rings light up white from the outside in as the hold time runs down.
   const Button &big = buttons[0];
   if (big.down && !big.holdSent && now - big.downSince > TAP_MAX_MS) {
-    // The leading pixel fades in rather than popping on, so even an 8-pixel ring reads as a smooth sweep.
     const float progress = constrain((float)(now - big.downSince - TAP_MAX_MS) / (holdMs - TAP_MAX_MS), 0.0f, 1.0f);
-    const float head = progress * LED_COUNT;
+    const float head = progress * RINGS;                     // how many rings are lit, counting from the outside
     for (int i = 0; i < LED_COUNT; i++) {
-      const float fill = constrain(head - i, 0.0f, 1.0f);
+      const float fill = constrain(head - (RINGS - 1 - ringOf[i]), 0.0f, 1.0f);
       if (fill > 0) ring.setPixelColor(i, scaled(255, 255, 255, fill));
     }
   }
@@ -303,17 +400,55 @@ static void render() {
   // One-shot reactions sit on top of everything.
   if (overlay != FX_NONE) {
     const uint32_t t = now - overlaySince;
-    uint32_t colour = 0;
-    bool show = false, done = false;
     switch (overlay) {
-      case FX_ACK: show = t < 160; done = !show; colour = scaled(255, 255, 255, 0.9f); break;
-      case FX_CONFIRM: show = t < 300; done = !show; colour = scaled(255, 255, 255, 1.0f - t / 300.0f); break;
-      case FX_DENIED: show = (t / 110) % 2 == 0; done = t >= 440; colour = scaled(255, 20, 40, 1); break;
-      case FX_IDENTIFY: show = (t / 125) % 2 == 0; done = t >= 1000; colour = scaled(255, 255, 255, 1); break;
-      default: done = true;
+      case FX_ACK:
+        if (t < 160) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 255, 255, 0.9f));
+        else overlay = FX_NONE;
+        break;
+      case FX_CONFIRM:
+        if (t < 300) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 255, 255, 1.0f - t / 300.0f));
+        else overlay = FX_NONE;
+        break;
+      case FX_DENIED:
+        if (t >= 440) overlay = FX_NONE;
+        else if ((t / 110) % 2 == 0) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 20, 40, 1));
+        break;
+      case FX_IDENTIFY:
+        if (t >= 1000) overlay = FX_NONE;
+        else if ((t / 125) % 2 == 0) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 255, 255, 1));
+        break;
+      case FX_RIPPLE: {
+        // one bright front, in the button's colour, from the centre to the rim
+        if (t >= 450) { overlay = FX_NONE; break; }
+        const float head = t / 450.0f * (RINGS + 1);
+        for (int i = 0; i < LED_COUNT; i++) {
+          const float d = head - ringOf[i];
+          if (d >= 0 && d < 1.6f) ring.setPixelColor(i, scaled(ledR, ledG, ledB, 1 - d / 1.6f));
+        }
+        break;
+      }
+      case FX_BURST: {
+        // a white flash that collapses outward and fades
+        if (t >= 520) { overlay = FX_NONE; break; }
+        if (t < 70) { for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(255, 255, 255, 1)); break; }
+        const float head = (t - 70) / 450.0f * (RINGS + 1);
+        for (int i = 0; i < LED_COUNT; i++) {
+          const float d = head - ringOf[i];
+          if (d >= 0 && d < 2.0f) ring.setPixelColor(i, scaled(255, 255, 255, 1 - d / 2.0f));
+        }
+        break;
+      }
+      case FX_SPARKLE: {
+        if (t >= 700) { overlay = FX_NONE; break; }
+        const float env = 1 - t / 700.0f;
+        for (int i = 0; i < LED_COUNT; i++) {
+          const float s = sinf((t / 180.0f + frac(i * 0.618034f)) * 2.0f * PI);
+          if (s > 0.6f) ring.setPixelColor(i, scaled(255, 255, 255, env * (s - 0.6f) / 0.4f));
+        }
+        break;
+      }
+      default: overlay = FX_NONE;
     }
-    if (done) overlay = FX_NONE;
-    else if (show) for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, colour);
   }
   ring.show();
 #if STATUS_LED_PIN >= 0
@@ -331,6 +466,13 @@ static Mode parseMode(const char *m) {
   if (!strcmp(m, "pulse")) return MODE_PULSE;
   if (!strcmp(m, "flash")) return MODE_FLASH;
   if (!strcmp(m, "rainbow")) return MODE_RAINBOW;
+  if (!strcmp(m, "ripple")) return MODE_RIPPLE_OUT;
+  if (!strcmp(m, "ripple_in")) return MODE_RIPPLE_IN;
+  if (!strcmp(m, "rings")) return MODE_RINGS;
+  if (!strcmp(m, "spin")) return MODE_SPIN;
+  if (!strcmp(m, "sparkle")) return MODE_SPARKLE;
+  if (!strcmp(m, "wave")) return MODE_WAVE;
+  if (!strcmp(m, "heartbeat")) return MODE_HEARTBEAT;
   return MODE_OFF;
 }
 
@@ -372,6 +514,7 @@ static void handle(const Packet &p) {
       modeSince = millis();
     }
     mode = next;
+    periodMs = doc["d"].is<uint32_t>() ? constrain(doc["d"].as<uint32_t>(), 200UL, 30000UL) : 0;
   } else if (!strcmp(type, "snd")) {
     static uint16_t list[MAX_NOTES][2];
     int count = 0;
@@ -387,6 +530,9 @@ static void handle(const Packet &p) {
     if (!strcmp(kind, "ack")) { setOverlay(FX_ACK); playNotes(SND_ACK, 2, WAVE_TRIANGLE); }
     else if (!strcmp(kind, "denied")) { setOverlay(FX_DENIED); playNotes(SND_DENIED, 3, WAVE_SAW); }
     else if (!strcmp(kind, "confirm")) { setOverlay(FX_CONFIRM); playNotes(SND_CONFIRM, 3, WAVE_TRIANGLE); }
+    else if (!strcmp(kind, "ripple")) setOverlay(FX_RIPPLE);
+    else if (!strcmp(kind, "burst")) setOverlay(FX_BURST);
+    else if (!strcmp(kind, "sparkle")) setOverlay(FX_SPARKLE);
   } else if (!strcmp(type, "cfg")) {
     holdMs = constrain((uint32_t)(doc["hold"] | (int)holdMs), 300UL, 10000UL);
     flashMs = constrain((uint32_t)(doc["flash"] | (int)flashMs), 300UL, 10000UL);
@@ -420,6 +566,7 @@ static void serviceButtons() {
       if (raw) {
         b.downSince = now;
         b.holdSent = false;
+        if (i == 0) pressedAt = now;
       } else if (!b.holdSent && now - b.downSince <= TAP_MAX_MS) {
         // Taps go out at once so acknowledging never lags; a quick second one adds "double".
         if (i == 0 && b.lastTap && now - b.lastTap <= DOUBLE_MS) {
@@ -435,7 +582,7 @@ static void serviceButtons() {
     if (i == 0 && b.down && !b.holdSent && now - b.downSince >= holdMs) {
       b.holdSent = true;
       sendButton(0, "hold");
-      setOverlay(FX_CONFIRM);
+      setOverlay(FX_BURST);
       playNotes(SND_CONFIRM, 3, WAVE_TRIANGLE);
     }
   }
@@ -480,6 +627,7 @@ void setup() {
   for (int i = 0; i < BIG_BUTTON_PIN_COUNT; i++) pinMode(BIG_BUTTON_PINS[i], INPUT_PULLUP);
   for (int i = 1; i < BUTTON_COUNT; i++) pinMode(BUTTON_PINS[i], INPUT_PULLUP);
 
+  mapPixels();
   ring.begin();
   ring.clear();
   ring.show();

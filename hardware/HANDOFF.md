@@ -10,6 +10,10 @@ One hub Atom and one button Atom + Key Unit + NeoHEX on a PortABC base, both on 
 
 Game night is roughly the first days of October 2026. Six buttons and one hub have to work by then. Favour whatever gets working buttons on the table over elegance.
 
+## Effects lab (2026-09-24)
+
+`/fx.html` (static, `public/fx.html`) connects to the hub and fires every mode, effect and a board of synthesised sounds at the real button, with press→sound+effect pairing. Firmware now maps the NeoHEX's 37 pixels to rings and angles and adds modes `ripple`, `ripple_in`, `rings`, `spin`, `sparkle`, `wave`, `heartbeat` (with an optional `d` period on `led`), fx `ripple`, `burst`, `sparkle`, ring-fill hold progress, a 70 ms press blip, and the dim fix. **For the app session:** these are documented as optional extras in `docs/BUTTON_STANDARD.md`; the bench could grow buttons for them, and the game could use `burst` on hold-confirm and `ripple` on tap. `HEX_SERPENTINE` in `config.h` is a guess to verify with the `rings` mode.
+
 ## The no-solder build (ordered 2026-09-22)
 
 Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for the first test unit **1 × Mechanical Key Unit, 1 × NeoHEX 37-LED board, 1 × PortABC base**. Power is his own NiMH AAs: an Adafruit 830 switched 4×AA holder, a 1N5817 in the red lead, Wago 221 clips, a USB-C plug with screw terminals into the Atom. Still to order: 5 more keys and hexes, 6 Unit Hub splitters (U006; the shell uses those, not more PortABC bases), 6 holders, Wagos and diodes, the USB-C screw plugs (Amazon), M3 screws, feet. The soldered carrier-board design is now the fallback; the JLCPCB order was not placed.

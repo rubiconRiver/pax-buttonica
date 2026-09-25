@@ -35,6 +35,7 @@ static const int BIG_BUTTON_PINS[] = {1, 8};               // any of these low =
 #define LED_PIN 38
 #endif
 #define LED_COUNT 37          // NeoHEX has 37; the Key Unit's own LED alone would be 1
+#define HEX_SERPENTINE 0      // 1 if the NeoHEX's rows run alternately left-right / right-left (test with the "rings" mode)
 #define STATUS_LED_PIN 35     // the Atom's tiny onboard pixel; mirrors the colour so a bare Atom shows something
 #define MAX_BRIGHTNESS 0.55f
 #define DIM_LEVEL 0.14f
@@ -50,10 +51,15 @@ static const int BUTTON_PINS[3] = {3, 5, 6};
 static const int BIG_BUTTON_PINS[] = {3};
 #define LED_PIN 10
 #define LED_COUNT 8           // 8-LED ring; 12 for the 50 mm ring
+#define HEX_SERPENTINE 0
 #define STATUS_LED_PIN -1
 #define MAX_BRIGHTNESS 0.55f
 #define DIM_LEVEL 0.14f
 #endif
+
+// ── Feel ────────────────────────────────────────────────────────────────────
+// A short brightening the instant the big button goes down, before the host has answered. 0 = off.
+#define PRESS_BLIP_MS 70
 
 // ── Sound: pick ONE ─────────────────────────────────────────────────────────
 // The standard button has no speaker: every sound plays from the laptop.

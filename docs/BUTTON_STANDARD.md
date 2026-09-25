@@ -65,6 +65,20 @@ Six modes, chosen so that a single LED and a timer can do all of them.
 | `flash` | Slow blink: on, soft fade, dark, soft fade. **2 s** cycle by default (set by the host), fades about a tenth of the cycle each | **A strategy card needs you.** Yours: do the primary, then tap. Someone else's: do the secondary (or don't), then tap |
 | `rainbow` | Hue cycle, 2.2 s period | You won |
 
+### Extra modes (optional)
+
+A device with more than one pixel may also understand these. They are decoration: a host must never rely on them to carry meaning, and a device that doesn't know one shows `off`. `d` on the `led` message sets the cycle in ms; each has a default.
+
+| Mode | Looks like | Default `d` |
+|---|---|---|
+| `ripple` | A bright front runs from the centre to the rim and leaves a fading tail | 1400 |
+| `ripple_in` | The same, rim to centre | 1400 |
+| `rings` | One more ring lights each step; when all are lit it holds, then starts over | 4000 |
+| `spin` | A comet runs round the outside | 1000 |
+| `sparkle` | Every pixel twinkles on its own schedule | 900 |
+| `wave` | The pulse, each ring a little behind the one inside it | 1700 |
+| `heartbeat` | Two thumps, then a rest | 1300 |
+
 ### How a strategy card plays out
 
 1. The active player **double-taps**. The big screen announces the card to the room; their button goes `flash` in the card's colour. Everyone else stays as they were.
@@ -117,7 +131,7 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 
 - `led` — colour `c` and mode `m`. The only message a minimal device has to understand. For `pulse` and `flash` the host adds `p`: how many milliseconds into the cycle the light should already be. Start your animation there and the whole table breathes and blinks in step; ignore it and you'll merely be a little out of time.
 - `snd` — a jingle as `[midiNote, milliseconds]` pairs; note `0` is a rest. `w` is the waveform (`square`, `triangle`, `sawtooth`, `sine`) — a piezo can ignore it. Every built-in jingle fits in one packet.
-- `fx` — a canned reaction the device renders however it likes: `ack` (small happy blip), `denied` (red flash and a buzz), `confirm`.
+- `fx` — a canned reaction the device renders however it likes: `ack` (small happy blip), `denied` (red flash and a buzz), `confirm`. Optional extras a multi-pixel device may render: `ripple` (one front, centre to rim, in the current colour), `burst` (white flash that collapses outward), `sparkle` (half a second of twinkles). Unknown kinds are ignored.
 - `cfg` — settings, all in ms: `hold` is the hold time, `flash` is the full on-off cycle of `flash` mode.
 - `id` — "blink white for a second" so a human can tell which button is which.
 
