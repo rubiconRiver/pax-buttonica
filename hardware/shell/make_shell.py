@@ -242,7 +242,7 @@ def saddle():
     depth = 6.0
     def sq(w, z):
         return cbox(0, 0, z, w, w, 0.01)
-    w_bottom = KEYCAP[0] - (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE   # keycap width where the cup's rim lands
+    w_bottom = KEYCAP_TOP_W + (KEYCAP[0] - KEYCAP_TOP_W) * (depth / KEYCAP_H) + 2 * PART_CLEARANCE   # keycap width where the cup's rim lands
     w_top = KEYCAP_TOP_W + 2 * PART_CLEARANCE
     cavity = Manifold.batch_hull([sq(w_bottom, KEYCAP_TOP - depth - 1), sq(w_bottom, KEYCAP_TOP - depth), sq(w_top, KEYCAP_TOP)])
     outer = Manifold.batch_hull([sq(w_bottom + 2 * SADDLE_WALL, KEYCAP_TOP - depth), sq(w_top + 2 * SADDLE_WALL, KEYCAP_TOP + SADDLE_T)])
@@ -281,9 +281,10 @@ def bought_parts(pressed=False):
     return {
         'key': cbox(0, KEY_Y0 + KEY_BODY[1] / 2, 0, *KEY_BODY) + cbox(0, KEY_Y0 - KEY_PLUG / 2, 2, 8, KEY_PLUG, 4)
                - union(cyl(4.85, 10, sx * KEY_HOLES[0] / 2, KEY_Y0 + KEY_HOLES[1], -1) for sx in (-1, 1)),
-        'keycap': Manifold.batch_hull([cbox(0, 0, KEY_BODY[2], 14, 14, 0.01),                       # switch housing, then the tapered cap
-                                       cbox(0, 0, KEYCAP_TOP - KEYCAP_H, KEYCAP[0], KEYCAP[0], 0.01),
-                                       cbox(0, 0, KEYCAP_TOP - PRELOAD + dz - 0.01, KEYCAP_TOP_W, KEYCAP_TOP_W, 0.01)]),
+        # the switch housing stays put; the keycap (a frustum) rides down by the preload, and by the travel when pressed
+        'keycap': cbox(0, 0, KEY_BODY[2], 14, 14, KEYCAP_TOP - KEYCAP_H - KEY_BODY[2] - PRELOAD + dz + 0.01)
+                  + Manifold.batch_hull([cbox(0, 0, KEYCAP_TOP - KEYCAP_H - PRELOAD + dz, KEYCAP[0], KEYCAP[0], 0.01),
+                                         cbox(0, 0, KEYCAP_TOP - PRELOAD + dz - 0.01, KEYCAP_TOP_W, KEYCAP_TOP_W, 0.01)]),
         'hex': hexboard,
         'atom': box(ATOM_X0, -ATOM[1] / 2, 0, *ATOM),
         'splitter': cbox(ATOM_X0 + ATOM[0] - SPLITTER[0] / 2, 0, ATOM[2], *SPLITTER),
