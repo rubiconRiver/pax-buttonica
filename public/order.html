@@ -81,13 +81,13 @@
   <header style="display:flex;flex-direction:column;gap:10px">
     <div class="eyebrow">Pax Buttonica · no-solder build</div>
     <h1>Order sheet: six buttons and a hub</h1>
-    <p class="lede">Everything plugs together: the clicky key and the LED strip click into the ESP32 with their own cables, and four of your rechargeable AAs run it. No soldering iron. Prices and stock are as read on 21 September 2026 and will move.</p>
+    <p class="lede">Everything plugs together: the clicky key and the hex light board click into the ESP32 with their own cables, and four of your rechargeable AAs run it. No soldering iron. Prices and stock are as read on 21–24 September 2026 and will move. The first button ran on the bench on the 24th.</p>
     <div class="progress"><div class="bar"><i id="fill"></i></div><div class="count" id="count">0 of 0</div></div>
   </header>
 
   <section class="panel chamfer"><div class="in chamfer">
     <div class="head"><div><h2>1 · DigiKey.ca, one order</h2><div class="sub">Free shipping over $100, usually next day</div></div><div class="sum">about $249 before tax</div></div>
-    <div class="chain"><b>AA pack</b><i>USB-C plug →</i><b>AtomS3 Lite</b><i>on</i><b>PortABC base</b><i>plug →</i><b>Key unit</b><i>+ plug →</i><b>LED strip</b></div>
+    <div class="chain"><b>AA pack</b><i>USB-C plug →</i><b>AtomS3 Lite</b><i>socket →</i><b>splitter</b><i>→</i><b>Key unit</b><i>+</i><b>NeoHEX</b></div>
 
     <label class="item"><span><input type="checkbox" id="c124"><span class="box"></span></span>
       <span><span class="name">M5Stack AtomS3 Lite <small>C124</small></span><br><span class="note">The brain and radio: a 24 mm ESP32-S3 cube with USB-C. Six buttons plus one that stays on the laptop as the hub. 3,809 in stock.</span></span>
@@ -98,16 +98,16 @@
       <span class="side"><span class="qty">7 <span>× $6.17</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/U144/16679757">DigiKey</a></span></label>
 
     <label class="item"><span><input type="checkbox" id="a035b"><span class="box"></span></span>
-      <span><span class="name">M5Stack RGB LED strip, 20 cm, 29 LEDs <small>A035-B</small></span><br><span class="note">This is what makes it visible across the room: it wraps round a printed drum inside the cap, facing outward. <span class="warn">Only 27 in stock, so this is the line not to wait on.</span></span></span>
-      <span class="side"><span class="qty">6 <span>× $13.28</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/A035-B/16370072">DigiKey</a></span></label>
+      <span><span class="name">M5Stack NeoHEX 37-LED board <small>A045-B</small></span><br><span class="note">The light: 37 LEDs on a 36 mm hexagon with a diffuser, riding inside the cap. Chosen over the strip on 2026-09-22; proven on the bench on the 24th.</span></span>
+      <span class="side"><span class="qty">6 <span>× $12.42</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/A045-B/16679754">DigiKey</a></span></label>
 
     <label class="item"><span><input type="checkbox" id="a130"><span class="box"></span></span>
-      <span><span class="name">M5Stack Atomic PortABC base <small>A130</small></span><br><span class="note">The Atom has one plug socket and needs two (key and strip). It sits on this base, which adds three. <span class="warn">Canadian stock not confirmed: check the page. If it is short, order what they have; the splitter below may cover the rest.</span></span></span>
-      <span class="side"><span class="qty">6 <span>× $5.60</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/A130/19722392">DigiKey</a></span></label>
+      <span><span class="name">M5Stack Atomic PortABC base <small>A130</small></span><br><span class="note">Bought one for the bench (2026-09-22). Not used in the shell: with the Atom on it, it is 60 mm long and does not fit beside the key. The splitter below does the job instead.</span></span>
+      <span class="side"><span class="qty">1 <span>(have)</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/A130/19722392">DigiKey</a></span></label>
 
     <label class="item"><span><input type="checkbox" id="u006"><span class="box"></span></span>
-      <span><span class="name">M5Stack Unit Hub, 1-to-3 splitter <small>U006</small></span><br><span class="note">One, as an experiment. If the key and the strip can share a socket through this, the next builder skips the PortABC base. M5's documents don't settle it, so we test it on the first button.</span></span>
-      <span class="side"><span class="qty">1 <span>× $5.13</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/U006/12088551">DigiKey</a></span></label>
+      <span><span class="name">M5Stack Unit Hub, 1-to-3 splitter <small>U006</small></span><br><span class="note">One per button. The key and the hex share the Atom's own socket through it (key on the white wire, hex on the yellow), which keeps the inside of the shell small.</span></span>
+      <span class="side"><span class="qty">6 <span>× $5.13</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/U006/12088551">DigiKey</a></span></label>
   </div></section>
 
   <section class="panel chamfer"><div class="in chamfer">

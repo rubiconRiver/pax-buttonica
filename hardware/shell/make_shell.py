@@ -4,29 +4,31 @@ Generates the Pax Buttonica button shell for the no-solder build: printable STLs
   python3 -m venv .venv && .venv/bin/pip install manifold3d numpy     # once
   .venv/bin/python make_shell.py
 
-What goes inside (all M5Stack, all plug-together):
-  NeoHEX     37-LED light board, on three small ledges just above the floor, LEDs up
-  Key Unit   the clicky switch, on a bridge over the hex so its keycap sits under the cap's centre
-  AtomS3     the brain, lying flat against one wall with its USB-C in a window: the battery plug
-             (or the laptop) plugs in from OUTSIDE, so flashing needs no disassembly
-  splitter   a Grove 1-to-3 (or a hand-made Y) taped on top of the Atom, so key and hex share its socket
+What goes inside (all M5Stack, all plug-together; sizes from M5's dimension drawings):
+  Key Unit   on the body floor, keycap on the axis, dropped onto two pegs that fit its mounting holes
+  saddle     a printed cup over the keycap with a wide brim, so the cap can press the key from outside
+             the hex's sockets
+  NeoHEX     rides INSIDE the cap on four snap legs, LEDs up against the diffuser, sockets down.
+             The legs continue below it and press the saddle's brim.
+  AtomS3     lying flat against the +x wall with its USB-C in a window: the battery plug (or the
+             laptop) plugs in from OUTSIDE, so flashing needs no disassembly
+  splitter   a Grove 1-to-3 (Unit Hub) taped on the Atom, so key and hex share its socket
   AA holder  in a pocket under the plinth, cover and switch facing the table
 
 Five printed parts, none of which needs supports:
   plinth  hex base with the battery pocket underneath. Depends only on the holder.
-  body    hex turret: floor, hex ledges, Atom bay, USB window, four screw posts.
-  bridge  two legs and a frame that carries the Key Unit above the hex.
-  cap     the part you hit (white or translucent). Flat top, 45-degree shoulder, a skirt that
-          slides in the bezel, a flange that keeps it captive, a plunger down to the keycap.
+  body    hex turret: floor, key pegs, Atom bay, USB window, four screw posts.
+  cap     the part you hit, with the hex cage hanging from its ceiling.
+  saddle  the cup over the keycap.
   bezel   screws onto the body over the cap: guides the skirt, holds the flange in.
 
 A slap goes cap flange -> top of the body wall -> plinth -> table. The keycap only ever sees
 TRAVEL + PRELOAD of movement, less than the switch's own travel.
 
-Millimetres. x to the right (USB window on the +x flat), y away from you, z up, z = 0 at the top
-of the body's floor. STLs come out already turned the way they print.
+Millimetres. x to the right (USB window on the +x flat), y away from you (the key's cable leaves
+toward -y), z up, z = 0 at the top of the body's floor. STLs come out already turned the way they print.
 
-STATUS: modelled from M5Stack's published sizes (marked MEASURE). Nothing printed or fitted yet.
+STATUS: v0.3, modelled from M5Stack's drawings. Nothing printed or fitted yet.
 The soldered carrier-board version of this shell is make_shell_pcb.py.
 """
 import math
@@ -50,13 +52,17 @@ TRAVEL = 2.8             # how far the cap moves before plastic meets plastic
 PRELOAD = 0.2            # how far the cap holds the keycap down at rest (takes up rattle)
 SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
 
-# ── the bought parts (MEASURE each when the box arrives) ────────────────────
-HEX_ACROSS = 41.6        # NeoHEX corner to corner, ears excluded (36 across flats per M5)   MEASURE
-HEX_BOARD_T = 3.1        # board plus LEDs
-HEX_UNDER = 6.5          # how far its sockets hang below the board                          MEASURE
-KEY_UNIT = (40.0, 24.0, 16.6)   # Key Unit body x, y, z; its socket on the +x end            MEASURE
-KEYCAP = (18.0, 18.0, 6.0)      # keycap on top, assumed centred on the body                 MEASURE
-KEY_TOTAL_H = 22.6              # M5: 40 x 24 x 22.6 including the keycap
+# ── the bought parts (M5Stack drawings; MEASURE = not on a drawing) ──────────
+KEY_BODY = (24.0, 40.0, 8.0)    # Key Unit case: x, y, z. Socket on its -y end.
+KEY_CAP_FROM_SOCKET = 28.0      # keycap centre from the socket end
+KEY_HOLES = (16.0, 12.0)        # two 4.85 mm holes: this far apart, this far from the socket end
+KEYCAP = (18.0, 16.3)           # keycap width, and height above the case (top at 24.3)
+KEY_PLUG = 8.0                  # how far the cable's plug sticks out past the socket end  MEASURE
+HEX_FLAT = 31.0                 # board across the flats; ears reach 36 tip to tip
+HEX_EAR_R = 16.0                # ear hole centres from the middle (2 mm holes)
+HEX_BOARD_T = 2.0               # board plus LEDs
+HEX_UNDER = 7.6                 # sockets below the board (9.55 overall)
+HEX_SOCKETS = (24.0, 22.0)      # the socket cluster on the back, as a box                  MEASURE
 ATOM = (24.0, 24.0, 9.5)        # AtomS3 Lite lying flat, USB-C on its +x edge
 ATOM_USB_Z = 4.75               # USB-C centre above the floor when it lies flat            MEASURE
 SPLITTER = (12.0, 24.0, 8.0)    # Unit Hub 1-to-3                                           MEASURE
@@ -67,28 +73,31 @@ TURRET_F = 90.0          # across the flats of the hexagon
 BORE_R = 40.0            # round bore inside it
 FLOOR_T = 1.6
 WALL_TOP = 24.5          # top of the body wall = the hard stop
-HEX_LEDGE_Z = 8.0        # the hex board rests here; its sockets hang in the gap below
-HEX_X = -8.0             # the hex sits off-centre, away from the Atom; its flats face +/-x
-BRIDGE_Z = 15.0          # underside of the bridge frame
-BRIDGE_T = 3.0
-BRIDGE_LEG = 8.0
-BRIDGE_LEG_Y = 25.0      # legs at (0, +/-BRIDGE_LEG_Y), so the key's cable can leave along +x
 ATOM_X0 = 13.0           # Atom bay from here to ATOM_X0 + 24 (its corners must stay inside the bore)
 POSTS = [(33, 20), (-33, 20), (-33, -20), (33, -20)]   # screws up from the plinth
 USB_WINDOW = (14.0, 9.0)
 LEAD_GROOVE_W = 6.0      # the battery leads run up the outside of the +x flat in this groove
+
+# ── the cage in the cap, and the saddle ─────────────────────────────────────
+LED_GAP = 12.0           # hex LEDs to the underside of the diffuser
+CAGE_ANGLES = (60, 120, 240, 300)   # legs at these flat centres; the side sockets open at 0 and 180
+CAGE_LEG = (5.0, 3.0)    # leg width (tangential) and radial thickness
+CAGE_R0 = HEX_FLAT / 2 + 0.6        # inner face of the legs
+LIP = 0.9                # snap lip under the board
+PAD_T = 3.0              # the pusher pads at the bottom of the legs
+SADDLE_WALL = 1.5
+SADDLE_BRIM_R = 18.0
+SADDLE_T = 2.0           # brim / roof thickness
 
 # ── cap and bezel ───────────────────────────────────────────────────────────
 CAP_D = 70.0
 CAP_TOP_T = 1.2          # the diffuser
 CAP_WALL = 1.6
 CAP_CHAMFER = 7.0
-CAP_EXPOSED = 10.0       # cap top above the bezel at rest
 FLANGE_W, FLANGE_LAND = 3.1, 0.8
 BEZEL_H = 17.0
 BEZEL_SCREW_R = 46.0
 BEZEL_FLANGE_T = 3.0
-PLUNGER_D = 9.0
 
 # ── plinth ──────────────────────────────────────────────────────────────────
 WIRE_RELIEF = 2.5        # extra pocket length at each end for the leads to turn
@@ -102,23 +111,27 @@ BEZEL_BORE_R = CAP_R + SLIDE_CLEARANCE
 FLANGE_R = CAP_R + FLANGE_W
 CHAMBER_R = FLANGE_R + SLIDE_CLEARANCE
 BEZEL_TOP = WALL_TOP + BEZEL_H
-CAP_TOP = BEZEL_TOP + CAP_EXPOSED
 FLANGE_BOTTOM = WALL_TOP + TRAVEL
 SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - SLIDE_CLEARANCE
-KEY_BOTTOM = BRIDGE_Z + BRIDGE_T
-KEYCAP_TOP = KEY_BOTTOM + KEY_TOTAL_H
-PLUNGER_TIP = KEYCAP_TOP - PRELOAD
-HEX_R = HEX_ACROSS / 2
-HEX_FLAT = HEX_R * math.cos(math.radians(30))          # centre to the middle of a flat
+KEY_Y0 = -KEY_CAP_FROM_SOCKET                        # the case's -y end; keycap centre at y = 0
+KEYCAP_TOP = KEY_BODY[2] + KEYCAP[1]
+SADDLE_TOP = KEYCAP_TOP + SADDLE_T                   # top of the brim, at rest
+PAD_BOTTOM = SADDLE_TOP - PRELOAD                    # the cage's pads rest here
+HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.5    # underside of the hex board
+HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
+INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
+CAP_TOP = INNER_TOP + CAP_TOP_T
+CAP_EXPOSED = CAP_TOP - BEZEL_TOP
 POCKET = (HOLDER[0] + 2 * (PART_CLEARANCE + WIRE_RELIEF), HOLDER[1] + 2 * PART_CLEARANCE, HOLDER[2] + 1)
 PLINTH_H = POCKET[2] + DECK_T
 PLINTH_F = TURRET_F + 16
-FLAT_X = TURRET_F / 2                                # the +x flat's outer face
-LEAD_SLOT_X = FLAT_X + 1.5                           # centre of the slot through the plinth deck
+FLAT_X = TURRET_F / 2
+LEAD_SLOT_X = FLAT_X + 1.5
 
 assert TRAVEL + PRELOAD <= SWITCH_TRAVEL_MIN, 'the cap would bottom the switch out before the shell stops it'
 assert math.hypot(ATOM_X0 + ATOM[0], ATOM[1] / 2) < BORE_R, 'the Atom does not fit in the bore'
-assert CAP_TOP - CAP_TOP_T > KEYCAP_TOP + 4, 'the keycap is too close to the cap top'
+assert CAP_EXPOSED >= 6, 'the cap barely shows above the bezel; lower WALL_TOP or BEZEL_H'
+assert CAGE_R0 + CAGE_LEG[1] < CAP_R - CAP_WALL - 1, 'the cage does not fit inside the cap'
 
 
 # ── helpers ─────────────────────────────────────────────────────────────────
@@ -141,7 +154,7 @@ def revolve(points):
     return CrossSection([pts if area > 0 else pts[::-1]]).revolve(SEG)
 
 def hex_prism(F, h, z=0.0, ct=0.0, cb=0.0):
-    """Hexagon F across the flats, corners on the x axis... no: flats on +/-x, so the USB window is on a flat."""
+    """Hexagon F across the flats, flats facing +/-x, optional chamfers top and bottom."""
     def slab(f, z0, t):
         return CrossSection.circle(f / 2 / math.cos(math.radians(30)), 6).rotate(30).extrude(t).translate([0, 0, z0])
     slabs = [slab(F, cb, h - ct - cb)]
@@ -157,21 +170,21 @@ def corners(r):
 def body():
     solid = hex_prism(TURRET_F, FLOOR_T + WALL_TOP, z=-FLOOR_T, cb=0.6) - cyl(2 * BORE_R, WALL_TOP + 1, seg=SEG)
     solid += union(cyl(7.5, 6, x, y) for x, y in POSTS)
-    # three ledges for the hex board: a post with an inward lip, at 60, 180 and 300 degrees
-    for a in (60, 180, 300):
-        px, py = HEX_X + (HEX_FLAT + 2.5) * math.cos(math.radians(a)), (HEX_FLAT + 2.5) * math.sin(math.radians(a))
-        solid += cbox(px, py, 0, 5, 5, HEX_LEDGE_Z)
-        lx, ly = HEX_X + (HEX_FLAT - 1.5) * math.cos(math.radians(a)), (HEX_FLAT - 1.5) * math.sin(math.radians(a))
-        solid += Manifold.batch_hull([cbox(px, py, HEX_LEDGE_Z - 2, 5, 5, 2), cbox(lx, ly, HEX_LEDGE_Z - 2, 3, 3, 2)])
+    # two pegs into the Key Unit's mounting holes, plus a low rim round its case
+    hy = KEY_Y0 + KEY_HOLES[1]
+    solid += union(cyl(4.5, 5, sx * KEY_HOLES[0] / 2, hy, d2=4.0, seg=32) for sx in (-1, 1))
+    rim = cbox(0, KEY_Y0 + KEY_BODY[1] / 2, 0, KEY_BODY[0] + 2 * PART_CLEARANCE + 3, KEY_BODY[1] + 2 * PART_CLEARANCE + 3, 2)
+    rim -= cbox(0, KEY_Y0 + KEY_BODY[1] / 2, -1, KEY_BODY[0] + 2 * PART_CLEARANCE, KEY_BODY[1] + 2 * PART_CLEARANCE, 4)
+    rim -= cbox(0, KEY_Y0, -1, 12, 8, 4)                                                      # the cable leaves here
+    rim -= box(KEY_BODY[0] / 2 + PART_CLEARANCE, -60, -1, 20, 120, 4)                          # no rim on the Atom's side
+    solid += rim
     # a low fence round the Atom, open on the inner side for its cable
     ax0, ay0 = ATOM_X0 - PART_CLEARANCE, -ATOM[1] / 2 - PART_CLEARANCE
     fence = box(ax0 - 1.5, ay0 - 1.5, 0, ATOM[0] + 2 * PART_CLEARANCE + 3, ATOM[1] + 2 * PART_CLEARANCE + 3, 2)
     fence -= box(ax0, ay0, -1, ATOM[0] + 2 * PART_CLEARANCE + 5, ATOM[1] + 2 * PART_CLEARANCE, 4)
-    fence -= box(ax0 - 3, -8, -1, 4, 16, 4)
+    fence -= box(ax0 - 3, -60, -1, 3.01, 120, 4)                                              # no wall on the key's side: the Atom's cable leaves there
     solid += fence
-    # pockets for the bridge's legs
-    cuts = [cbox(0, sy * BRIDGE_LEG_Y, -1.0, BRIDGE_LEG + 0.4, BRIDGE_LEG + 0.4, 3.0) for sy in (-1, 1)]
-    cuts += [cyl(TAP_D, FLOOR_T + 6 + 2, x, y, -FLOOR_T - 1, seg=24) for x, y in POSTS]
+    cuts = [cyl(TAP_D, FLOOR_T + 6 + 2, x, y, -FLOOR_T - 1, seg=24) for x, y in POSTS]
     # USB-C window through the +x flat, with a recess outside for the plug's body
     cuts.append(cbox(FLAT_X, 0, ATOM_USB_Z - USB_WINDOW[1] / 2, 2 * (FLAT_X - BORE_R + 2), USB_WINDOW[0], USB_WINDOW[1]))
     cuts.append(cbox(FLAT_X, 0, -FLOOR_T - 1, 6, USB_WINDOW[0] + 6, FLOOR_T + 1 + ATOM_USB_Z + USB_WINDOW[1] / 2 + 3))
@@ -179,19 +192,6 @@ def body():
     cuts.append(cbox(FLAT_X, 0, -FLOOR_T - 1, 6, LEAD_GROOVE_W, FLOOR_T + 1 + ATOM_USB_Z))
     cuts += [cyl(TAP_D, 9.01, x, y, WALL_TOP - 9, seg=24) for x, y in corners(BEZEL_SCREW_R)]
     return solid - union(cuts)
-
-
-# ── bridge: carries the Key Unit over the hex ───────────────────────────────
-def bridge():
-    fx, fy = KEY_UNIT[0] + 2 * PART_CLEARANCE + 8, KEY_UNIT[1] + 2 * PART_CLEARANCE + 8
-    frame = cbox(0, 0, BRIDGE_Z, fx, fy, BRIDGE_T)
-    frame -= cbox(0, 0, BRIDGE_Z - 1, KEY_UNIT[0] - 4, KEY_UNIT[1] - 4, BRIDGE_T + 2)        # light passes; the unit rests on a 2 mm rim
-    frame += cbox(0, 0, BRIDGE_Z + BRIDGE_T, fx, fy, 2) - cbox(0, 0, BRIDGE_Z + BRIDGE_T - 1, KEY_UNIT[0] + 2 * PART_CLEARANCE, KEY_UNIT[1] + 2 * PART_CLEARANCE, 4)
-    frame -= cbox(fx / 2, 0, BRIDGE_Z + BRIDGE_T - 1, 10, 12, 4)                              # the cable leaves along +x
-    legs = union(cbox(0, sy * BRIDGE_LEG_Y, -1.0, BRIDGE_LEG, BRIDGE_LEG, 1.0 + BRIDGE_Z + 0.01) for sy in (-1, 1))
-    reach = BRIDGE_LEG_Y + BRIDGE_LEG / 2 - fy / 2                                            # from the frame's edge out to the leg
-    tabs = union(cbox(0, sy * (fy / 2 + reach / 2), BRIDGE_Z, BRIDGE_LEG, reach + 0.01, BRIDGE_T) for sy in (-1, 1))
-    return frame + legs + tabs
 
 
 # ── bezel ───────────────────────────────────────────────────────────────────
@@ -208,21 +208,39 @@ def bezel():
     return hex_prism(TURRET_F, BEZEL_H, z=WALL_TOP, ct=1.5) - union(cuts)
 
 
-# ── cap ─────────────────────────────────────────────────────────────────────
+# ── cap, with the hex cage hanging from its ceiling ─────────────────────────
 def cap():
     k = CAP_WALL * math.sqrt(2)
     inner_r = CAP_R - CAP_WALL
-    inner_top = CAP_TOP - CAP_TOP_T
     shoulder_z = CAP_TOP - CAP_CHAMFER
     inner_shoulder_z = shoulder_z - k + CAP_WALL
     shell = revolve([
         (0, CAP_TOP), (CAP_R - CAP_CHAMFER, CAP_TOP), (CAP_R, shoulder_z),
         (CAP_R, FLANGE_BOTTOM + FLANGE_LAND + FLANGE_W), (FLANGE_R, FLANGE_BOTTOM + FLANGE_LAND), (FLANGE_R, FLANGE_BOTTOM),
         (inner_r, FLANGE_BOTTOM), (inner_r, inner_shoulder_z),
-        (inner_r - (inner_top - inner_shoulder_z), inner_top), (0, inner_top)])
-    plunger = cyl(PLUNGER_D, inner_top - PLUNGER_TIP + 0.01, z=PLUNGER_TIP)
-    root = cyl(PLUNGER_D, 3.01, z=inner_top - 3, d2=PLUNGER_D + 4)
-    return shell + plunger + root
+        (inner_r - (INNER_TOP - inner_shoulder_z), INNER_TOP), (0, INNER_TOP)])
+    w, t = CAGE_LEG
+    legs = []
+    for a in CAGE_ANGLES:
+        # the leg: from the ceiling down to the pad, standing just outside the board's flat
+        leg = box(CAGE_R0, -w / 2, PAD_BOTTOM, t, w, INNER_TOP + 0.01 - PAD_BOTTOM)
+        # a stop above the board and a snap lip below it, so the board clicks in from underneath
+        leg += box(CAGE_R0 - 2.0, -w / 2, HEX_TOP + 0.3, 2.01, w, INNER_TOP + 0.01 - (HEX_TOP + 0.3))
+        leg += Manifold.batch_hull([box(CAGE_R0 - LIP, -w / 2, HEX_BOTTOM - 0.3 - LIP, LIP + 0.01, w, 0.01),
+                                    box(CAGE_R0 - 0.01, -w / 2, HEX_BOTTOM - 0.3 - LIP * 2.2, 0.02, w, LIP * 2.2 + 0.01)])
+        # the pusher pad, reaching inward over the saddle's brim
+        leg += box(SADDLE_BRIM_R - 3.5, -w / 2, PAD_BOTTOM, CAGE_R0 + t - (SADDLE_BRIM_R - 3.5), w, PAD_T)
+        legs.append(leg.rotate([0, 0, a]))
+    return shell + union(legs)
+
+
+# ── saddle: a cup over the keycap with a brim for the cage to press ─────────
+def saddle():
+    inner = KEYCAP[0] + 2 * PART_CLEARANCE
+    depth = 6.0
+    cup = cbox(0, 0, KEYCAP_TOP - depth, inner + 2 * SADDLE_WALL, inner + 2 * SADDLE_WALL, depth + SADDLE_T)
+    cup += cyl(2 * SADDLE_BRIM_R, SADDLE_T, z=KEYCAP_TOP, seg=SEG)
+    return cup - cbox(0, 0, KEYCAP_TOP - depth - 1, inner, inner, depth + 1)
 
 
 # ── plinth (built hanging under the body) ───────────────────────────────────
@@ -250,14 +268,16 @@ def fit_test():
 
 # ── stand-ins for the bought parts: for the drawings and the clash check ────
 def bought_parts(pressed=False):
-    cap_h = KEYCAP[2] - PRELOAD - (TRAVEL if pressed else 0)
+    dz = -TRAVEL if pressed else 0
+    hexboard = CrossSection.circle(HEX_FLAT / 2 / math.cos(math.radians(30)), 6).rotate(30).extrude(HEX_BOARD_T).translate([0, 0, HEX_BOTTOM + dz])
+    hexboard += cbox(0, 0, HEX_BOTTOM - HEX_UNDER + dz, HEX_SOCKETS[0], HEX_SOCKETS[1], HEX_UNDER)
     return {
-        'hex': CrossSection.circle(HEX_R, 6).rotate(30).extrude(HEX_BOARD_T).translate([HEX_X, 0, HEX_LEDGE_Z])
-               + cbox(HEX_X, 0, HEX_LEDGE_Z - HEX_UNDER, 24, 12, HEX_UNDER),
-        'key': cbox(0, 0, KEY_BOTTOM, *KEY_UNIT),
-        'keycap': cbox(0, 0, KEY_BOTTOM + KEY_UNIT[2], KEYCAP[0], KEYCAP[1], cap_h),
+        'key': cbox(0, KEY_Y0 + KEY_BODY[1] / 2, 0, *KEY_BODY) + cbox(0, KEY_Y0 - KEY_PLUG / 2, 2, 8, KEY_PLUG, 4)
+               - union(cyl(4.85, 10, sx * KEY_HOLES[0] / 2, KEY_Y0 + KEY_HOLES[1], -1) for sx in (-1, 1)),
+        'keycap': cbox(0, 0, KEY_BODY[2], KEYCAP[0], KEYCAP[0], KEYCAP[1] - PRELOAD + dz),
+        'hex': hexboard,
         'atom': box(ATOM_X0, -ATOM[1] / 2, 0, *ATOM),
-        'splitter': cbox(ATOM_X0 + ATOM[0] - SPLITTER[0] / 2, 0, ATOM[2], *SPLITTER),   # taped on top of the Atom, at the wall end
+        'splitter': cbox(ATOM_X0 + ATOM[0] - SPLITTER[0] / 2, 0, ATOM[2], *SPLITTER),
         'holder': cbox(0, 0, -FLOOR_T - DECK_T - HOLDER[2], *HOLDER),
     }
 
@@ -289,7 +309,7 @@ def section_svg(solids, colours, path, plane):
         if plane == 'yz':
             solid = solid.rotate([0, 0, -90])
         shapes.append((name, solid.rotate([90, 0, 0]).slice(0).to_polygons()))
-    lo_x, hi_x, lo_y, hi_y = -60, 60, -58, 30
+    lo_x, hi_x, lo_y, hi_y = -60, 60, -62, 30
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{lo_x} {lo_y} {hi_x - lo_x} {hi_y - lo_y}" width="1320" height="968">',
            f'<rect x="{lo_x}" y="{lo_y}" width="{hi_x - lo_x}" height="{hi_y - lo_y}" fill="#f4f1ea"/>']
     for name, polys in shapes:
@@ -303,13 +323,13 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'plinth': plinth(), 'body': body(), 'bridge': bridge(), 'cap': cap(), 'bezel': bezel()}
-    flipped = {'plinth', 'cap', 'bridge'}     # flat face on the bed
+    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'saddle': saddle(), 'bezel': bezel()}
+    flipped = {'plinth', 'cap', 'saddle'}     # flat face on the bed
     os.makedirs(os.path.join(HERE, 'stl'), exist_ok=True)
 
     print(f'plinth {PLINTH_F:.0f} mm across flats, turret {TURRET_F:.0f} mm, '
           f'{FLOOR_T + PLINTH_H + CAP_TOP:.1f} mm tall, cap top {CAP_D - 2 * CAP_CHAMFER:.0f} mm, '
-          f'keycap top {KEYCAP_TOP:.1f} above the floor, LEDs {CAP_TOP - CAP_TOP_T - HEX_LEDGE_Z - HEX_BOARD_T:.0f} below the diffuser')
+          f'keycap top {KEYCAP_TOP:.1f} above the floor, hex LEDs at {HEX_TOP:.1f}, cap shows {CAP_EXPOSED:.1f} above the bezel')
     for name, solid in {**printed, 'fit_test': fit_test()}.items():
         out = for_printing(solid, name in flipped)
         write_stl(out, os.path.join(HERE, 'stl', f'{name}.stl'))
@@ -320,6 +340,7 @@ if __name__ == '__main__':
     clashes = 0
     for pressed in (False, True):
         state = {**printed, **bought_parts(pressed)}
+        state['saddle'] = state['saddle'].translate([0, 0, -PRELOAD - (TRAVEL if pressed else 0)])   # it rides on the keycap
         if pressed:
             state['cap'] = state['cap'].translate([0, 0, -TRAVEL])
         names = list(state)
@@ -331,7 +352,7 @@ if __name__ == '__main__':
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
 
-    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'bridge': '#8a8a92', 'cap': '#ffffff',
+    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'saddle': '#8a8a92', 'cap': '#ffffff',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8', 'holder': '#15151a'}
     everything = {**printed, **bought_parts()}
     section_svg(everything, colours, os.path.join(HERE, 'section-front.svg'), 'xz')

@@ -12,10 +12,10 @@ Game night is roughly the first days of October 2026. Six buttons and one hub ha
 
 ## The no-solder build (ordered 2026-09-22)
 
-Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for the first test unit **1 × Mechanical Key Unit, 1 × NeoHEX 37-LED board, 1 × PortABC base**. Power is his own NiMH AAs: an Adafruit 830 switched 4×AA holder, a 1N5817 in the red lead, Wago 221 clips, a USB-C plug with screw terminals into the Atom. Still to order once the first unit lights up: 5 more keys, hexes and holders, the Wagos and diodes, a Unit Hub splitter, the USB-C screw plugs (Amazon), M3 screws, feet. The soldered carrier-board design is now the fallback; the JLCPCB order was not placed.
+Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for the first test unit **1 × Mechanical Key Unit, 1 × NeoHEX 37-LED board, 1 × PortABC base**. Power is his own NiMH AAs: an Adafruit 830 switched 4×AA holder, a 1N5817 in the red lead, Wago 221 clips, a USB-C plug with screw terminals into the Atom. Still to order: 5 more keys and hexes, 6 Unit Hub splitters (U006; the shell uses those, not more PortABC bases), 6 holders, Wagos and diodes, the USB-C screw plugs (Amazon), M3 screws, feet. The soldered carrier-board design is now the fallback; the JLCPCB order was not placed.
 
 - Firmware: `config.h` has a board selector, default `BOARD_ATOMS3_LITE`. Hex on Port A / the Atom's socket (yellow = G2), key on Port B, switch on white. Until the base's pin sticker is read, every pin Port B could be is treated as the big button. Both boards compile.
-- Shell v0.2 (`hardware/shell/make_shell.py`): built round the M5 parts; every one of their sizes is marked MEASURE. Clash check clean, never printed. The Atom's USB-C faces out through a window so flashing needs no disassembly.
+- Shell v0.3 (`hardware/shell/make_shell.py`): sizes from M5's dimension drawings. The hex rides in the cap on snap legs, a printed saddle over the keycap takes the press, the key sits on pegs, the Atom's USB-C faces out through a window. Uses a Unit Hub splitter, not the PortABC base (too long to fit beside the key). Clash check clean, never printed.
 - Order sheet with links: `/order.html` on the site.
 
 ## Decided
