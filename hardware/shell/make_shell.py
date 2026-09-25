@@ -19,6 +19,7 @@ Five printed parts, none of which needs supports:
   cap     the part you hit, with the hex cage hanging from its ceiling.
   cage    four legs that clip round the hex and end in the cup over the keycap; pushes up into the cap.
   bezel   screws onto the body over the cap: guides the skirt, holds the flange in.
+  spring  print three: zigzags that stand under the cap's flange and give the return force.
 
 A slap goes cap flange -> top of the body wall -> plinth -> table. The keycap only ever sees
 TRAVEL + PRELOAD of movement, less than the switch's own travel.
@@ -40,8 +41,8 @@ from manifold3d import CrossSection, Manifold, OpType
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ── fit: tune these with the fit_test rings ─────────────────────────────────
-SLIDE_CLEARANCE = 0.30   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar
-CHAMBER_CLEARANCE = 0.5  # radial gap round the cap's flange inside the bezel (it never guides, so it can be loose)
+SLIDE_CLEARANCE = 0.40   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar
+CHAMBER_CLEARANCE = 1.6  # radial gap round the cap's flange inside the bezel (it never guides, so it can be loose; the springs live under it)
 PART_CLEARANCE = 0.5     # around every bought part in its pocket
 TAP_D = 2.8              # an M3 screw cuts its own thread in a hole this size
 M3_CLEAR_D = 3.4
@@ -86,15 +87,24 @@ LEAD_GROOVE_W = 6.0      # the battery leads run up the outside of the +x flat i
 # ── the cage in the cap, and the saddle ─────────────────────────────────────
 LED_GAP = 9.0            # hex LEDs to the underside of the diffuser
 CAGE_ANGLES = (60, 120, 240, 300)   # legs at these flat centres; the side sockets open at 0 and 180
-CAGE_LEG = (5.0, 2.5)    # leg width (tangential) and radial thickness: thin enough to flex for the snap lips
+CAGE_LEG = (5.0, 3.0)    # leg width (tangential) and radial thickness
 CAGE_R0 = HEX_FLAT / 2 + 0.6        # inner face of the legs
-LIP = 0.7                # snap lips above and below the board
+LEDGE = 1.4              # a fixed ledge under the board; the cap's sockets hold it from above once the cage is in
 PAD_T = 2.5              # the pusher pads at the bottom of the legs
 SADDLE_WALL = 1.5
-SOCKET_H = 6.0           # bosses on the cap's ceiling that the cage's leg tops push into
+SOCKET_H = 8.6           # bosses on the cap's ceiling that the cage's leg tops push into; they reach down to hold the hex
 SOCKET_FIT = 0.15        # clearance per side in those sockets: a firm push fit; a dab of glue if it isn't
 SADDLE_BRIM_R = 18.0
 SADDLE_T = 2.0           # brim / roof thickness
+
+# ── printed springs: three zigzags under the cap's flange give the return force ─
+SPRING_ANGLES = (60, 180, 300)
+SPRING_W = 3.6           # radial width (the zigzag's amplitude)
+SPRING_D = 10.0          # tangential depth (the print's Z height)
+SPRING_B = 1.0           # beam thickness. Stiffer: 1.2. Softer: 0.8.
+SPRING_FOLDS = 7
+SPRING_FREE = 30.0       # free length; it sits 1.7 mm compressed at rest
+CABLE_ARCH_ANGLES = (225, 315)   # low arches on the floor the cables run under
 
 # ── cap and bezel ───────────────────────────────────────────────────────────
 CAP_D = 70.0
@@ -139,6 +149,10 @@ assert TRAVEL + PRELOAD <= SWITCH_TRAVEL_MIN, 'the cap would bottom the switch o
 assert math.hypot(ATOM_X0 + ATOM[0], ATOM[1] / 2) < BORE_R, 'the Atom does not fit in the bore'
 assert CAP_EXPOSED - TRAVEL >= 8, 'the cap should stand well proud of the bezel even when pressed'
 COLLAR_R = CAP_R - CAP_WALL - SLIDE_CLEARANCE          # outer face of the collar
+SPRING_R0 = CAP_R + 0.6                                # springs stand just outside the skirt, under the flange
+assert SPRING_R0 + SPRING_W < BORE_R - 0.5, 'springs hit the wall'
+assert SPRING_R0 + 1.5 < FLANGE_R, 'the flange must reach over the springs'
+assert SPRING_R0 + SPRING_W < CHAMBER_R - 0.3, 'the springs must clear the bezel'
 assert COLLAR_H < FLANGE_BOTTOM + 30, 'collar taller than the cap is deep'
 assert CAGE_R0 + CAGE_LEG[1] < CAP_R - CAP_WALL - 1, 'the cage does not fit inside the cap'
 
@@ -185,6 +199,11 @@ def body():
         wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(COLLAR_H + 2).translate([0, 0, -1])
         collar -= wedge
     solid += collar
+    # low arches for the cables to run under, inside the collar
+    for a in CABLE_ARCH_ANGLES:
+        rc = COLLAR_R - COLLAR_T - 4.0
+        arch = cbox(rc, 0, 0, 6, 11, 6) - cbox(rc, 0, -1, 8, 7, 5.5)
+        solid += arch.rotate([0, 0, a])
     # two pegs into the Key Unit's mounting holes, plus a low rim round its case
     hy = KEY_Y0 + KEY_HOLES[1]
     solid += union(cyl(4.5, 5, sx * KEY_HOLES[0] / 2, hy, d2=4.0, seg=32) for sx in (-1, 1))
@@ -200,6 +219,9 @@ def body():
     fence -= box(ax0 - 3, -60, -1, 3.01, 120, 4)                                              # no wall on the key's side: the Atom's cable leaves there
     solid += fence
     cuts = [cyl(TAP_D, FLOOR_T + 6 + 2, x, y, -FLOOR_T - 1, seg=24) for x, y in POSTS]
+    # shallow pockets that locate the springs' feet
+    for a in SPRING_ANGLES:
+        cuts.append(box(SPRING_R0 - 0.3, -SPRING_D / 2 - 0.3, -1.2, SPRING_W + 0.6, SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     # USB-C window through the +x flat, with a recess outside for the plug's body
     cuts.append(cbox(FLAT_X, 0, ATOM_USB_Z - USB_WINDOW[1] / 2, 2 * (FLAT_X - BORE_R + 2), USB_WINDOW[0], USB_WINDOW[1]))
     cuts.append(cbox(FLAT_X, 0, -FLOOR_T - 1, 6, USB_WINDOW[0] + 6, FLOOR_T + 1 + ATOM_USB_Z + USB_WINDOW[1] / 2 + 3))
@@ -224,6 +246,25 @@ def bezel():
 
 
 # ── cap, with the hex cage hanging from its ceiling ─────────────────────────
+def spring(L):
+    """A zigzag spring in its own frame: x radial (0..W), y along its length (0..L), z tangential (0..D)."""
+    W, D, b, n = SPRING_W, SPRING_D, SPRING_B, SPRING_FOLDS
+    pitch = (L - 2 * b) / n
+    pts = [((b / 2) if i % 2 == 0 else (W - b / 2), b + i * pitch) for i in range(n + 1)]
+    beams = [Manifold.batch_hull([box(x0 - b / 2, y0 - b / 2, 0, b, b, D), box(x1 - b / 2, y1 - b / 2, 0, b, b, D)])
+             for (x0, y0), (x1, y1) in zip(pts, pts[1:])]
+    feet = [box(0, 0, 0, W, b, D), box(0, L - b, 0, W, b, D)]
+    return union(beams + feet)
+
+def springs_in_place(L):
+    """The three springs standing in the body, compressed to length L."""
+    out = []
+    for a in SPRING_ANGLES:
+        sp = spring(L).rotate([90, 0, 0]).translate([SPRING_R0, SPRING_D / 2, 0])   # y -> z, stands up; centred tangentially
+        out.append(sp.rotate([0, 0, a]))
+    return union(out)
+
+
 def cap():
     k = CAP_WALL * math.sqrt(2)
     inner_r = CAP_R - CAP_WALL
@@ -253,11 +294,8 @@ def cage():
         leg = box(CAGE_R0, -w / 2, PAD_BOTTOM, t, w, top - PAD_BOTTOM)
         # a stop above the board and a snap lip below it, so the board clicks in from above... no: drops in from the top
         # before the cage goes into the cap, and the lip keeps it from falling out
-        # snap lips above and below the board: it clicks in from the top with the legs flexing, and can't fall out
-        leg += Manifold.batch_hull([box(CAGE_R0 - LIP, -w / 2, HEX_BOTTOM - 0.3 - LIP, LIP + 0.01, w, 0.01),
-                                    box(CAGE_R0 - 0.01, -w / 2, HEX_BOTTOM - 0.3 - LIP * 2.2, 0.02, w, LIP * 2.2 + 0.01)])
-        leg += Manifold.batch_hull([box(CAGE_R0 - LIP, -w / 2, HEX_TOP + 0.3, LIP + 0.01, w, 0.01),
-                                    box(CAGE_R0 - 0.01, -w / 2, HEX_TOP + 0.3 - 0.01, 0.02, w, LIP * 2.2 + 0.01)])
+        # a fixed ledge under the board; the hex drops in from the top
+        leg += box(CAGE_R0 - LEDGE, -w / 2, HEX_BOTTOM - 0.3 - 1.2, LEDGE + 0.01, w, 1.2)
         # the pad, reaching inward to the brim
         leg += box(SADDLE_BRIM_R - 3.5, -w / 2, PAD_BOTTOM, CAGE_R0 + t - (SADDLE_BRIM_R - 3.5), w, PAD_T)
         parts.append(leg.rotate([0, 0, a]))
@@ -359,7 +397,7 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel()}
+    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
     flipped = {'plinth', 'cap'}               # flat face on the bed; the cage prints cup-down, legs up
     os.makedirs(os.path.join(HERE, 'stl'), exist_ok=True)
 
@@ -376,6 +414,8 @@ if __name__ == '__main__':
     clashes = 0
     for pressed in (False, True):
         state = {**printed, **bought_parts(pressed)}
+        del state['spring']
+        state['springs'] = springs_in_place((FLANGE_BOTTOM - 1.2 if not pressed else WALL_TOP - 1.2) - 0.05)   # as compressed by the flange
         if pressed:
             state['cap'] = state['cap'].translate([0, 0, -TRAVEL])
             state['cage'] = state['cage'].translate([0, 0, -TRAVEL])
@@ -388,8 +428,9 @@ if __name__ == '__main__':
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
 
-    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff',
+    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff', 'springs': '#c9a227',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8', 'holder': '#15151a'}
-    everything = {**printed, **bought_parts()}
+    everything = {k: v for k, v in printed.items() if k != 'spring'}
+    everything.update(bought_parts()); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
     section_svg(everything, colours, os.path.join(HERE, 'section-front.svg'), 'xz')
     section_svg(everything, colours, os.path.join(HERE, 'section-side.svg'), 'yz')

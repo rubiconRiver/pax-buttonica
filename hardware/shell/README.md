@@ -4,7 +4,7 @@ Five printed parts around the plug-together electronics: an M5Stack AtomS3 Lite,
 
 ![front cutaway](section-front.svg)
 
-**Revision 0.4.** v0.3 was printed and lit on 2026-09-24. v0.4 answers the first look: a low bezel ring the cap always stands proud of, an inner collar that guides the cap (so the bezel no longer has to be tall to do it), 4 mm less height, and fasteners from an ordinary PC screw kit. **Not yet printed.** The M5Stack sizes come from M5's own dimension drawings; the few that don't are marked `MEASURE` at the top of `make_shell.py`. The script checks that no part overlaps another, at rest or fully pressed, and that is all it proves. The electronics themselves were proven on the bench on 2026-09-24.
+**Revision 0.5.** v0.3 was printed and lit on 2026-09-24; v0.4 lowered the bezel and added the collar. v0.5 answers the v0.4 print: the hex drops into the cage from the top (no snapping), three **printed springs** under the cap's flange give the return force instead of the switch, cable arches keep the wires off the slide, and the slide has a little more clearance. **Not yet printed.** The M5Stack sizes come from M5's own dimension drawings; the few that don't are marked `MEASURE` at the top of `make_shell.py`. The script checks that no part overlaps another, at rest or fully pressed, and that is all it proves. The electronics themselves were proven on the bench on 2026-09-24.
 
 About 106 mm across the base's flats (122 mm corner to corner), 90 mm across the turret, 72 mm tall, with a 70 mm cap standing 14 mm above the bezel at rest and 11 mm pressed.
 
@@ -23,17 +23,18 @@ This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U0
 |---|---|---|
 | `body.stl` | black | The turret: floor, key pegs, Atom bay, the USB window and lead groove, four screw posts, and a 36 mm inner collar the cap's skirt slides over (the real guide; open where the Atom and the key's cable are). |
 | `cap.stl` | white / translucent | What you hit, with the hex cage hanging inside. The top is 1.2 mm thick, which is the diffuser. Print with 4 walls. |
-| `cage.stl` | any | Four legs the hex clicks into, ending in a cup that sits over the keycap. Pushes up into sockets in the cap. Nothing inside the button is loose. |
+| `cage.stl` | any | Four legs with a ledge the hex drops onto from the top, ending in a cup that sits over the keycap. Pushes up into sockets in the cap, whose bosses then hold the hex down. Nothing inside the button is loose. |
+| `spring.stl` | any, PETG if you have it | **Print three.** Zigzag springs that stand under the cap's flange. Prints flat. `SPRING_B` sets the stiffness: 1.0 mm beams to start; 1.2 for firmer, 0.8 for softer. |
 | `bezel.stl` | black | A 9 mm ring that screws down over the cap: a cone inside holds the cap's flange in and its bore steadies the top of the skirt. |
 | `plinth.stl` | black | The base. Battery pocket underneath. **Sized from Adafruit's listing for the 830 holder; measure yours first.** |
 | `fit_test.stl` | any | Two thin rings, a quick print: a slice of the bezel's bore and a slice of the cap's skirt. The small ring should slide freely in the big one without rattling. If not, change `SLIDE_CLEARANCE`. |
 
-Every STL is already turned the way it prints: cap and plinth are upside down, flat face on the bed; the cage prints cup-down, legs up. **No supports on anything.**
+Every STL is already turned the way it prints: cap and plinth are upside down, flat face on the bed; the cage prints cup-down, legs up; the spring prints flat. **No supports on anything.**
 
 ## How the press works
 
-- The cap travels **2.8 mm**, then its flange lands on the top of the body's wall. Plastic takes the blow; the key's switch has about 4 mm of travel and is never bottomed out. The cage legs only ever carry the switch's spring force.
-- The switch's spring holds the cap, hex and saddle up against the cone in the bezel. That stack weighs about 30 g; a blue switch pushes back with 50–60 g. Fine, but not lavish: if the cap doesn't return crisply, a thinner `CAP_WALL` is the first lever.
+- The cap travels **2.8 mm**, then its flange lands on the top of the body's wall. Plastic takes the blow; the key's switch has about 4 mm of travel and is never bottomed out.
+- Three printed springs, 1.7 mm pre-compressed at rest, push the cap up against the cone in the bezel and return it after a press. The switch only senses. If the press is too stiff or too soft, change `SPRING_B` and reprint three two-minute parts.
 - Off-centre hits are carried by the skirt in the bezel's bore and the flange in the chamber below it. Hits right at the rim may drag; dry PTFE on the skirt is the first thing to try.
 
 ## Printing (Bambu X1C, 0.4 mm nozzle)
@@ -47,8 +48,9 @@ Designed round a PC-case screw kit. **Bezel:** three of the brass **M3 6+6 stand
 ## Assembly
 
 1. **Body:** drop the Key Unit onto its pegs, socket toward −y. Atom into its bay with the USB-C in the window, splitter taped on top. Key cable → splitter → Atom.
-2. **Cage:** click the hex down into the legs, LEDs up. Plug its cable into an underside socket and lead it out past a leg. Push the cage's legs up into the cap's sockets until they seat (a dab of glue if loose).
-3. Lower the cap over the body, cup onto the keycap, hex cable to the splitter. **Bezel** over it, three standoffs.
+2. **Springs:** stand the three springs in their floor pockets, outside the collar.
+3. **Cage:** drop the hex onto the ledges, LEDs up. Plug its cable into an underside socket and lead it out between two legs. Push the cage's legs up into the cap's sockets until they seat (a dab of glue if loose); the sockets' bosses now hold the hex down.
+4. Lower the cap over the body, cup onto the keycap, hex cable to the splitter, cables under the arches. **Bezel** over it, three standoffs.
 5. **Plinth:** holder in the pocket with foam tape, leads through the slot and up the groove; four screws up into the posts.
 
 ## Changing it
