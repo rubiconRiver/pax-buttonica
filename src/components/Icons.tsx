@@ -19,3 +19,5 @@ export const IconUpload = (p: P) => <svg {...base} {...p}><path d="M12 16V4M7 9l
 export const IconCrown = (p: P) => <svg {...base} {...p}><path d="M3 8l4 4 5-7 5 7 4-4-2 11H5z" /></svg>;
 export const IconPhone = (p: P) => <svg {...base} {...p}><rect x="7" y="2.5" width="10" height="19" rx="2" /><circle cx="12" cy="14" r="2.5" /><path d="M10.5 5.5h3" /></svg>;
 export const IconLock = (p: P) => <svg {...base} {...p}><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 018 0v3" /></svg>;
+export const IconRedo = (p: P) => <svg {...base} {...p}><path d="M15 14l5-5-5-5" /><path d="M20 9H10a6 6 0 000 12h3" /></svg>;
+export const IconWhistle = (p: P) => <svg {...base} {...p}><path d="M3 13a5 5 0 105 5v-5zM8 13V9h13v4H8z" /><path d="M15 9V6M18 9V6" /></svg>;

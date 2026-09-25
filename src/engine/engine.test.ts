@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import * as engineModule from './engine';
 import { createGame, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice } from './engine';
 import { deriveOutputs } from './outputs';
 import type { Action, GameState, PlayerSetup } from './types';
@@ -343,5 +344,93 @@ describe('device identities', () => {
     const g = setup(['a']);
     expect(g.code).toBe('TEST');
     expect(createGame(setup(['a']).players, { vpTarget: 10, speaker: 0 }, 0).code).toMatch(/^[A-HJ-KM-NP-Z2-9]{4}$/);
+  });
+});
+
+describe('the action log', () => {
+  const { replay, applyEvent, core: coreOf } = engineModule;
+  const six = () => createGame(setup(6), { vpTarget: 10, speaker: 0, code: 'LOGS' }, 1000);
+
+  it('replaying the log lands on the same state as playing it live', () => {
+    const base = six();
+    const events = [
+      { at: 1001, action: { type: 'PICK_CARD', card: 3, at: 1001 } },
+      { at: 1002, action: { type: 'PICK_CARD', card: 5, at: 1002 } },
+      { at: 1003, action: { type: 'PICK_CARD', card: 1, at: 1003 } },
+      { at: 1004, action: { type: 'PICK_CARD', card: 8, at: 1004 } },
+      { at: 1005, action: { type: 'PICK_CARD', card: 2, at: 1005 } },
+      { at: 1006, action: { type: 'PICK_CARD', card: 6, at: 1006 } },
+      { at: 2000, action: { type: 'INPUT', seat: 2, input: 'double', at: 2000 } },
+      { at: 3000, action: { type: 'INPUT', seat: 2, input: 'tap', at: 3000 } },
+      { at: 3500, action: { type: 'ACK_ALL', at: 3500 } },
+      { at: 4000, action: { type: 'END_TURN', at: 4000 } },
+    ] as const;
+    let live = base;
+    events.forEach((e, i) => {
+      live = applyEvent(live, e as never, i);
+    });
+    const again = replay(base, events as never);
+    expect(coreOf(again)).toBe(coreOf(live));
+    expect(again.players[2].timeMs).toBe(4000 - 1006);
+    // Every log line knows which event wrote it.
+    expect(again.log.find((l) => l.text.includes('plays 1'))?.event).toBe(6);
+    expect(again.log.find((l) => l.text.includes('Round 1'))?.event).toBeUndefined();
+  });
+});
+
+describe('referee', () => {
+  const inAction = () => {
+    let g = createGame(setup(6), { vpTarget: 10, speaker: 0, code: 'REFF' }, 0);
+    for (const card of [3, 5, 1, 8, 2, 6]) g = reduce(g, { type: 'PICK_CARD', card, at: 1 });
+    return g;
+  };
+
+  it('hands the turn to anyone, banking the clock of whoever had it', () => {
+    let g = inAction();
+    expect(g.active).toBe(2);
+    g = reduce(g, { type: 'SET_ACTIVE', seat: 4, at: 5000 });
+    expect(g.active).toBe(4);
+    expect(g.players[2].timeMs).toBe(4999);
+    expect(g.log[g.log.length - 1].text).toMatch(/^Referee: the turn goes to /);
+    // Someone who had passed is back in when given the turn.
+    g = reduce(g, { type: 'SET_PASSED', seat: 0, passed: true, at: 5001 });
+    g = reduce(g, { type: 'SET_ACTIVE', seat: 0, at: 5002 });
+    expect(g.players[0].passed).toBe(false);
+  });
+
+  it('un-passes someone, and passing the active player ends their turn', () => {
+    let g = inAction();
+    g = reduce(g, { type: 'SET_PASSED', seat: 2, passed: true, at: 100 });
+    expect(g.players[2].passed).toBe(true);
+    expect(g.active).toBe(4);
+    g = reduce(g, { type: 'SET_PASSED', seat: 2, passed: false, at: 101 });
+    expect(g.players[2].passed).toBe(false);
+    expect(g.active).toBe(4);
+  });
+
+  it('cancels a card in play, and marks cards played or not', () => {
+    let g = inAction();
+    g = reduce(g, { type: 'INPUT', seat: 2, input: 'double', at: 10 });
+    expect(g.strategyPlay?.card).toBe(1);
+    g = reduce(g, { type: 'CANCEL_PLAY', at: 11 });
+    expect(g.strategyPlay).toBeNull();
+    expect(g.players[2].usedCards).toEqual([]);
+    expect(g.actedThisTurn).toBe(false);
+    g = reduce(g, { type: 'SET_CARD_USED', seat: 2, card: 1, used: true });
+    expect(g.players[2].usedCards).toEqual([1]);
+    g = reduce(g, { type: 'SET_CARD_USED', seat: 2, card: 7, used: true });
+    expect(g.players[2].usedCards).toEqual([1]);
+  });
+
+  it('jumps phases', () => {
+    let g = inAction();
+    g = reduce(g, { type: 'GOTO', phase: 'status', at: 50 });
+    expect(g.phase).toBe('status');
+    expect(g.players[2].timeMs).toBe(49);
+    g = reduce(g, { type: 'GOTO', phase: 'agenda', at: 51 });
+    expect(g.phase).toBe('agenda');
+    g = reduce(g, { type: 'GOTO', phase: 'next-round', at: 52 });
+    expect(g.phase).toBe('strategy');
+    expect(g.round).toBe(2);
   });
 });

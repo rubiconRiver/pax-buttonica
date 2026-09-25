@@ -621,3 +621,19 @@
 .room__site[data-state='offline'], .room__site[data-state='taken'] { color: var(--gold-2); }
 .settings__save { font-size: 12px; margin: 0; }
 .settings__save[data-state='offline'], .settings__save[data-state='taken'] { color: var(--gold-2); }
+
+.log__rewind { margin-left: auto; flex: none; display: inline-flex; align-items: center; gap: 5px; padding: 1px 5px; border: 1px solid transparent; background: none; color: var(--faint); font: 600 11px/1 var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; opacity: 0; transition: opacity 0.12s; }
+.log__rewind svg { width: 12px; height: 12px; }
+.log__row:hover .log__rewind, .log__rewind:focus-visible, .log__row[data-armed] .log__rewind { opacity: 1; }
+.log__row[data-armed] { background: rgba(242, 184, 75, 0.08); }
+.log__row[data-armed] .log__rewind { color: var(--gold-2); border-color: var(--gold); }
+.popover--referee { width: 420px; display: flex; flex-direction: column; gap: 14px; }
+.referee__section { display: flex; flex-direction: column; gap: 8px; }
+.referee__row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.referee__row .select { flex: 1; min-width: 120px; }
+.referee__players { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.referee__players li { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.referee__name { flex: 1; font-weight: 600; }
+.referee__cards { display: inline-flex; gap: 4px; }
+.referee__cards .cardpip { cursor: pointer; border: 0; }
+.referee__note { font-size: 12px; margin: 0; }

@@ -18,6 +18,7 @@ export class FakeApi {
   clips = new Map<string, { type: string; bytes: number; name: string }>();
   /** Games as api/game.ts keeps them, and the phones' inbox as api/actions.ts keeps it. */
   games = new Map<string, { hostKey: string; seq: number; record: any; updatedAt: number }>();
+  events = new Map<string, { at: number; action: any; auto?: true; noop?: true }[]>();
   actions: { seq: number; code: string; data: any; at: number }[] = [];
   requests: { method: string; url: string; body?: any }[] = [];
   online = true;
@@ -47,21 +48,34 @@ export class FakeApi {
       if (!g) return route.fulfill({ status: 404, json: { error: 'No game with that code.' } });
       const after = Number(url.searchParams.get('after'));
       if (Number.isFinite(after) && g.seq <= after) return route.fulfill({ status: 204, body: '' });
-      return route.fulfill({ json: { seq: g.seq, record: g.record, updatedAt: g.updatedAt } });
+      if (url.searchParams.get('full')) return route.fulfill({ json: { seq: g.seq, record: g.record, events: this.events.get(code) ?? [], updatedAt: g.updatedAt } });
+      const { base: _b, ...slim } = g.record;
+      return route.fulfill({ json: { seq: g.seq, record: slim, updatedAt: g.updatedAt } });
     }
     if (method === 'PUT') {
       if (g && g.hostKey !== key) return route.fulfill({ status: 403, json: { error: 'This game belongs to another laptop.' } });
       const seq = (g?.seq ?? 0) + 1;
-      this.games.set(code, { hostKey: key!, seq, record: req.postDataJSON(), updatedAt: Date.now() });
+      const { events: incoming = [], eventCount, ...record } = req.postDataJSON();
+      if (!record.base && g?.record.base) record.base = g.record.base;
+      this.games.set(code, { hostKey: key!, seq, record, updatedAt: Date.now() });
+      if (Number.isInteger(eventCount)) {
+        const first = eventCount - incoming.length;
+        const list = (this.events.get(code) ?? []).slice(0, Math.max(0, first));
+        list.push(...incoming);
+        this.events.set(code, list);
+      }
       return route.fulfill({ json: { ok: true, seq } });
     }
     if (method === 'POST' && url.searchParams.get('claim')) {
       if (!g) return route.fulfill({ status: 404, json: { error: 'No game with that code.' } });
       g.hostKey = key!;
-      return route.fulfill({ json: { seq: g.seq, record: g.record, updatedAt: g.updatedAt } });
+      return route.fulfill({ json: { seq: g.seq, record: g.record, events: this.events.get(code) ?? [], updatedAt: g.updatedAt } });
     }
     if (method === 'DELETE') {
-      if (g && g.hostKey === key) this.games.delete(code);
+      if (g && g.hostKey === key) {
+        this.games.delete(code);
+        this.events.delete(code);
+      }
       return route.fulfill({ json: { ok: true } });
     }
     return route.fulfill({ status: 405, json: { error: 'method' } });

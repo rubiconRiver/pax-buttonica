@@ -29,5 +29,5 @@ export function seedDemo(store: GameStore, point: DemoPoint = 'action') {
     }
   }
   // A seeded game is a starting point, not something to undo back through.
-  store.set((s) => ({ game: s.game && { ...s.game, fx: [] }, past: [] }));
+  store.set((s) => ({ ...s, base: s.game && { ...s.game, fx: [] }, events: [], future: [], epoch: s.epoch + 1, game: s.game && { ...s.game, fx: [] } }));
 }

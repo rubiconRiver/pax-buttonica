@@ -115,6 +115,8 @@ export interface LogEntry {
   seat?: number;
   card?: number;
   tone?: 'info' | 'good' | 'warn';
+  /** Which event (index in the game's action log) wrote this line, so the table can rewind to just before it. */
+  event?: number;
 }
 
 export interface GameState {
@@ -214,7 +216,15 @@ export type Action =
   | { type: 'SET_ZERO_TOKEN'; seat: number | null }
   | { type: 'SET_CUSTODIANS'; removed: boolean }
   | { type: 'PAUSE'; at: number }
-  | { type: 'RESUME'; at: number };
+  | { type: 'RESUME'; at: number }
+  // Referee's levers: for action cards, rules disputes and mistakes. Logged like everything else.
+  /** Hand the turn to someone, whatever the initiative order says. */
+  | { type: 'SET_ACTIVE'; seat: number; at: number }
+  | { type: 'SET_PASSED'; seat: number; passed: boolean; at: number }
+  /** Put a strategy card that is in play back in its owner's hand. */
+  | { type: 'CANCEL_PLAY'; at: number }
+  | { type: 'SET_CARD_USED'; seat: number; card: number; used: boolean }
+  | { type: 'GOTO'; phase: 'status' | 'agenda' | 'next-round'; at: number };
 
 export interface GameOptions {
   vpTarget: number;

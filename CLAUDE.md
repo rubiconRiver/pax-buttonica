@@ -48,6 +48,7 @@ kicad-cli pcb drc pax-button.kicad_pcb     # must stay at 0 violations, 0 unconn
 
 - Game logic lives in the web app. Hub and buttons stay dumb: report presses, show what they're told.
 - The host laptop (the `/play` screen) is the only authority; the site holds a copy of the game (one record per game, named by its four-letter code) that it rewrites after every change. Phones read that record and derive their own light with the engine; presses go back through the inbox. No WebRTC. Only `/play` runs the sync: another tab in the same browser must never act as a second host.
+- A game is its action log: `GameSlot` in `src/state/game.ts` holds `base` (how it began) and `events` (every action with its time); the state is a replay. Undo, redo, rewind-from-the-log and the referee's actions all go through it. The log also goes to the site (`game_events`) and can be downloaded as JSON; `scripts/stats.ts` replays one.
 - The standard button has no speaker; the laptop plays every sound.
 - The UI has to feel crisp and look like TI (chamfered frames, not bubbly). The site doubles as a recruiting demo.
 - The M5Stack button and hub ran on real parts on 2026-09-24 (see `hardware/HANDOFF.md`). The carrier board has never been manufactured: say "passes DRC", not "works", about it. Say "works" only about what has been seen running.

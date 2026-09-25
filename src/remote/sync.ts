@@ -11,12 +11,15 @@ import { createStore } from '../state/createStore';
 import { liveGame } from '../state/game';
 import { settingsStore } from '../state/settings';
 import type { GameState } from '../engine/types';
+import type { GameEvent } from '../engine/engine';
 import { apiJson, hostKey } from './key';
 
 /** What goes to the site: the whole state, plus the settings a phone needs to behave like a button. */
 export interface GameRecord {
   state: GameState;
   settings: { holdMs: number; flashMs: number };
+  /** How the game began; with the events, enough to rebuild it anywhere. */
+  base?: GameState;
 }
 
 export interface PhonePresence {
@@ -46,6 +49,9 @@ let writeTimer = 0;
 let writing = false;
 let writeAgain = false;
 let lastWritten = '';
+/** How much of the action log the site has, and which cut of it. */
+let sentEvents = 0;
+let sentEpoch = -1;
 let readTimer = 0;
 let readAfter = 0;
 let lastProfiles = 0;
@@ -79,14 +85,22 @@ async function write() {
     writeAgain = true;
     return;
   }
-  const body = JSON.stringify(recordOf(game));
-  if (body === lastWritten) return;
+  const { base, events, epoch } = liveGame.get();
+  const record = recordOf(game);
+  const key = JSON.stringify(record) + `|${events.length}|${epoch}`;
+  if (key === lastWritten) return;
+  // After a cut (undo, rewind) the site's copy of the log is stale from the cut onwards: send it all again.
+  const fresh = epoch !== sentEpoch || sentEvents > events.length;
+  const from = fresh ? 0 : sentEvents;
+  const body = JSON.stringify({ ...record, ...(from === 0 ? { base } : {}), events: events.slice(from), eventCount: events.length });
   writing = true;
   syncStatus.set((s) => ({ ...s, code: game.code, site: 'saving' }));
   try {
     const res = await apiJson<{ seq: number }>(`/api/game?code=${game.code}&key=${hostKey()}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body });
     if (!res) throw new Error('offline');
-    lastWritten = body;
+    lastWritten = key;
+    sentEvents = events.length;
+    sentEpoch = epoch;
     syncStatus.set((s) => ({ ...s, site: 'saved', seq: res.seq }));
   } catch (err) {
     syncStatus.set((s) => ({ ...s, site: (err as { status?: number }).status === 403 ? 'taken' : 'offline' }));
@@ -145,6 +159,8 @@ function begin(game: GameState) {
   seen.clear();
   readAfter = 0;
   lastWritten = '';
+  sentEvents = 0;
+  sentEpoch = -1;
   syncStatus.set({ code: game.code, site: 'idle', seq: 0, phones: [] });
   window.clearInterval(readTimer);
   readTimer = window.setInterval(() => void read(), READ_EVERY_MS);
@@ -227,9 +243,10 @@ export const listMyGames = () => apiJson<{ games: SavedGameSummary[] }>(`/api/ga
 /** Take a game over by its code. From now on it is this browser's; the laptop it came from stops saving. */
 export async function pickUpGame(code: string): Promise<boolean> {
   try {
-    const res = await apiJson<{ record: GameRecord }>(`/api/game?code=${code}&key=${hostKey()}&claim=1`, { method: 'POST' });
+    const res = await apiJson<{ record: GameRecord; events?: GameEvent[] }>(`/api/game?code=${code}&key=${hostKey()}&claim=1`, { method: 'POST' });
     if (!res?.record?.state) return false;
-    liveGame.set({ game: { ...res.record.state, fx: [] }, past: [] });
+    // A record from before the action log existed has no base: the log starts from here.
+    liveGame.adopt(res.record.base ?? res.record.state, res.record.base ? res.events ?? [] : [], res.record.state);
     return true;
   } catch {
     return false;

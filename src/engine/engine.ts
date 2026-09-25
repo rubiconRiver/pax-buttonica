@@ -493,6 +493,37 @@ function finishSeating(g: GameState, at: number) {
 
 // ── Reducer ─────────────────────────────────────────────────────────────────
 
+/** One entry in a game's action log: what happened, and when. The whole game can be rebuilt from these. */
+export interface GameEvent {
+  at: number;
+  action: Action;
+  /** Housekeeping the app does by itself (a phone saying who it is, a renamed profile): kept through undo and rewind. */
+  auto?: true;
+  /** The action changed nothing that matters (a refused press): skipped by undo. */
+  noop?: true;
+}
+
+export const AUTO_ACTIONS = new Set<Action['type']>(['UPDATE_PLAYER', 'BIND', 'IDENTIFY']);
+
+/** Everything except transient effects and the log: what makes an action "count". */
+export const core = (g: GameState) => JSON.stringify({ ...g, fx: 0, fxSeq: 0, log: 0, logSeq: 0 });
+
+/** Apply one event and tag the log lines it wrote with its index. */
+export function applyEvent(g: GameState, e: GameEvent, index: number): GameState {
+  const next = reduce(g, e.action);
+  for (const line of next.log) if (line.id > g.logSeq) line.event = index;
+  return next;
+}
+
+/** The game as it stands after these events, starting from how it began. */
+export function replay(base: GameState, events: GameEvent[]): GameState {
+  let g = base;
+  events.forEach((e, i) => {
+    g = applyEvent(g, e, i);
+  });
+  return g;
+}
+
 export function reduce(state: GameState, action: Action): GameState {
   const g = structuredClone(state);
   switch (action.type) {
@@ -524,6 +555,55 @@ export function reduce(state: GameState, action: Action): GameState {
     case 'IDENTIFY':
       identify(g, action.dev.slice(0, 40), action.profileId, action.at);
       break;
+    case 'SET_ACTIVE': {
+      if (g.phase !== 'action' || action.seat < 0 || action.seat >= g.players.length || g.seating) break;
+      if (g.active != null) g.players[g.active].timeMs += clockStop(g, action.at);
+      g.players[action.seat].passed = false;
+      log(g, `Referee: the turn goes to ${g.players[action.seat].name}.`, { seat: action.seat, tone: 'warn' });
+      beginTurn(g, action.seat, action.at);
+      break;
+    }
+    case 'SET_PASSED': {
+      const p = g.players[action.seat];
+      if (!p || g.phase !== 'action' || p.passed === action.passed) break;
+      if (action.passed && g.active === action.seat) {
+        p.passed = true;
+        g.choosingCard = false;
+        g.strategyPlay = null;
+        log(g, `Referee: ${p.name} passes.`, { seat: action.seat, tone: 'warn' });
+        finishTurn(g, action.at, 'pass');
+      } else {
+        p.passed = action.passed;
+        log(g, `Referee: ${p.name} ${action.passed ? 'has passed' : 'is back in the round'}.`, { seat: action.seat, tone: 'warn' });
+      }
+      break;
+    }
+    case 'CANCEL_PLAY': {
+      const sp = g.strategyPlay;
+      if (!sp) break;
+      const p = g.players[sp.by];
+      p.usedCards = p.usedCards.filter((c) => c !== sp.card);
+      g.strategyPlay = null;
+      g.actedThisTurn = false;
+      log(g, `Referee: ${cardByNumber(sp.card).name} goes back to ${p.name}, unplayed.`, { seat: sp.by, card: sp.card, tone: 'warn' });
+      break;
+    }
+    case 'SET_CARD_USED': {
+      const p = g.players[action.seat];
+      if (!p || !p.cards.includes(action.card) || p.usedCards.includes(action.card) === action.used) break;
+      p.usedCards = action.used ? [...p.usedCards, action.card] : p.usedCards.filter((c) => c !== action.card);
+      log(g, `Referee: ${cardByNumber(action.card).name} is marked ${action.used ? 'played' : 'unplayed'} for ${p.name}.`, { seat: action.seat, card: action.card, tone: 'warn' });
+      break;
+    }
+    case 'GOTO': {
+      if (g.seating || g.phase === 'finished') break;
+      if (g.active != null) g.players[g.active].timeMs += clockStop(g, action.at);
+      log(g, `Referee: jumping to ${action.phase === 'next-round' ? 'the next round' : `the ${action.phase} phase`}.`, { tone: 'warn' });
+      if (action.phase === 'status') startStatusPhase(g);
+      else if (action.phase === 'agenda') startAgendaPhase(g);
+      else startRound(g, action.at);
+      break;
+    }
     case 'UPDATE_PLAYER': {
       const p = g.players[action.seat];
       if (p) Object.assign(p, action.patch);

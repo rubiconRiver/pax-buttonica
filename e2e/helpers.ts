@@ -93,7 +93,9 @@ export const readStorage = <T = any>(page: Page, key: string): Promise<T | null>
   page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? 'null'), key);
 
 /** The live game as the app has persisted it. */
-export const liveGame = async (page: Page) => (await readStorage(page, 'pb.game.v3'))?.game ?? null;
+export const liveGame = async (page: Page) => (await readStorage(page, 'pb.game.v4'))?.game ?? null;
+/** The whole slot: base, events, game. */
+export const liveSlot = (page: Page) => readStorage(page, 'pb.game.v4');
 
 const exact = (s: string) => new RegExp(`^${s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
 

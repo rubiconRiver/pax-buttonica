@@ -11,6 +11,7 @@ import { useStore } from '../state/createStore';
 import { createProfile, deleteProfile, patchProfile, profilesStore } from '../state/profiles';
 import { syncStatus } from '../state/profileSync';
 import { listMyGames, pickUpGame, type SavedGameSummary } from '../remote/sync';
+import { archiveStore, exportGame, forgetArchived } from '../state/archive';
 import { CODE_LENGTH, cleanCode } from '../engine/engine';
 import '../styles/setup.css';
 
@@ -35,6 +36,7 @@ function initialSeats(n: number): PlayerSetup[] {
 
 export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: GameOptions): void }) {
   const profiles = useStore(profilesStore);
+  const archive = useStore(archiveStore);
   const sync = useStore(syncStatus);
   const [seats, setSeats] = useState<PlayerSetup[]>(() => initialSeats(6));
   const [vpTarget, setVpTarget] = useState(10);
@@ -271,6 +273,24 @@ export function Setup({ onStart }: { onStart(players: PlayerSetup[], options: Ga
           );
         })}
       </div>
+
+      {archive.length > 0 && (
+        <section className="panel setup__archive">
+          <div className="panel__head"><span>Past games</span><span>Logs kept in this browser</span></div>
+          <ul className="archive">
+            {archive.map((g) => (
+              <li key={g.code}>
+                <span className="archive__code mono-num">{g.code}</span>
+                <span className="archive__what">
+                  {g.players.join(', ')} · {g.rounds} round{g.rounds === 1 ? '' : 's'} · {g.winner ? `${g.winner} won` : 'unfinished'} · {new Date(g.endedAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                </span>
+                <button type="button" className="btn btn--sm" onClick={() => exportGame(g)}>Download log</button>
+                <button type="button" className="btn btn--sm btn--ghost" aria-label={`Forget game ${g.code}`} onClick={() => forgetArchived(g.code)}>Forget</button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <footer className="setup__foot">
         <span className="setup__sync" data-state={sync} title="Saved players are kept in the site's database and mirrored in this browser">

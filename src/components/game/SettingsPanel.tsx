@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
 import { settingsStore } from '../../state/settings';
 import { syncStatus } from '../../remote/sync';
+import { exportGame } from '../../state/archive';
+import { liveGame } from '../../state/game';
 
 export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo }: { onClose(): void; onExit(): void; onReseat(): void; onPrimaryStage(on: boolean): void; demo: boolean }) {
   const s = useStore(settingsStore);
@@ -59,6 +61,11 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <p className="muted settings__save" data-state={saved} title="A copy of the game goes to the site a second after every change, so it can be picked up on another laptop with the room code">
           {saved === 'saved' ? 'Saved to the site' : saved === 'saving' ? 'Saving to the site…' : saved === 'offline' ? 'Not reaching the site: the game is only in this browser' : saved === 'taken' ? 'Picked up on another laptop: this copy no longer saves' : 'Saving to the site…'}
         </p>
+      )}
+      {!demo && (
+        <button type="button" className="btn btn--sm" title="Every action with its time, as a JSON file, for working out statistics later" onClick={() => { const { base, events, game } = liveGame.get(); if (base && game) exportGame({ code: game.code, base, events, players: game.players.map((p) => p.name) }, game); }}>
+          Download the game log
+        </button>
       )}
       <button type="button" className="btn btn--sm btn--danger" onClick={onExit}>
         {demo ? 'Leave the demo' : 'End this game…'}

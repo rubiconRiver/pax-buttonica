@@ -5,7 +5,8 @@ import type { Action, GameState, Phase } from '../../engine/types';
 import { connectHub, hubStatus, serialSupported } from '../../hardware/serial';
 import { useStore } from '../../state/createStore';
 import { settingsStore } from '../../state/settings';
-import { IconPhone, IconGear, IconLock, IconMute, IconPause, IconPlay, IconSound, IconUndo, IconUsb } from '../Icons';
+import { IconPhone, IconGear, IconLock, IconMute, IconPause, IconPlay, IconRedo, IconSound, IconUndo, IconUsb, IconWhistle } from '../Icons';
+import { RefereePanel } from './RefereePanel';
 import { PhonesPanel } from './PhonesPanel';
 import { syncStatus } from '../../remote/sync';
 import { SettingsPanel } from './SettingsPanel';
@@ -21,18 +22,21 @@ interface Props {
   game: GameState;
   demo: boolean;
   canUndo: boolean;
+  canRedo: boolean;
   dispatch(a: Action): void;
   onUndo(): void;
+  onRedo(): void;
   onExit(): void;
   onScoreboard(): void;
 }
 
-export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreboard }: Props) {
+export function TopBar({ game, demo, canUndo, canRedo, dispatch, onUndo, onRedo, onExit, onScoreboard }: Props) {
   const settings = useStore(settingsStore);
   const hub = useStore(hubStatus);
   const sync = useStore(syncStatus);
   const [showSettings, setShowSettings] = useState(false);
   const [showPhones, setShowPhones] = useState(false);
+  const [showReferee, setShowReferee] = useState(false);
 
   return (
     <header className="topbar">
@@ -74,6 +78,19 @@ export function TopBar({ game, demo, canUndo, dispatch, onUndo, onExit, onScoreb
         <button type="button" className="btn btn--sm" disabled={!canUndo} title="Undo (⌘Z)" onClick={() => { sfx.click(); onUndo(); }}>
           <IconUndo /> Undo
         </button>
+        {canRedo && (
+          <button type="button" className="btn btn--sm btn--icon" title="Redo (⇧⌘Z)" aria-label="Redo" onClick={() => { sfx.click(); onRedo(); }}>
+            <IconRedo />
+          </button>
+        )}
+        {!demo && (
+          <div className="popover-anchor">
+            <button type="button" className="btn btn--sm" aria-pressed={showReferee} title="Referee: hand the turn over, un-pass someone, cancel a card, jump a phase" onClick={() => { sfx.click(); setShowReferee((v) => !v); }}>
+              <IconWhistle /> Referee
+            </button>
+            {showReferee && <RefereePanel game={game} dispatch={dispatch} onClose={() => setShowReferee(false)} />}
+          </div>
+        )}
         <button type="button" className="btn btn--sm btn--icon" title={settings.sound ? 'Mute' : 'Unmute'} onClick={() => settingsStore.set((s) => ({ ...s, sound: !s.sound }))}>
           {settings.sound ? <IconSound /> : <IconMute />}
         </button>

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { GameView } from '../components/game/GameView';
 import { startSync, stopSync } from '../remote/sync';
+import { archiveGame } from '../state/archive';
 import { useStore } from '../state/createStore';
 import { liveGame } from '../state/game';
 import { settingsStore } from '../state/settings';
@@ -19,7 +20,11 @@ export function Play() {
       store={liveGame}
       game={game}
       onExit={() => {
-        if (window.confirm('End this game? The table will be cleared.')) liveGame.clear();
+        if (window.confirm('End this game? The table will be cleared.')) {
+          // The log stays in this browser for downloading later; the site's copy goes.
+          archiveGame(liveGame.get());
+          liveGame.clear();
+        }
       }}
     />
   );

@@ -11,7 +11,7 @@ import { Scoreboard } from './Scoreboard';
 import { profilesStore } from '../../state/profiles';
 import { useStore } from '../../state/createStore';
 import { seedDemo, type DemoPoint } from '../../state/demo';
-import type { GameStore } from '../../state/game';
+import { lastUndoable, type GameStore } from '../../state/game';
 import { settingsStore } from '../../state/settings';
 import type { DeviceHandle } from '../Device';
 import { CenterPanel } from './CenterPanel';
@@ -50,7 +50,7 @@ interface Props {
 }
 
 export function GameView({ store, game, demo = false, onExit }: Props) {
-  const { past } = useStore(store);
+  const { events, future } = useStore(store);
   const settings = useStore(settingsStore);
   const profiles = useStore(profilesStore);
   const [tour, setTour] = useState(demo);
@@ -106,7 +106,8 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     const down = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
         e.preventDefault();
-        store.undo();
+        if (e.shiftKey) store.redo();
+        else store.undo();
         return;
       }
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
@@ -165,7 +166,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
   return (
     <div className="game" data-demo={demo || undefined} onPointerDownCapture={unlockAudio}>
-      <TopBar game={game} demo={demo} canUndo={past.length > 0} dispatch={dispatch} onUndo={store.undo} onExit={onExit} onScoreboard={() => setBoard((b) => (b === 'closed' ? 'open' : 'closed'))} />
+      <TopBar game={game} demo={demo} canUndo={lastUndoable(events) >= 0} canRedo={future.length > 0} dispatch={dispatch} onUndo={store.undo} onRedo={store.redo} onExit={onExit} onScoreboard={() => setBoard((b) => (b === 'closed' ? 'open' : 'closed'))} />
 
       {board !== 'closed' && (
         <div className="boardwrap">
@@ -237,7 +238,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
         <div className="rail">
           {tour && <Tour game={game} holdMs={settings.holdMs} onClose={() => setTour(false)} />}
-          <SidePanel game={game} dispatch={dispatch} />
+          <SidePanel game={game} dispatch={dispatch} onRewind={demo ? undefined : store.rewind} />
         </div>
       </main>
     </div>

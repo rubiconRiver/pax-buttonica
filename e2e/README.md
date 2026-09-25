@@ -23,6 +23,7 @@ npx playwright show-report          # after a failure: screenshots, and a trace 
 | `setup.spec.ts` | Validation, player counts, colours, options reaching the game, saved players, persistence across reloads, ending a game. |
 | `hub.spec.ts` | The USB hub and real buttons, via a fake `navigator.serial`: the app's Web Serial code runs for real and the test plays the hub, speaking the wire protocol from `docs/BUTTON_STANDARD.md`. Seat claiming, a full turn, extra buttons, lost and returning buttons, low batteries, line noise, the test bench. |
 | `phones.spec.ts` | Phones as buttons and the game on the site, against a stand-in for the site (`api.ts`): who you are, seats, lights, presses through the inbox, profile edits and clips, the table view, laptop reloads, codes retiring with the game, resuming after lost data, another laptop picking the game up by code. |
+| `rewind.spec.ts` | The game as an action log: undo and redo, rewinding from a line of the Ship's log, a phone keeping its seat through a rewind, the referee's levers, downloading the log during and after a game, another laptop picking up the log. |
 | `profiles.spec.ts` | Saved players against a stand-in for the database (`api.ts`): newest edit wins, deletions travel, offline catches up later, clip uploads. |
 | `pages.spec.ts` | Every page renders; navigation; the documents; the parts list arithmetic and memory; nothing scrolls sideways on a phone. |
 

@@ -46,6 +46,15 @@ async function createSchema() {
       updated_at bigint not null
     )`,
     tx`create index if not exists game_states_host on game_states (host_key, updated_at)`,
+    // Everything that happened in a game, in order, with its time: the game can be rebuilt from these, and
+    // they are what stats are made from later.
+    tx`create table if not exists game_events (
+      code text not null,
+      i integer not null,
+      at bigint not null,
+      action jsonb not null,
+      primary key (code, i)
+    )`,
     // Presses and answers from phones, waiting for the host to read them.
     tx`create table if not exists game_actions (
       seq bigserial primary key,
