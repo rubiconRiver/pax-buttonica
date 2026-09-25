@@ -28,7 +28,8 @@ TRAVEL + PRELOAD of movement, less than the switch's own travel.
 Millimetres. x to the right (USB window on the +x flat), y away from you (the key's cable leaves
 toward -y), z up, z = 0 at the top of the body's floor. STLs come out already turned the way they print.
 
-STATUS: v0.3, modelled from M5Stack's drawings. Nothing printed or fitted yet.
+STATUS: v0.4. v0.3 was printed 2026-09-24 and lit up; v0.4 lowers the bezel to a 9 mm ring, adds an
+inner collar as the cap's guide, drops 4 mm of height, and takes M3 x 5 screws or brass standoffs.
 The soldered carrier-board version of this shell is make_shell_pcb.py.
 """
 import math
@@ -41,7 +42,8 @@ from manifold3d import CrossSection, Manifold, OpType
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ── fit: tune these with the fit_test rings ─────────────────────────────────
-SLIDE_CLEARANCE = 0.30   # radial gap between the cap's skirt and the bezel's bore
+SLIDE_CLEARANCE = 0.30   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar
+CHAMBER_CLEARANCE = 0.5  # radial gap round the cap's flange inside the bezel (it never guides, so it can be loose)
 PART_CLEARANCE = 0.5     # around every bought part in its pocket
 TAP_D = 2.8              # an M3 screw cuts its own thread in a hole this size
 M3_CLEAR_D = 3.4
@@ -74,19 +76,22 @@ HOLDER = (63.5, 57.6, 16.0)     # Adafruit 830 4xAA holder, leads out of its +x 
 TURRET_F = 90.0          # across the flats of the hexagon
 BORE_R = 40.0            # round bore inside it
 FLOOR_T = 1.6
-WALL_TOP = 24.5          # top of the body wall = the hard stop
+WALL_TOP = 25.5          # top of the body wall = the hard stop
+COLLAR_H = 36.0          # an inner collar the cap's skirt slides over: the real guide, hidden inside
+COLLAR_T = 2.0
+COLLAR_GAPS = ((-28, 28), (250, 290))   # no collar where the Atom bay and the key's cable are
 ATOM_X0 = 13.0           # Atom bay from here to ATOM_X0 + 24 (its corners must stay inside the bore)
 POSTS = [(33, 20), (-33, 20), (-33, -20), (33, -20)]   # screws up from the plinth
 USB_WINDOW = (14.0, 9.0)
 LEAD_GROOVE_W = 6.0      # the battery leads run up the outside of the +x flat in this groove
 
 # ── the cage in the cap, and the saddle ─────────────────────────────────────
-LED_GAP = 12.0           # hex LEDs to the underside of the diffuser
+LED_GAP = 9.0            # hex LEDs to the underside of the diffuser
 CAGE_ANGLES = (60, 120, 240, 300)   # legs at these flat centres; the side sockets open at 0 and 180
 CAGE_LEG = (5.0, 3.0)    # leg width (tangential) and radial thickness
 CAGE_R0 = HEX_FLAT / 2 + 0.6        # inner face of the legs
 LIP = 0.9                # snap lip under the board
-PAD_T = 3.0              # the pusher pads at the bottom of the legs
+PAD_T = 2.5              # the pusher pads at the bottom of the legs
 SADDLE_WALL = 1.5
 SADDLE_BRIM_R = 18.0
 SADDLE_T = 2.0           # brim / roof thickness
@@ -97,9 +102,9 @@ CAP_TOP_T = 1.2          # the diffuser
 CAP_WALL = 1.6
 CAP_CHAMFER = 7.0
 FLANGE_W, FLANGE_LAND = 3.1, 0.8
-BEZEL_H = 17.0
+BEZEL_H = 9.0            # a low ring: it retains the flange and guides the top of the skirt; the collar does the rest
 BEZEL_SCREW_R = 46.0
-BEZEL_FLANGE_T = 3.0
+BEZEL_FLANGE_T = 2.5     # plastic under each screw head. Screws: M3 x 5, or the brass M3 6+6 standoffs used as bolts
 
 # ── plinth ──────────────────────────────────────────────────────────────────
 WIRE_RELIEF = 2.5        # extra pocket length at each end for the leads to turn
@@ -111,15 +116,15 @@ SEG = 128
 CAP_R = CAP_D / 2
 BEZEL_BORE_R = CAP_R + SLIDE_CLEARANCE
 FLANGE_R = CAP_R + FLANGE_W
-CHAMBER_R = FLANGE_R + SLIDE_CLEARANCE
+CHAMBER_R = FLANGE_R + CHAMBER_CLEARANCE
 BEZEL_TOP = WALL_TOP + BEZEL_H
 FLANGE_BOTTOM = WALL_TOP + TRAVEL
-SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - SLIDE_CLEARANCE
+SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - CHAMBER_CLEARANCE
 KEY_Y0 = -KEY_CAP_FROM_SOCKET                        # the case's -y end; keycap centre at y = 0
 KEYCAP_TOP = KEY_BODY[2] + KEYCAP[1]
 SADDLE_TOP = KEYCAP_TOP + SADDLE_T                   # top of the brim, at rest
 PAD_BOTTOM = SADDLE_TOP - PRELOAD                    # the cage's pads rest here
-HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.5    # underside of the hex board
+HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.3    # underside of the hex board
 HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
 INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
 CAP_TOP = INNER_TOP + CAP_TOP_T
@@ -132,7 +137,9 @@ LEAD_SLOT_X = FLAT_X + 1.5
 
 assert TRAVEL + PRELOAD <= SWITCH_TRAVEL_MIN, 'the cap would bottom the switch out before the shell stops it'
 assert math.hypot(ATOM_X0 + ATOM[0], ATOM[1] / 2) < BORE_R, 'the Atom does not fit in the bore'
-assert CAP_EXPOSED >= 6, 'the cap barely shows above the bezel; lower WALL_TOP or BEZEL_H'
+assert CAP_EXPOSED - TRAVEL >= 8, 'the cap should stand well proud of the bezel even when pressed'
+COLLAR_R = CAP_R - CAP_WALL - SLIDE_CLEARANCE          # outer face of the collar
+assert COLLAR_H < FLANGE_BOTTOM + 30, 'collar taller than the cap is deep'
 assert CAGE_R0 + CAGE_LEG[1] < CAP_R - CAP_WALL - 1, 'the cage does not fit inside the cap'
 
 
@@ -172,6 +179,12 @@ def corners(r):
 def body():
     solid = hex_prism(TURRET_F, FLOOR_T + WALL_TOP, z=-FLOOR_T, cb=0.6) - cyl(2 * BORE_R, WALL_TOP + 1, seg=SEG)
     solid += union(cyl(7.5, 6, x, y) for x, y in POSTS)
+    # the inner collar: the cap's skirt slides over it, so a 70 mm cap can't rock however it's hit
+    collar = cyl(2 * COLLAR_R, COLLAR_H, seg=SEG) - cyl(2 * (COLLAR_R - COLLAR_T), COLLAR_H + 2, z=-1, seg=SEG)
+    for a0, a1 in COLLAR_GAPS:
+        wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(COLLAR_H + 2).translate([0, 0, -1])
+        collar -= wedge
+    solid += collar
     # two pegs into the Key Unit's mounting holes, plus a low rim round its case
     hy = KEY_Y0 + KEY_HOLES[1]
     solid += union(cyl(4.5, 5, sx * KEY_HOLES[0] / 2, hy, d2=4.0, seg=32) for sx in (-1, 1))

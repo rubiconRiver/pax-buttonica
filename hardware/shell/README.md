@@ -4,9 +4,9 @@ Five printed parts around the plug-together electronics: an M5Stack AtomS3 Lite,
 
 ![front cutaway](section-front.svg)
 
-**Revision 0.3. Status: modelled, never printed.** The M5Stack sizes come from M5's own dimension drawings; the few that don't are marked `MEASURE` at the top of `make_shell.py`. The script checks that no part overlaps another, at rest or fully pressed, and that is all it proves. The electronics themselves were proven on the bench on 2026-09-24.
+**Revision 0.4.** v0.3 was printed and lit on 2026-09-24. v0.4 answers the first look: a low bezel ring the cap always stands proud of, an inner collar that guides the cap (so the bezel no longer has to be tall to do it), 4 mm less height, and fasteners from an ordinary PC screw kit. **Not yet printed.** The M5Stack sizes come from M5's own dimension drawings; the few that don't are marked `MEASURE` at the top of `make_shell.py`. The script checks that no part overlaps another, at rest or fully pressed, and that is all it proves. The electronics themselves were proven on the bench on 2026-09-24.
 
-About 106 mm across the base's flats (122 mm corner to corner), 90 mm across the turret, 75 mm tall, with a 70 mm cap.
+About 106 mm across the base's flats (122 mm corner to corner), 90 mm across the turret, 72 mm tall, with a 70 mm cap standing 14 mm above the bezel at rest and 11 mm pressed.
 
 This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U006), not the PortABC base: the base with the Atom on it is 60 mm long including the plugs and doesn't lie beside a centred key unit inside the turret. The firmware pins for the splitter wiring are the Atom's own: hex data on G2, key on G1.
 
@@ -22,10 +22,10 @@ This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U0
 
 | File in `stl/` | Colour | What it does |
 |---|---|---|
-| `body.stl` | black | The turret: floor, key pegs, Atom bay, the USB window and lead groove, four screw posts. |
+| `body.stl` | black | The turret: floor, key pegs, Atom bay, the USB window and lead groove, four screw posts, and a 36 mm inner collar the cap's skirt slides over (the real guide; open where the Atom and the key's cable are). |
 | `cap.stl` | white / translucent | What you hit, with the hex cage hanging inside. The top is 1.2 mm thick, which is the diffuser. Print with 4 walls. |
 | `saddle.stl` | any | The cup over the keycap. |
-| `bezel.stl` | black | Screws down over the cap. Its bore guides the cap's skirt; a cone inside holds the cap's flange in. |
+| `bezel.stl` | black | A 9 mm ring that screws down over the cap: a cone inside holds the cap's flange in and its bore steadies the top of the skirt. |
 | `plinth.stl` | black | The base. Battery pocket underneath. **Sized from Adafruit's listing for the 830 holder; measure yours first.** |
 | `fit_test.stl` | any | Two thin rings, a quick print: a slice of the bezel's bore and a slice of the cap's skirt. The small ring should slide freely in the big one without rattling. If not, change `SLIDE_CLEARANCE`. |
 
@@ -43,7 +43,7 @@ Every STL is already turned the way it prints: cap, saddle and plinth are upside
 
 ## Screws
 
-M3 × 8, socket-head or pan-head, self-tapping into the plastic: 4 up through the plinth into the body's posts, 3 to 6 for the bezel. About 10 a button.
+Designed round a PC-case screw kit. **Bezel:** three of the brass **M3 6+6 standoffs**, threaded end down through the bezel into the body; the hex body sits in the countersink as the head and tightens by hand or with small pliers. M3 × 5 pan-heads work too (2.5 mm of bite). **Plinth:** four M3 × 5 up through the pocket's roof into the body's posts (heads sink flush). Skip anything M3.5 or M5; they'd split the posts.
 
 ## Assembly
 
