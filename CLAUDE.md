@@ -50,7 +50,7 @@ kicad-cli pcb drc pax-button.kicad_pcb     # must stay at 0 violations, 0 unconn
 - The host laptop (the `/play` screen) is the only authority; the site holds a copy of the game (one record per game, named by its four-letter code) that it rewrites after every change. Phones read that record and derive their own light with the engine; presses go back through the inbox. No WebRTC. Only `/play` runs the sync: another tab in the same browser must never act as a second host.
 - The standard button has no speaker; the laptop plays every sound.
 - The UI has to feel crisp and look like TI (chamfered frames, not bubbly). The site doubles as a recruiting demo.
-- Nothing on the hardware side has been flashed or manufactured yet. Say "compiles" or "passes DRC", never "works", until it has run on real parts.
+- The M5Stack button and hub ran on real parts on 2026-09-24 (see `hardware/HANDOFF.md`). The carrier board has never been manufactured: say "passes DRC", not "works", about it. Say "works" only about what has been seen running.
 - Run `npm run test:all` before pushing app changes. A behaviour change needs its test changed or added in `e2e/`.
 - Garett's standing instruction: commit, push and redeploy when a round of changes is done.
 

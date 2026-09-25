@@ -1,6 +1,10 @@
 # Hardware handoff
 
-Where the physical side stands, for whoever (or whichever session) picks it up. Updated 2026-09-21.
+Where the physical side stands, for whoever (or whichever session) picks it up. Updated 2026-09-24.
+
+## First run on real parts: 2026-09-24
+
+One hub Atom and one button Atom + Key Unit + NeoHEX on a PortABC base, both on USB. **Everything worked on the bench:** the Mac saw the Atom with no driver, Web Serial connected to the hub first try, the button announced itself over ESP-NOW at −39 dBm, tap / double / hold all arrived, every light mode lit the hex. Found and fixed on the night: the base's Port A is G38/G39 on an AtomS3 (hex data on G38), Port B is G7/G8 (key switch on G8). Still open: `dim` renders dark (gamma applied after scaling: fix is gamma8 per channel before scaling in `scaled()`); the Atom's onboard pixel on G35 doesn't follow (the NeoPixel library drives one RMT pin at a time). Neither matters for play.
 
 ## Deadline
 
