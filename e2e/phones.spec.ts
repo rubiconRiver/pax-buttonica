@@ -1,6 +1,6 @@
 import { FakeApi } from './api';
 import { Board, Table, expect, liveGame, readStorage, setSlider, setUpGame, test } from './helpers';
-import { pickCards } from './flows';
+import { FANFARE_MS, pickCards } from './flows';
 import { gameCode, openPhone, tick, tinyWav } from './phones';
 
 /**
@@ -379,4 +379,39 @@ test.describe('the game on the site', () => {
     await table.expectVp('Ana', 1); // locally it still plays, it just doesn't count on the site
     await other.close();
   });
+});
+
+test('a phone celebrates the end of the round with everyone, then waits for its turn to score', async ({ page, context }) => {
+  const { code, table } = await hostWithSite(page, context);
+  const phone = await openPhone(context, code);
+  const both = [page, phone.page];
+  await phone.iAm('Ben');
+  await tick(both);
+  await table.tapKey('2');
+  await table.tapKey('3');
+  await pickCards(table, SIX);
+  await table.expectActive('Ana');
+
+  await page.getByRole('button', { name: 'Referee', exact: true }).click();
+  await page.getByRole('dialog', { name: 'Referee' }).getByRole('button', { name: 'Jump to the status phase' }).click();
+  await page.keyboard.press('Escape');
+  await tick(both);
+  await phone.expectLight('rainbow');
+  await expect(phone.why).toHaveText('The round is over!');
+  // The host keeps time; the phone follows the record.
+  await page.clock.fastForward(FANFARE_MS + 100);
+  await tick(both);
+  await phone.expectLight('dim');
+  await expect(phone.why).toHaveText('Waiting to score');
+  await expect(table.center.locator('.center__active')).toHaveText('Ana');
+  await table.tap('Ana');
+  await tick(both);
+  await phone.expectLight('pulse');
+  await expect(phone.why).toHaveText('Your turn to score — tap when done');
+  await phone.tap();
+  await tick(both);
+  await expect(table.center.locator('.center__active')).toHaveText('Cleo');
+  await phone.expectLight('dim');
+  await expect(phone.why).toHaveText('Scored');
+  await expect(table.log).toContainText('Ben is done scoring.');
 });

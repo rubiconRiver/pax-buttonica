@@ -109,6 +109,26 @@ export async function everyonePasses(table: Table, order: string[]) {
   await table.expectPhase('Status');
 }
 
+/** The default length of the status-phase celebration. */
+export const FANFARE_MS = 4000;
+
+/** The last pass: every light cycles through the rainbow under a banner that stays up, then scoring begins. */
+export async function statusFanfare(table: Table, names: string[]) {
+  await table.expectPhase('Status');
+  await table.expectLights(Object.fromEntries(names.map((n) => [n, 'rainbow' as const])));
+  await expect(table.banner).toContainText('Status phase');
+  await table.page.clock.fastForward(FANFARE_MS + 100);
+}
+
+/** Scoring goes round in initiative order: each scorer breathes in their own colour and taps when done. */
+export async function everyoneScores(table: Table, order: string[]) {
+  for (const [i, name] of order.entries()) {
+    await expect(table.center.locator('.center__active')).toHaveText(name);
+    await table.expectLights({ [name]: 'pulse', ...(i > 0 ? { [order[i - 1]]: 'dim' as const } : {}) });
+    await table.tap(name);
+  }
+}
+
 /** Status phase: everyone breathes white until they tap in. */
 export async function everyoneReady(table: Table, names: string[]) {
   await table.expectPhase('Status');

@@ -1,5 +1,5 @@
 import { Table, expect, liveGame, setUpGame, test } from './helpers';
-import { everyonePasses, everyoneReady, pickCards, playStrategyCard, scard, takeTurn, type Picks } from './flows';
+import { everyonePasses, everyoneReady, everyoneScores, initiativeOrder, pickCards, playStrategyCard, scard, statusFanfare, takeTurn, type Picks } from './flows';
 
 /** Three and four players hold two strategy cards each: two laps of choosing, a "which card?" step, and no passing until both are played. */
 
@@ -62,7 +62,9 @@ test('a four-player round with two cards each', async ({ page }) => {
   await test.step('round two: every card was taken, so none gathered trade goods', async () => {
     await takeTurn(table, 'Ana');
     await everyonePasses(table, ['Ben', 'Cleo', 'Dev', 'Ana']);
+    await statusFanfare(table, NAMES);
     await page.keyboard.press('Escape');
+    await everyoneScores(table, initiativeOrder(PICKS));
     await everyoneReady(table, NAMES);
     await table.expectPhase('Strategy');
     await expect(page.locator('.scard__tg')).toHaveCount(0);

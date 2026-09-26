@@ -4,7 +4,8 @@
  * with the same code the host uses.
  */
 import { colorById } from '../engine/data';
-import type { ExtraPoints, GameState, Law, Objective } from '../engine/types';
+import { currentScorer } from '../engine/engine';
+import type { ExtraPoints, GameState, Law, Objective, StatusStep } from '../engine/types';
 
 /** Everything a player might want to check from their seat: the public state of the game, nothing hidden. */
 export interface TableSnapshot {
@@ -15,6 +16,9 @@ export interface TableSnapshot {
   speaker: number;
   custodiansRemoved: boolean;
   ready: boolean[];
+  /** Status phase: which step it is at, and whose turn it is to score while scoring goes round. */
+  statusStep: StatusStep;
+  scorer: number | null;
   players: { name: string; color: string; faction: string; vp: number; cards: number[]; used: number[]; passed: boolean; secrets: string[]; extras: ExtraPoints[] }[];
   objectives: Objective[];
   laws: Law[];
@@ -28,6 +32,8 @@ export const snapshotOf = (g: GameState): TableSnapshot => ({
   speaker: g.speaker,
   custodiansRemoved: g.custodiansRemoved,
   ready: g.ready,
+  statusStep: g.statusStep ?? 'tidy',
+  scorer: currentScorer(g),
   players: g.players.map((p) => ({ name: p.name, color: colorById(p.color).led, faction: p.faction, vp: p.vp, cards: p.cards, used: p.usedCards, passed: p.passed, secrets: p.secrets, extras: p.extras })),
   objectives: g.objectives,
   laws: g.laws,

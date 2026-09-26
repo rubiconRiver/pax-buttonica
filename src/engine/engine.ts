@@ -6,6 +6,9 @@ const MAX_FX = 16;
 /** Taps from the card's owner are ignored for this long after the card comes out. */
 export const PRIMARY_GUARD_MS = 600;
 
+/** How long every light celebrates the end of a round before scoring, unless the table says otherwise. */
+export const DEFAULT_FANFARE_MS = 4000;
+
 export const cardsPerPlayer = (playerCount: number) => (playerCount <= 4 ? 2 : 1);
 
 /** Id of the simulated on-screen button at a given spot round the table. */
@@ -57,7 +60,12 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     actedThisTurn: false,
     strategyPlay: null,
     choosingCard: false,
+    statusStep: 'tidy',
+    scoringOrder: [],
+    scoringIdx: 0,
     ready: [],
+    fanfareMs: options.fanfareMs ?? DEFAULT_FANFARE_MS,
+    scoreInOrder: options.scoreInOrder ?? true,
     agenda: null,
     winner: null,
     bindings: players.map((_, i) => (options.seating ? null : simDevice(i))),
@@ -108,6 +116,28 @@ export function currentPicker(g: GameState): number | null {
 
 export function currentVoter(g: GameState): number | null {
   return g.phase === 'agenda' && g.agenda ? g.agenda.order[g.agenda.idx] ?? null : null;
+}
+
+/** Whose turn it is to score, while the status phase goes round the table. */
+export function currentScorer(g: GameState): number | null {
+  return g.phase === 'status' && g.statusStep === 'scoring' ? g.scoringOrder[g.scoringIdx] ?? null : null;
+}
+
+/**
+ * The order players act in right now: who chooses next in the strategy phase, initiative order for the action and
+ * status phases, voting order in the agenda phase. Seat order while seats are still being claimed.
+ */
+export function turnOrder(g: GameState): number[] {
+  const seats = g.players.map((_, i) => i);
+  if (g.seating) return seats;
+  switch (g.phase) {
+    case 'strategy':
+      return [...new Set(g.pickOrder)];
+    case 'agenda':
+      return g.agenda?.order ?? seats;
+    default:
+      return initiativeOrder(g);
+  }
 }
 
 /**
@@ -263,8 +293,48 @@ function startStatusPhase(g: GameState) {
   g.phase = 'status';
   g.active = null;
   g.ready = g.players.map(() => false);
+  g.scoringOrder = g.scoreInOrder ? initiativeOrder(g) : [];
+  g.scoringIdx = 0;
   log(g, 'Everyone has passed — status phase.', { tone: 'info' });
   fx(g, { kind: 'phase', note: 'status' });
+  if (g.fanfareMs > 0) g.statusStep = 'fanfare';
+  else startScoring(g);
+}
+
+/** After the celebration: scoring goes round in initiative order, or straight to the tidy-up if the table scores all at once. */
+function startScoring(g: GameState) {
+  if (!g.scoringOrder.length) {
+    g.statusStep = 'tidy';
+    return;
+  }
+  g.statusStep = 'scoring';
+  log(g, `Scoring, in initiative order: ${g.scoringOrder.map((s) => g.players[s].name).join(', ')}.`, { tone: 'info' });
+  fx(g, { kind: 'score', seat: g.scoringOrder[0] });
+}
+
+function fanfareDone(g: GameState) {
+  if (g.phase !== 'status' || g.statusStep !== 'fanfare') return;
+  startScoring(g);
+}
+
+/** The player whose turn it is to score is done: on to the next, or to the tidy-up. */
+function scored(g: GameState, seat: number) {
+  if (seat !== currentScorer(g)) return;
+  fx(g, { kind: 'ack', seat });
+  log(g, `${g.players[seat].name} is done scoring.`, { seat });
+  g.scoringIdx += 1;
+  const next = currentScorer(g);
+  if (next != null) fx(g, { kind: 'score', seat: next });
+  else {
+    g.statusStep = 'tidy';
+    log(g, 'Scoring is done — tidy up, then tap in.', { tone: 'info' });
+  }
+}
+
+function skipScoring(g: GameState) {
+  if (g.phase !== 'status' || g.statusStep === 'tidy') return;
+  g.statusStep = 'tidy';
+  log(g, 'On to the tidy-up.', { tone: 'warn' });
 }
 
 function startAgendaPhase(g: GameState) {
@@ -349,7 +419,8 @@ function pass(g: GameState, at: number) {
 }
 
 function ready(g: GameState, seat: number, at: number) {
-  if (g.phase !== 'status' || g.ready[seat]) return;
+  // Games saved before the status phase had steps have no step at all: they are tidying up.
+  if (g.phase !== 'status' || (g.statusStep ?? 'tidy') !== 'tidy' || g.ready[seat]) return;
   g.ready[seat] = true;
   fx(g, { kind: 'ready', seat });
   if (g.ready.every(Boolean)) afterStatus(g, at);
@@ -411,8 +482,10 @@ function handleInput(g: GameState, seat: number, input: DeviceInput, at: number)
       return fx(g, { kind: 'hint', seat, note: 'Hold to end your turn' });
     }
     case 'status':
-      if (input === 'tap' || input === 'hold') ready(g, seat, at);
-      return;
+      if (input !== 'tap' && input !== 'hold') return;
+      if (g.statusStep === 'fanfare') return;
+      if (g.statusStep === 'scoring') return scored(g, seat);
+      return ready(g, seat, at);
     case 'agenda':
       if (seat === currentVoter(g) && (input === 'tap' || input === 'hold')) voteDone(g, at);
       return;
@@ -503,7 +576,7 @@ export interface GameEvent {
   noop?: true;
 }
 
-export const AUTO_ACTIONS = new Set<Action['type']>(['UPDATE_PLAYER', 'BIND', 'IDENTIFY']);
+export const AUTO_ACTIONS = new Set<Action['type']>(['UPDATE_PLAYER', 'BIND', 'IDENTIFY', 'FANFARE_DONE', 'SET_STATUS_FLOW']);
 
 /** Everything except transient effects and the log: what makes an action "count". */
 export const core = (g: GameState) => JSON.stringify({ ...g, fx: 0, fxSeq: 0, log: 0, logSeq: 0 });
@@ -648,7 +721,21 @@ export function reduce(state: GameState, action: Action): GameState {
       ready(g, action.seat, action.at);
       break;
     case 'READY_ALL':
+      if (g.phase === 'status') g.statusStep = 'tidy';
       for (let s = 0; s < g.players.length; s++) if (g.phase === 'status') ready(g, s, action.at);
+      break;
+    case 'FANFARE_DONE':
+      fanfareDone(g);
+      break;
+    case 'SCORED':
+      scored(g, action.seat);
+      break;
+    case 'SKIP_SCORING':
+      skipScoring(g);
+      break;
+    case 'SET_STATUS_FLOW':
+      g.fanfareMs = Math.max(0, Math.min(30000, Math.round(action.fanfareMs)));
+      g.scoreInOrder = action.scoreInOrder;
       break;
     case 'VOTE_DONE':
       voteDone(g, action.at);

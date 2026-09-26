@@ -1,5 +1,5 @@
 import { cardByNumber, colorById } from './data';
-import { currentPicker, currentVoter } from './engine';
+import { currentPicker, currentScorer, currentVoter } from './engine';
 import type { GameState } from './types';
 
 /**
@@ -77,10 +77,18 @@ export function deriveOutputs(g: GameState): DeviceOutput[] {
         if (p.passed) return { color: own, mode: 'off', reason: 'Passed' };
         return { color: own, mode: 'dim', reason: 'Waiting' };
       }
-      case 'status':
+      case 'status': {
+        if (g.statusStep === 'fanfare') return { color: own, mode: 'rainbow', reason: 'The round is over!' };
+        if (g.statusStep === 'scoring') {
+          if (seat === currentScorer(g)) return { color: own, mode: 'pulse', reason: 'Your turn to score — tap when done' };
+          return g.scoringOrder.indexOf(seat) < g.scoringIdx
+            ? { color: own, mode: 'dim', reason: 'Scored' }
+            : { color: own, mode: 'dim', reason: 'Waiting to score' };
+        }
         return g.ready[seat]
           ? { color: own, mode: 'dim', reason: 'Ready' }
           : { color: '#ffffff', mode: 'pulse', reason: 'Status phase — tap when ready' };
+      }
       case 'agenda':
         return seat === currentVoter(g)
           ? { color: own, mode: 'pulse', reason: 'Your vote — tap when done' }

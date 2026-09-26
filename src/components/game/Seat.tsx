@@ -4,12 +4,14 @@ import type { DeviceOutput, TurnLook } from '../../engine/outputs';
 import type { DeviceInput, Player } from '../../engine/types';
 import { Device, type DeviceHandle } from '../Device';
 import { IconGavel } from '../Icons';
-import { formatClock, seatPosition } from './geometry';
+import { formatClock, type SeatPos } from './geometry';
 
 interface Props {
-  /** Where on the table this seat is drawn. */
+  /** Where on the table this seat is drawn, and which number key presses its button. */
   spot: number;
-  count: number;
+  pos: SeatPos;
+  /** This player's place in the order of play (0 = first), shown in the turn-order layout. */
+  rank?: number;
   player: Player;
   output: DeviceOutput;
   /** How this player's "your move" is drawn. */
@@ -26,10 +28,9 @@ interface Props {
 }
 
 export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
-  { spot, count, player, output, look, size, holdMs, isSpeaker, hasZero, isActive, liveMs, explain, react, onInput },
+  { spot, pos, rank, player, output, look, size, holdMs, isSpeaker, hasZero, isActive, liveMs, explain, react, onInput },
   ref,
 ) {
-  const pos = seatPosition(spot, count);
   const led = colorById(player.color).led;
   return (
     <div
@@ -39,6 +40,7 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
       data-passed={player.passed || undefined}
       style={{ '--x': pos.x, '--y': pos.y, '--pc': led, '--size': `${size}px` } as CSSProperties}
     >
+      {rank != null && <span className="seat__rank mono-num" aria-label={`${ordinal(rank + 1)} to act`}>{rank + 1}</span>}
       <Device
         ref={ref}
         color={output.color}
@@ -86,10 +88,11 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
   );
 });
 
+const ordinal = (n: number) => `${n}${n % 10 === 1 && n !== 11 ? 'st' : n % 10 === 2 && n !== 12 ? 'nd' : n % 10 === 3 && n !== 13 ? 'rd' : 'th'}`;
+
 /** A button nobody has claimed yet. */
-export const OpenSpot = forwardRef<DeviceHandle, { spot: number; count: number; size: number; holdMs: number; output: DeviceOutput; look: TurnLook; onInput(input: DeviceInput): void }>(
-  function OpenSpot({ spot, count, size, holdMs, output, look, onInput }, ref) {
-    const pos = seatPosition(spot, count);
+export const OpenSpot = forwardRef<DeviceHandle, { spot: number; pos: SeatPos; size: number; holdMs: number; output: DeviceOutput; look: TurnLook; onInput(input: DeviceInput): void }>(
+  function OpenSpot({ spot, pos, size, holdMs, output, look, onInput }, ref) {
     return (
       <div className="seat seat--open" data-above={pos.above || undefined} style={{ '--x': pos.x, '--y': pos.y, '--pc': '#ffffff', '--size': `${size}px` } as CSSProperties}>
         <Device ref={ref} color={output.color} mode={output.mode} look={look} size={size} holdMs={holdMs} pan={pos.pan} hotkey={String(spot + 1)} label={`Unclaimed button ${spot + 1}`} onInput={onInput} />

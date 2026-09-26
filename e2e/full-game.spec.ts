@@ -1,5 +1,5 @@
 import { Board, Table, claimSeatsInOrder, expect, liveGame, readStorage, setUpGame, test } from './helpers';
-import { everyonePasses, everyoneReady, initiativeOrder, pass, pickCards, playStrategyCard, scard, takeTurn, voteRound, type Picks } from './flows';
+import { everyonePasses, everyoneReady, everyoneScores, initiativeOrder, pass, pickCards, playStrategyCard, scard, statusFanfare, takeTurn, type Picks, voteRound } from './flows';
 
 /**
  * A whole six-player game, played the way the table will play it: through the setup screen, the seat-claiming
@@ -95,11 +95,15 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
   await test.step('round 1: everyone passes', async () => {
     await everyonePasses(table, initiativeOrder(r1));
     await table.expectPhase('Status');
-    await expect(table.banner).toHaveText('Status phase');
+    await expect(table.banner).toContainText('Status phase');
+    await expect(table.banner).toContainText('Round 1 is over');
+    await expect(board.root, 'the lights get their moment before the scoreboard comes up').toBeHidden();
   });
 
   await test.step('round 1: status phase, first objectives scored', async () => {
+    await statusFanfare(table, NAMES);
     await expect(board.root, 'the scoreboard puts itself up for scoring').toBeVisible();
+    await expect(board.root.locator('.board__scoring')).toContainText(`Scoring: ${initiativeOrder(r1)[0]}`);
     await board.reveal(1, 'Expand Borders');
     await board.reveal(1, 'Erect a Monument');
     await board.score('Expand Borders', GARETT);
@@ -114,6 +118,8 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
     await board.expectVp(PRIYA, 1);
     await board.expectVp(LISE, 1);
 
+    await everyoneScores(table, initiativeOrder(r1));
+    await expect(board.root.locator('.board__ready')).toHaveText('0/6 ready');
     await everyoneReady(table, NAMES);
     // Custodians still on Mecatol, so no agenda phase: straight to round two, and the scoreboard steps aside.
     await table.expectPhase('Strategy');
@@ -180,12 +186,13 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
   });
 
   await test.step('round 2: status, then the first agenda phase', async () => {
-    await table.expectPhase('Status');
+    await statusFanfare(table, NAMES);
     await board.score('Erect a Monument', GARETT);
     await board.addSecret(GARETT, 'Become a Legend');
     await board.expectVp(GARETT, 4);
     await expect(board.stand(GARETT).locator('.stand__split')).toHaveText(/Public 2.*Secret 1.*Other 1/);
     await board.reveal(1, 'Sway the Council');
+    await everyoneScores(table, initiativeOrder(r2));
     await expect(board.root.locator('.board__ready')).toHaveText('0/6 ready');
     await everyoneReady(table, NAMES);
 
@@ -238,13 +245,14 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
     // Owen passes first and still has to answer… nothing left to answer; everyone simply passes.
     await everyonePasses(table, order);
 
-    await table.expectPhase('Status');
+    await statusFanfare(table, NAMES);
     await board.score('Sway the Council', GARETT);
     await board.reveal(2, 'Found a Golden Age');
     await board.score('Found a Golden Age', GARETT);
     await board.score('Found a Golden Age', MARC);
     await board.expectVp(GARETT, 8);
     await board.expectVp(MARC, 2);
+    await everyoneScores(table, order);
     await everyoneReady(table, NAMES);
 
     // The table is tired of politics: the host skips the agenda phase.
@@ -284,10 +292,12 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
     await board.expectVp(GARETT, 9);
     await board.close();
     await pass(table, PRIYA);
-    await table.expectPhase('Status');
+    await statusFanfare(table, NAMES);
   });
 
   await test.step('the tenth point ends the game', async () => {
+    // Scoring has come round to Garett, and the point that wins doesn't wait for anyone.
+    await everyoneScores(table, initiativeOrder(r4).slice(0, initiativeOrder(r4).indexOf(GARETT)));
     await board.addSecret(GARETT);
     await expect(table.center).toContainText('claims the throne in round 4');
     await expect(table.center.locator('.center__active')).toHaveText(GARETT);

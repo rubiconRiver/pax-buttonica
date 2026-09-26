@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
-import { settingsStore } from '../../state/settings';
+import { LAYOUTS, SCORING_CUES, settingsStore } from '../../state/settings';
+import { DEFAULT_FANFARE_MS } from '../../engine/engine';
 import { TURN_LOOKS } from '../../engine/outputs';
 import { syncStatus } from '../../remote/sync';
 import { exportGame } from '../../state/archive';
@@ -27,6 +28,14 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
 
   return (
     <div className="popover panel" ref={ref}>
+      <div className="field" role="radiogroup" aria-label="Layout">
+        <span>Layout</span>
+        <div className="looks">
+          {LAYOUTS.map((l) => (
+            <button key={l.id} type="button" role="radio" aria-checked={s.layout === l.id} title={l.hint} onClick={() => set({ layout: l.id })}>{l.name}</button>
+          ))}
+        </div>
+      </div>
       <label className="field">
         <span>Hold to end turn <b className="mono-num">{(s.holdMs / 1000).toFixed(1)}s</b></span>
         <input type="range" min={500} max={4000} step={100} value={s.holdMs} onChange={(e) => set({ holdMs: +e.target.value })} />
@@ -60,10 +69,36 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <input type="checkbox" checked={s.primaryStage} onChange={(e) => { set({ primaryStage: e.target.checked }); onPrimaryStage(e.target.checked); }} />
         <span>Strategy cards: primary first, then secondaries</span>
       </label>
+      <div className="settings__h">Status phase</div>
+      <label className="toggle" title="When the last player passes, every light cycles through the rainbow for a moment">
+        <input type="checkbox" checked={s.fanfareMs > 0} onChange={(e) => set({ fanfareMs: e.target.checked ? DEFAULT_FANFARE_MS : 0 })} />
+        <span>Rainbows when everyone has passed</span>
+      </label>
+      {s.fanfareMs > 0 && (
+        <label className="field">
+          <span>Rainbows for <b className="mono-num">{(s.fanfareMs / 1000).toFixed(0)}s</b></span>
+          <input type="range" min={1000} max={15000} step={1000} value={s.fanfareMs} onChange={(e) => set({ fanfareMs: +e.target.value })} />
+        </label>
+      )}
+      <label className="toggle" title="On: after the rainbows, the first player in initiative order is called to score, taps when done, and so on round the table. Off: everyone scores at once.">
+        <input type="checkbox" checked={s.scoreInOrder} onChange={(e) => set({ scoreInOrder: e.target.checked })} />
+        <span>Score one player at a time, in initiative order</span>
+      </label>
+      {s.scoreInOrder && (
+        <div className="field" role="radiogroup" aria-label="Scorer's cue">
+          <span>When it's your turn to score</span>
+          <div className="looks">
+            {SCORING_CUES.map((c) => (
+              <button key={c.id} type="button" role="radio" aria-checked={s.scoringCue === c.id} title={c.hint} onClick={() => set({ scoringCue: c.id })}>{c.name}</button>
+            ))}
+          </div>
+        </div>
+      )}
       <label className="toggle" title="Scoring happens in the status phase, so that's when everyone wants to read the objectives">
         <input type="checkbox" checked={s.autoScoreboard} onChange={(e) => set({ autoScoreboard: e.target.checked })} />
         <span>Show the scoreboard during the status phase</span>
       </label>
+      <div className="settings__h">This game</div>
       <label className="toggle">
         <input type="checkbox" checked={s.explainLights} onChange={(e) => set({ explainLights: e.target.checked })} />
         <span>Explain each light under its button</span>

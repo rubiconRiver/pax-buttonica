@@ -1,5 +1,8 @@
 export type Phase = 'strategy' | 'action' | 'status' | 'agenda' | 'finished';
 
+/** The status phase in order: every light celebrates the round's end, then scoring goes round, then everyone tidies up and taps in. */
+export type StatusStep = 'fanfare' | 'scoring' | 'tidy';
+
 /**
  * What a physical device can tell us, after the hardware layer has mapped raw
  * button indexes and gestures to meaning:
@@ -96,6 +99,8 @@ export type FxKind =
   | 'pass'
   | 'pick'
   | 'ready'
+  /** It's this seat's turn to score. */
+  | 'score'
   | 'phase'
   | 'win';
 
@@ -148,8 +153,16 @@ export interface GameState {
   /** Active player holds several unused cards and must say which one. */
   choosingCard: boolean;
 
-  // Status phase
+  // Status phase, in three steps: a moment's celebration, scoring one player at a time, then the tidy-up ready check.
+  statusStep: StatusStep;
+  /** Who scores, in initiative order, and how far along the scoring is. Empty when the table scores all at once. */
+  scoringOrder: number[];
+  scoringIdx: number;
   ready: boolean[];
+  /** How the table likes its status phase (from the host's settings): how long everyone's lights celebrate (0 = not at all)… */
+  fanfareMs: number;
+  /** …and whether scoring goes round in initiative order, one player at a time. */
+  scoreInOrder: boolean;
 
   // Agenda phase
   agenda: AgendaState | null;
@@ -199,6 +212,13 @@ export type Action =
   | { type: 'ACK'; seat: number; at: number }
   | { type: 'ACK_ALL'; at: number }
   | { type: 'READY'; seat: number; at: number }
+  /** The host's timer: the celebration is over, on to scoring (or tidying up). */
+  | { type: 'FANFARE_DONE'; at: number }
+  /** The player whose turn it is to score is done. */
+  | { type: 'SCORED'; seat: number; at: number }
+  /** Straight to the tidy-up, whoever hasn't scored yet. */
+  | { type: 'SKIP_SCORING'; at: number }
+  | { type: 'SET_STATUS_FLOW'; fanfareMs: number; scoreInOrder: boolean }
   | { type: 'READY_ALL'; at: number }
   | { type: 'VOTE_DONE'; at: number }
   | { type: 'ADVANCE'; at: number }
@@ -232,6 +252,9 @@ export interface GameOptions {
   /** The game's code, shown on screen; phones and other laptops find the game by it. Chosen at random if left out. */
   code?: string;
   primaryStage?: boolean;
+  /** Status phase: how long every light celebrates the end of the round (0 = skip it), and whether scoring goes round in order. */
+  fanfareMs?: number;
+  scoreInOrder?: boolean;
   /** Begin with the seat-claiming ritual instead of pre-assigned simulated buttons. */
   seating?: boolean;
 }

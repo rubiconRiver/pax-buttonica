@@ -1,4 +1,5 @@
 import { Table, expect, lab, liveGame, openDemo, openSettings, seedStorage, test } from './helpers';
+import { FANFARE_MS } from './flows';
 
 /** The demo is the recruiting pitch: the guided tour has to follow what the visitor does, and every lab button has to work. */
 
@@ -90,7 +91,14 @@ test('scenario lab: passing, the status phase, agenda and victory', async ({ pag
 
   await lab(page, 'Everyone has passed').click();
   await table.expectPhase('Status');
+  await table.expectLights({ Dave: 'rainbow', Jen: 'rainbow' });
+  await expect(lab(page, 'One player ready')).toBeDisabled();
+  await page.clock.fastForward(FANFARE_MS + 100);
   await page.keyboard.press('Escape'); // the scoreboard put itself up
+  await expect(table.center.locator('.center__active')).toHaveText('Dave');
+  await lab(page, 'Next scorer is done').click();
+  await expect(table.center.locator('.center__active')).toHaveText('Kyle');
+  await table.center.getByRole('button', { name: 'Skip to the tidy-up' }).click();
   await expect(table.center).toContainText('0/6 ready');
   await lab(page, 'One player ready').click();
   await expect(table.center).toContainText('1/6 ready');

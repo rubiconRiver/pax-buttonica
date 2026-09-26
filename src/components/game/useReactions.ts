@@ -11,6 +11,7 @@ const REACTIONS: Partial<Record<Fx['kind'], 'denied' | 'ack' | 'hint' | 'burst'>
   ready: 'ack',
   pick: 'ack',
   turnStart: 'burst',
+  score: 'burst',
   allAcked: 'burst',
 };
 

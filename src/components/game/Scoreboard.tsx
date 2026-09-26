@@ -30,7 +30,13 @@ export function Scoreboard({ table, dispatch }: Props) {
     <div className="board" data-edit={edit || undefined}>
       <header className="board__head">
         <span className="eyebrow">Round {table.round} · {table.phase} phase</span>
-        {table.phase === 'status' && <span className="board__ready mono-num">{table.ready.filter(Boolean).length}/{table.players.length} ready</span>}
+        {table.phase === 'status' && table.scorer != null && (
+          <span className="board__scoring" style={{ '--pc': table.players[table.scorer].color } as CSSProperties}>
+            Scoring: <b>{table.players[table.scorer].name}</b>
+            {edit && <button type="button" className="btn btn--sm" onClick={() => { sfx.click(); dispatch!({ type: 'SCORED', seat: table.scorer!, at: at() }); }}>Done</button>}
+          </span>
+        )}
+        {table.phase === 'status' && table.statusStep === 'tidy' && <span className="board__ready mono-num">{table.ready.filter(Boolean).length}/{table.players.length} ready</span>}
         <span className="eyebrow">First to {table.vpTarget}</span>
       </header>
 
@@ -39,7 +45,7 @@ export function Scoreboard({ table, dispatch }: Props) {
           const publics = table.objectives.filter((o) => o.scoredBy.includes(seat)).reduce((t, o) => t + o.points, 0);
           const extras = p.extras.reduce((t, e) => t + e.points, 0);
           return (
-            <div key={seat} className="stand" data-lead={(p.vp === leader && leader > 0) || undefined} data-active={table.active === seat || undefined} style={{ '--pc': p.color } as CSSProperties}>
+            <div key={seat} className="stand" data-lead={(p.vp === leader && leader > 0) || undefined} data-active={table.active === seat || table.scorer === seat || undefined} style={{ '--pc': p.color } as CSSProperties}>
               <div className="stand__name">
                 {p.name}
                 {table.speaker === seat && <IconGavel aria-label="Speaker" />}

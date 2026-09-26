@@ -4,6 +4,7 @@ import { sfx, turnLane } from '../../audio/synth';
 import { seatSpots } from '../../engine/engine';
 import type { GameState, SoundRef } from '../../engine/types';
 import { isOnHub, playsOwnSounds, sendToDevice } from '../../hardware/serial';
+import { settingsStore } from '../../state/settings';
 import { seatPosition } from './geometry';
 
 /** Turns the engine's one-shot effects into sound. Each effect plays exactly once. */
@@ -36,6 +37,12 @@ export function useGameAudio(game: GameState | null, enabled = true) {
       switch (f.kind) {
         case 'claim': sfx.ack(pan); if (p) turnSound(p.intro); break;
         case 'turnStart': if (p) turnSound(p.intro); break;
+        case 'score': {
+          const cue = settingsStore.get().scoringCue;
+          if (cue === 'turn' && p) turnSound(p.intro);
+          else if (cue === 'chime') sfx.alert();
+          break;
+        }
         case 'turnEnd': if (p) turnSound(p.outro); break;
         case 'card': sfx.card(); break;
         case 'alert': sfx.alert(); break;

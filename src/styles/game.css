@@ -73,7 +73,12 @@
   z-index: 40;
   background: var(--panel-solid);
   animation: arrive 0.16s var(--out);
+  /* Settings have grown: the popover scrolls rather than running off the screen. */
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
+.settings__h { font: 700 10.5px/1 var(--font-d); letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold); margin: 4px 0 -6px; }
 .popover--phones { width: 300px; text-align: center; justify-items: center; }
 .room__code { font: 800 46px/1 var(--font-d); letter-spacing: 0.3em; margin-right: -0.3em; color: var(--gold-2); text-shadow: 0 0 24px rgba(242, 184, 75, 0.5); }
 .room__qr { width: 200px; height: 200px; padding: 8px; background: #fff; image-rendering: pixelated; }
@@ -164,6 +169,31 @@
   z-index: 1;
 }
 .seat > .dev { position: absolute; top: 50%; left: 50%; translate: -50% -50%; }
+/* Seats slide when the order of play changes (a new round's cards, a rewind). */
+.seat { transition: left 0.55s var(--out), top 0.55s var(--out); }
+@media (prefers-reduced-motion: reduce) { .seat { transition: none; } }
+
+/* ── Turn-order layout: a row across the top, first to act on the left ──── */
+.table[data-layout='order'] .center { top: calc(50% + var(--row-drop, 118px)); width: min(56%, 620px); }
+.table[data-layout='order'] .center[data-phase='strategy'] { width: min(68%, 720px); }
+.table[data-layout='order'] .center::before { inset: -10% -8%; }
+.seat__rank {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--size, 122px) / 2 + 10px);
+  translate: -50% 0;
+  min-width: 26px;
+  padding: 3px 7px;
+  border: 1px solid var(--line-2);
+  background: #080b13;
+  font: 800 13px/1 var(--font-d);
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  text-align: center;
+  transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.seat[data-active] .seat__rank { color: #06080d; background: var(--gold); border-color: var(--gold); box-shadow: 0 0 14px rgba(242, 184, 75, 0.55); }
+.seat[data-passed] .seat__rank { color: var(--faint); border-color: var(--line); text-decoration: line-through; }
 .seat .plate { position: absolute; left: 0; right: 0; top: calc(var(--size, 122px) / 2 + 22px); }
 .seat[data-above] .plate { top: auto; bottom: calc(var(--size, 122px) / 2 + 14px); }
 .seat[data-active] { z-index: 2; }
@@ -457,6 +487,10 @@
   100% { opacity: 0; transform: scaleY(0.6); }
 }
 
+/* The status-phase banner stays up while every light celebrates: its length comes from the settings. */
+.banner[data-hold] span { animation: banner var(--hold-ms, 4s) var(--out) forwards; }
+.banner[data-hold] small { display: block; margin-top: 10px; font: 600 clamp(13px, 1.3vw, 17px)/1 var(--font-b); letter-spacing: 0.24em; color: var(--gold-2); }
+
 /* A strategy card takes over the whole display: colour strobe, then the name slams in. */
 .banner[data-card]::before {
   content: '';
@@ -626,7 +660,8 @@
   .hextable { display: none; }
   .center::before { display: none; }
   .center { position: static; translate: none; width: 100%; grid-column: 1 / -1; order: -1; padding: 8px 0 14px; }
-  .seat { position: static; translate: none; width: auto; height: auto; }
+  .seat { position: static; translate: none; width: auto; height: auto; transition: none; }
+  .seat__rank { position: static; translate: none; order: -1; margin-bottom: -4px; }
   .seat > .dev { position: relative; top: auto; left: auto; translate: none; }
   .seat .plate, .seat[data-above] .plate { position: static; }
   .cards { grid-template-columns: repeat(2, 1fr); }

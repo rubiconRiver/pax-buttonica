@@ -22,12 +22,14 @@ const ms = (x: number) => `${Math.floor(x / 60000)}:${String(Math.floor((x % 600
 const turns: { seat: number; from: number; to: number; round: number }[] = [];
 const responses: { seat: number; card: number; by: number; ms: number }[] = [];
 const primaries: { seat: number; card: number; ms: number }[] = [];
+const scorings: { seat: number; round: number; ms: number }[] = [];
 let referee = 0;
 let refused = 0;
 let g = doc.base;
 let turnStart: { seat: number; at: number } | null = null;
 let primaryStart: { by: number; card: number; at: number } | null = null;
 let secondaryStart: { by: number; card: number; at: number; acked: boolean[] } | null = null;
+let scoringStart: { seat: number; at: number } | null = null;
 
 doc.events.forEach((e, i) => {
   const before = g;
@@ -62,6 +64,13 @@ doc.events.forEach((e, i) => {
     });
   }
   if (!sp) secondaryStart = null;
+  // Scoring, when it goes round: from being called to tapping done.
+  const scorer = g.phase === 'status' && g.statusStep === 'scoring' ? g.scoringOrder[g.scoringIdx] ?? null : null;
+  const wasScorer = before.phase === 'status' && before.statusStep === 'scoring' ? before.scoringOrder[before.scoringIdx] ?? null : null;
+  if (scorer !== wasScorer) {
+    if (scoringStart && wasScorer === scoringStart.seat && e.action.type !== 'SKIP_SCORING') scorings.push({ seat: scoringStart.seat, round: before.round, ms: e.at - scoringStart.at });
+    scoringStart = scorer != null ? { seat: scorer, at: e.at } : null;
+  }
 });
 
 const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -84,4 +93,12 @@ console.log('\nDoing the primary                      n    avg   longest');
 for (let s = 0; s < n; s++) {
   const mine = primaries.filter((r) => r.seat === s).map((r) => r.ms);
   console.log(`${names[s].padEnd(38)} ${String(mine.length).padStart(3)}  ${ms(avg(mine)).padStart(5)}  ${ms(Math.max(0, ...mine)).padStart(7)}`);
+}
+
+if (scorings.length) {
+  console.log('\nScoring turn (status phase)             n    avg   longest');
+  for (let s = 0; s < n; s++) {
+    const mine = scorings.filter((x) => x.seat === s).map((x) => x.ms);
+    console.log(`${names[s].padEnd(38)} ${String(mine.length).padStart(3)}  ${ms(avg(mine)).padStart(5)}  ${ms(Math.max(0, ...mine)).padStart(7)}`);
+  }
 }

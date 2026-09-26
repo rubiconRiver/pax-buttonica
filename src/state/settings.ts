@@ -1,5 +1,21 @@
+import { DEFAULT_FANFARE_MS } from '../engine/engine';
 import type { TurnLook } from '../engine/outputs';
 import { createStore } from './createStore';
+
+/** What the player whose turn it is to score gets, besides their light: the turn-start ring and their entrance music, a chime, or nothing. */
+export type ScoringCue = 'turn' | 'chime' | 'quiet';
+export const SCORING_CUES: { id: ScoringCue; name: string; hint: string }[] = [
+  { id: 'turn', name: 'Ring in', hint: 'Like a turn: the ring, and their entrance music' },
+  { id: 'chime', name: 'Chime', hint: 'A short chime' },
+  { id: 'quiet', name: 'Light only', hint: 'Just their button' },
+];
+
+/** How the big screen lays the players out: in the order they act, or where they sit round the table. */
+export type Layout = 'order' | 'table';
+export const LAYOUTS: { id: Layout; name: string; hint: string }[] = [
+  { id: 'order', name: 'Turn order', hint: 'A row, in the order they act; the table already shows where everyone sits' },
+  { id: 'table', name: 'Seating', hint: 'Round a hexagonal table, where they sit' },
+];
 
 export interface Settings {
   /** How long the main button must be held to end a turn. */
@@ -20,6 +36,14 @@ export interface Settings {
   turnLight: TurnLook;
   /** Real buttons only: a share of their full brightness, 0.1–1. */
   brightness: number;
+  /** Players laid out in the order they act, or where they sit. */
+  layout: Layout;
+  /** Status phase: how long every light celebrates the end of the round (0 = not at all)… */
+  fanfareMs: number;
+  /** …whether scoring goes round in initiative order, one player at a time… */
+  scoreInOrder: boolean;
+  /** …and what the player whose turn it is to score gets, besides their light. */
+  scoringCue: ScoringCue;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -33,6 +57,10 @@ export const DEFAULT_SETTINGS: Settings = {
   autoScoreboard: true,
   turnLight: 'solid',
   brightness: 1,
+  layout: 'order',
+  fanfareMs: DEFAULT_FANFARE_MS,
+  scoreInOrder: true,
+  scoringCue: 'turn',
 };
 
 export const settingsStore = createStore<Settings>(DEFAULT_SETTINGS, 'pb.settings.v1');

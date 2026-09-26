@@ -4,6 +4,8 @@
 .board h3 small { font: 500 12px/1 var(--font-b); letter-spacing: 0; text-transform: none; color: var(--faint); }
 .board__head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .board__ready { font-size: 15px; font-weight: 700; color: #fff; padding: 4px 10px; border: 1px solid var(--line-2); }
+.board__scoring { display: inline-flex; align-items: center; gap: 10px; font-size: 15px; color: var(--muted); padding: 3px 4px 3px 12px; border: 1px solid color-mix(in srgb, var(--pc) 70%, transparent); box-shadow: 0 0 18px color-mix(in srgb, var(--pc) 35%, transparent); }
+.board__scoring b { color: color-mix(in oklab, var(--pc) 60%, white); font-size: 17px; }
 .board__empty { font-size: 13px; color: var(--faint); }
 
 /* Standings */

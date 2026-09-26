@@ -14,7 +14,16 @@ export function Play() {
     startSync();
     return stopSync;
   }, []);
-  if (!game) return <Setup onStart={(players, options) => liveGame.start(players, { ...options, seating: true, primaryStage: settingsStore.get().primaryStage })} />;
+  if (!game) {
+    return (
+      <Setup
+        onStart={(players, options) => {
+          const { primaryStage, fanfareMs, scoreInOrder } = settingsStore.get();
+          liveGame.start(players, { ...options, seating: true, primaryStage, fanfareMs, scoreInOrder });
+        }}
+      />
+    );
+  }
   return (
     <GameView
       store={liveGame}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { unlockAudio } from '../../audio/synth';
-import { seatSpots, simDevice, turnElapsed } from '../../engine/engine';
+import { currentScorer, seatSpots, simDevice, turnElapsed, turnOrder } from '../../engine/engine';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
@@ -17,6 +17,7 @@ import type { DeviceHandle } from '../Device';
 import { CenterPanel } from './CenterPanel';
 import { ScenarioLab } from './ScenarioLab';
 import { HexTable, type HomeSystem } from './HexTable';
+import { rankPosition, seatPosition } from './geometry';
 import { OpenSpot, Seat } from './Seat';
 import { SidePanel } from './SidePanel';
 import { TopBar } from './TopBar';
@@ -56,7 +57,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const [tour, setTour] = useState(demo);
   const [board, setBoard] = useState<'closed' | 'open' | 'auto'>('closed');
   const table = useMemo(() => snapshotOf(game), [game]);
-  const [banner, setBanner] = useState<{ id: number; text: string; sub?: string; color?: string } | null>(null);
+  const [banner, setBanner] = useState<{ id: number; text: string; sub?: string; color?: string; holdMs?: number } | null>(null);
   const devices = useRef<(DeviceHandle | null)[]>([]);
   const dispatch = useCallback((a: Action) => store.dispatch(a), [store]);
   const outputs = useMemo(() => deriveOutputs(game), [game]);
@@ -69,9 +70,20 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     [game.players, profiles, settings.turnLight],
   );
   const spots = useMemo(() => seatSpots(game), [game]);
+  // The order of play, and where each table spot is drawn: in a row by that order, or round the table by seat.
+  const order = useMemo(() => turnOrder(game), [game]);
+  const inRow = settings.layout === 'order';
+  const posOf = (spot: number) => {
+    if (!inRow) return seatPosition(spot, n);
+    const seat = spots.indexOf(spot);
+    const rank = seat >= 0 ? order.indexOf(seat) : -1;
+    return rankPosition(rank >= 0 ? rank : spot, n);
+  };
   const now = useNow(game.clockStartedAt != null);
   const liveMs = turnElapsed(game, now);
   const n = game.players.length;
+  // Whose moment it is: the active player, or whoever is scoring while the status phase goes round.
+  const spotlight = game.seating ? null : game.active ?? currentScorer(game);
 
   useGameAudio(game);
 
@@ -100,12 +112,27 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     });
   }, [profiles, game.players, dispatch]);
 
-  // Scoring happens in the status phase, so that's when the scoreboard goes up on its own…
-  const phaseKey = game.seating ? 'seating' : game.phase;
+  // The table's taste in status phases lives in the game (phones and the log see it), and follows the settings.
+  useEffect(() => {
+    if (game.fanfareMs !== settings.fanfareMs || game.scoreInOrder !== settings.scoreInOrder) {
+      dispatch({ type: 'SET_STATUS_FLOW', fanfareMs: settings.fanfareMs, scoreInOrder: settings.scoreInOrder });
+    }
+  }, [game.fanfareMs, game.scoreInOrder, settings.fanfareMs, settings.scoreInOrder, dispatch]);
+
+  // The host keeps time for the status-phase fanfare: when it's over, scoring begins.
+  const fanfare = game.phase === 'status' && game.statusStep === 'fanfare';
+  useEffect(() => {
+    if (!fanfare) return;
+    const t = window.setTimeout(() => dispatch({ type: 'FANFARE_DONE', at: Date.now() }), game.fanfareMs);
+    return () => window.clearTimeout(t);
+  }, [fanfare, game.fanfareMs, game.round, dispatch]);
+
+  // Scoring happens in the status phase, so that's when the scoreboard goes up on its own (once the lights have had their moment)…
+  const phaseKey = game.seating ? 'seating' : fanfare ? 'fanfare' : game.phase;
   useEffect(() => {
     if (phaseKey === 'status' && settings.autoScoreboard) setBoard((b) => (b === 'closed' ? 'auto' : b));
     // …and comes down again when the round moves on, unless someone opened it by hand.
-    else setBoard((b) => (b === 'auto' ? 'closed' : b));
+    else if (phaseKey !== 'fanfare') setBoard((b) => (b === 'auto' ? 'closed' : b));
   }, [phaseKey, settings.autoScoreboard]);
 
   // Number keys are the buttons: hold "3" to hold seat three's button.
@@ -151,9 +178,11 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       const c = cardByNumber(f.card);
       setBanner({ id: f.id, text: `${c.n} · ${c.name}`, sub: `${game.players[f.seat].name} plays their strategy card`, color: c.color });
     } else if (f.note) {
-      setBanner({ id: f.id, text: PHASE_TITLES[f.note] ?? f.note });
+      const celebrating = f.note === 'status' && game.statusStep === 'fanfare';
+      setBanner({ id: f.id, text: PHASE_TITLES[f.note] ?? f.note, sub: celebrating ? `Round ${game.round} is over` : undefined, holdMs: celebrating ? Math.max(1500, game.fanfareMs) : undefined });
     } else return;
-    const t = window.setTimeout(() => setBanner(null), f.kind === 'card' ? 2300 : 1500);
+    const celebrating = f.kind === 'phase' && f.note === 'status' && game.statusStep === 'fanfare';
+    const t = window.setTimeout(() => setBanner(null), f.kind === 'card' ? 2300 : celebrating ? Math.max(1500, game.fanfareMs) : 1500);
     return () => window.clearTimeout(t);
   }, [game.fxSeq]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -165,15 +194,19 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     return Array.from({ length: 6 }, (_, spot) => {
       const seat = spots.indexOf(spot);
       const p = seat >= 0 ? game.players[seat] : null;
-      return { color: p ? colorById(p.color).led : '#5b6480', active: seat >= 0 && seat === game.active && !game.seating, passed: !!p?.passed };
+      return { color: p ? colorById(p.color).led : '#5b6480', active: seat >= 0 && seat === spotlight, passed: !!p?.passed };
     });
-  }, [n, spots, game.players, game.active, game.seating]);
+  }, [n, spots, game.players, spotlight]);
 
   const lastDenied = [...game.fx].reverse().find((f) => f.kind === 'denied' || f.kind === 'hint');
   const toast = lastDenied && lastDenied.id === game.fxSeq ? lastDenied : null;
 
   const input = (seat: number) => (i: DeviceInput) => dispatch({ type: 'INPUT', seat, input: i, at: Date.now() });
   const size = n <= 5 ? 132 : n <= 6 ? 122 : 104;
+  // In the row, seats are drawn (and read by a screen reader, and stacked on a phone) in the order of play.
+  const drawOrder = inRow
+    ? [...game.players.keys()].sort((a, b) => posOf(a).x - posOf(b).x)
+    : [...game.players.keys()];
   const jump = (where: DemoPoint) => seedDemo(store, where);
 
   return (
@@ -189,9 +222,9 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
       <main className="game__main">
         <div className="stage">
-          <div className="table" data-phase={game.phase} style={{ '--n': n } as CSSProperties}>
-            <HexTable homes={homes} />
-            {game.players.map((_, spot) => {
+          <div className="table" data-phase={game.phase} data-layout={settings.layout} style={{ '--n': n } as CSSProperties}>
+            {!inRow && <HexTable homes={homes} />}
+            {drawOrder.map((spot) => {
               const seat = spots.indexOf(spot);
               if (seat < 0) {
                 return (
@@ -199,7 +232,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                     key={`open-${spot}`}
                     ref={(h) => { devices.current[spot] = h; }}
                     spot={spot}
-                    count={n}
+                    pos={posOf(spot)}
                     size={size}
                     holdMs={settings.holdMs}
                     output={UNCLAIMED}
@@ -214,7 +247,8 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                   key={`seat-${seat}`}
                   ref={(h) => { devices.current[spot] = h; }}
                   spot={spot}
-                  count={n}
+                  pos={posOf(spot)}
+                  rank={inRow ? order.indexOf(seat) : undefined}
                   player={p}
                   output={outputs[seat]}
                   look={seatPrefs[seat].look}
@@ -222,7 +256,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                   holdMs={settings.holdMs}
                   isSpeaker={game.speaker === seat}
                   hasZero={game.zeroToken === seat}
-                  isActive={game.active === seat && !game.seating}
+                  isActive={spotlight === seat}
                   liveMs={p.timeMs + (game.active === seat ? liveMs : 0)}
                   explain={settings.explainLights}
                   react={reactions[seat]}
@@ -232,7 +266,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
             })}
             <CenterPanel game={game} now={now} liveMs={liveMs} holdMs={settings.holdMs} dispatch={dispatch} onUndo={store.undo} onNewGame={onExit} />
             {banner && (
-              <div className="banner" key={banner.id} data-card={banner.color ? '' : undefined} style={{ '--cc': banner.color } as CSSProperties}>
+              <div className="banner" key={banner.id} data-card={banner.color ? '' : undefined} data-hold={banner.holdMs ? '' : undefined} style={{ '--cc': banner.color, '--hold-ms': banner.holdMs ? `${banner.holdMs}ms` : undefined } as CSSProperties}>
                 <span>
                   {banner.text}
                   {banner.sub && <small>{banner.sub}</small>}

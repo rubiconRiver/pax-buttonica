@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as engineModule from './engine';
-import { createGame, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice } from './engine';
+import { createGame, currentScorer, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
 import { deriveOutputs } from './outputs';
 import type { Action, GameState, PlayerSetup } from './types';
 
@@ -137,7 +137,8 @@ describe('action phase', () => {
     expect(g.active).toBe(4);
     for (let i = 0; i < 5; i++) g = reduce(g, { type: 'PASS', at: 0 });
     expect(g.phase).toBe('status');
-    expect(deriveOutputs(g).every((o) => o.mode === 'pulse')).toBe(true);
+    expect(g.statusStep).toBe('fanfare');
+    expect(deriveOutputs(g).every((o) => o.mode === 'rainbow')).toBe(true);
   });
 
   it('asks which card when a player holds two', () => {
@@ -159,14 +160,89 @@ describe('action phase', () => {
 });
 
 describe('status and agenda', () => {
-  const toStatus = () => reduce(sixInAction(), { type: 'ADVANCE', at: 0 });
+  /** The tidy-up straight away: no fanfare, everyone scores at once. */
+  const toStatus = () => {
+    let g = createGame(setup(6), { vpTarget: 10, speaker: 0, primaryStage: false, fanfareMs: 0, scoreInOrder: false }, 0);
+    for (let i = 0; i < 6; i++) g = reduce(g, pick(6 - i));
+    return reduce(g, { type: 'ADVANCE', at: 0 });
+  };
 
   it('starts a new round once everyone is ready', () => {
     let g = toStatus();
+    expect(g.statusStep).toBe('tidy');
     for (let s = 0; s < 6; s++) g = reduce(g, { type: 'INPUT', seat: s, input: 'tap', at: 0 });
     expect(g.phase).toBe('strategy');
     expect(g.round).toBe(2);
     expect(g.players.every((p) => p.cards.length === 0 && !p.passed)).toBe(true);
+  });
+
+  it('celebrates, then scores in initiative order, then tidies up', () => {
+    let g = reduce(sixInAction(), { type: 'ADVANCE', at: 100 });
+    expect(g.fanfareMs).toBe(4000);
+    expect(g.statusStep).toBe('fanfare');
+    expect(deriveOutputs(g).map((o) => o.mode)).toEqual(Array(6).fill('rainbow'));
+    // Taps during the celebration do nothing.
+    g = reduce(g, { type: 'INPUT', seat: 5, input: 'tap', at: 200 });
+    expect(g.statusStep).toBe('fanfare');
+
+    g = reduce(g, { type: 'FANFARE_DONE', at: 4100 });
+    expect(g.statusStep).toBe('scoring');
+    expect(g.scoringOrder).toEqual([5, 4, 3, 2, 1, 0]);
+    expect(currentScorer(g)).toBe(5);
+    expect(g.fx.at(-1)).toMatchObject({ kind: 'score', seat: 5 });
+    expect(deriveOutputs(g)[5]).toMatchObject({ mode: 'pulse', color: expect.any(String) });
+    expect(deriveOutputs(g)[4].mode).toBe('dim');
+    expect(g.log.at(-1)?.text).toBe('Scoring, in initiative order: P5, P4, P3, P2, P1, P0.');
+
+    // Only the scorer's tap counts.
+    g = reduce(g, { type: 'INPUT', seat: 3, input: 'tap', at: 4200 });
+    expect(currentScorer(g)).toBe(5);
+    g = reduce(g, { type: 'INPUT', seat: 5, input: 'tap', at: 4300 });
+    expect(currentScorer(g)).toBe(4);
+    expect(g.fx.at(-1)).toMatchObject({ kind: 'score', seat: 4 });
+    expect(deriveOutputs(g)[5].reason).toBe('Scored');
+    // The host's button works too, and a hold is as good as a tap.
+    g = reduce(g, { type: 'SCORED', seat: 4, at: 4400 });
+    g = reduce(g, { type: 'INPUT', seat: 3, input: 'hold', at: 4500 });
+    for (const seat of [2, 1, 0]) g = reduce(g, { type: 'SCORED', seat, at: 4600 });
+    expect(g.statusStep).toBe('tidy');
+    expect(g.phase).toBe('status');
+    expect(deriveOutputs(g).every((o) => o.mode === 'pulse' && o.color === '#ffffff')).toBe(true);
+    // Now the taps are "ready".
+    for (let s = 0; s < 6; s++) g = reduce(g, { type: 'INPUT', seat: s, input: 'tap', at: 5000 });
+    expect(g.phase).toBe('strategy');
+    expect(g.round).toBe(2);
+  });
+
+  it('can skip the scoring order, and "everyone is ready" cuts through everything', () => {
+    let g = run(sixInAction(), { type: 'ADVANCE', at: 0 }, { type: 'FANFARE_DONE', at: 0 }, { type: 'SKIP_SCORING', at: 0 });
+    expect(g.statusStep).toBe('tidy');
+    g = run(sixInAction(), { type: 'ADVANCE', at: 0 }, { type: 'READY_ALL', at: 0 });
+    expect(g.phase).toBe('strategy');
+    expect(g.round).toBe(2);
+  });
+
+  it('follows the table\'s taste: no fanfare goes straight to scoring; neither goes straight to the tidy-up', () => {
+    let g = run(sixInAction(), { type: 'SET_STATUS_FLOW', fanfareMs: 0, scoreInOrder: true }, { type: 'ADVANCE', at: 0 });
+    expect(g.statusStep).toBe('scoring');
+    g = run(sixInAction(), { type: 'SET_STATUS_FLOW', fanfareMs: 0, scoreInOrder: false }, { type: 'ADVANCE', at: 0 });
+    expect(g.statusStep).toBe('tidy');
+    // A game saved before the status phase had steps tidies up as it always did.
+    const old = { ...toStatus() } as Partial<GameState>;
+    delete old.statusStep;
+    delete old.scoringOrder;
+    g = reduce(old as GameState, { type: 'INPUT', seat: 0, input: 'tap', at: 0 });
+    expect(g.ready[0]).toBe(true);
+  });
+
+  it('knows the order of play in every phase', () => {
+    let g = createGame(setup(6), { vpTarget: 10, speaker: 2 }, 0);
+    expect(turnOrder(g)).toEqual([2, 3, 4, 5, 0, 1]);
+    for (let i = 0; i < 6; i++) g = reduce(g, pick(6 - i));
+    expect(turnOrder(g)).toEqual(initiativeOrder(g));
+    g = run(g, { type: 'SET_CUSTODIANS', removed: true }, { type: 'ADVANCE', at: 0 }, { type: 'READY_ALL', at: 0 });
+    expect(g.phase).toBe('agenda');
+    expect(turnOrder(g)).toEqual([3, 4, 5, 0, 1, 2]);
   });
 
   it('runs two agendas, speaker voting last, once custodians are gone', () => {

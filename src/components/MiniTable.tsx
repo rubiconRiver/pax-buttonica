@@ -7,6 +7,7 @@ import { useStore } from '../state/createStore';
 import { seedDemo } from '../state/demo';
 import { createGameStore } from '../state/game';
 import { HexTable } from './game/HexTable';
+import { seatPosition } from './game/geometry';
 import { Seat } from './game/Seat';
 import { useReactions } from './game/useReactions';
 import '../styles/game.css';
@@ -86,7 +87,7 @@ function MiniTableView({ game }: { game: GameState }) {
           <Seat
             key={seat}
             spot={seat}
-            count={n}
+            pos={seatPosition(seat, n)}
             player={p}
             output={outputs[seat]}
             look="pulse"

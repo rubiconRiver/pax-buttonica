@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { sfx } from '../../audio/synth';
 import { STATUS_STEPS, STRATEGY_CARDS, cardByNumber, colorById } from '../../engine/data';
-import { cardHolder, currentPicker, simDevice, currentVoter, endTurnBlocker, pendingAcks, unusedCards } from '../../engine/engine';
+import { cardHolder, currentPicker, currentScorer, simDevice, currentVoter, endTurnBlocker, pendingAcks, unusedCards } from '../../engine/engine';
 import type { Action, GameState } from '../../engine/types';
 import { IconCheck, IconCrown } from '../Icons';
 import { formatClock } from './geometry';
@@ -21,7 +21,7 @@ const at = () => Date.now();
 export function CenterPanel(props: Props) {
   const { game } = props;
   return (
-    <div className="center" data-phase={game.phase} key={game.seating ? 'seating' : `${game.phase}-${game.round}`}>
+    <div className="center" data-phase={game.phase} key={game.seating ? 'seating' : `${game.phase}-${game.round}-${game.phase === 'status' ? game.statusStep : ''}`}>
       {game.seating ? <SeatingView {...props} /> : <PhaseView {...props} />}
     </div>
   );
@@ -233,6 +233,43 @@ function SecondaryStage({ game, dispatch }: Pick<Props, 'game' | 'dispatch'>) {
 
 function StatusView({ game, dispatch }: Props) {
   const ready = game.ready.filter(Boolean).length;
+  const step = game.statusStep ?? 'tidy';
+  const scorer = currentScorer(game);
+
+  if (step === 'fanfare') {
+    return (
+      <>
+        <div className="eyebrow">Round {game.round} · Status phase</div>
+        <h2 className="center__title">Everyone has passed</h2>
+        <p className="center__hint">{game.scoreInOrder ? 'Scoring starts in a moment, in initiative order.' : 'Scoring starts in a moment.'}</p>
+        <div className="center__actions">
+          <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'FANFARE_DONE', at: at() })}>Get on with it</button>
+        </div>
+      </>
+    );
+  }
+
+  if (step === 'scoring' && scorer != null) {
+    return (
+      <>
+        <div className="eyebrow">Round {game.round} · Status phase · Scoring</div>
+        <h2 className="center__active"><Who game={game} seat={scorer} big /></h2>
+        <p className="center__hint">scores objectives, then taps their button. Then the next player, in initiative order.</p>
+        <div className="voters" aria-label="Scoring order">
+          {game.scoringOrder.map((s, i) => (
+            <span key={s} className="voter" data-state={i < game.scoringIdx ? 'done' : i === game.scoringIdx ? 'now' : 'next'} style={{ '--pc': colorById(game.players[s].color).led } as CSSProperties}>
+              {game.players[s].name}
+            </span>
+          ))}
+        </div>
+        <div className="center__actions">
+          <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: 'SCORED', seat: scorer, at: at() })}>{game.players[scorer].name} is done</button>
+          <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'SKIP_SCORING', at: at() })}>Skip to the tidy-up</button>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <div className="eyebrow">Round {game.round} · Status phase</div>

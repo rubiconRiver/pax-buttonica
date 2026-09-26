@@ -1,4 +1,5 @@
-import { Board, Table, expect, lab, liveGame, openDemo, openSettings, setUpGame, test } from './helpers';
+import { Board, DEMO, DEMO_ORDER, Table, expect, lab, liveGame, openDemo, openSettings, setUpGame, test } from './helpers';
+import { FANFARE_MS } from './flows';
 
 /** Objectives, points and laws: the part of the game people argue about, so the arithmetic has to be right. */
 
@@ -151,8 +152,9 @@ test('the scoreboard goes up by itself for the status phase, unless told not to'
   await openDemo(page);
   const board = new Board(page);
   await lab(page, 'Everyone has passed').click();
+  await page.clock.fastForward(FANFARE_MS + 100);
   await expect(board.root).toBeVisible();
-  await expect(board.root.locator('.board__ready')).toHaveText('0/6 ready');
+  await expect(board.root.locator('.board__scoring')).toContainText('Scoring: Dave');
   await board.close();
 
   const panel = await openSettings(page);
@@ -161,6 +163,7 @@ test('the scoreboard goes up by itself for the status phase, unless told not to'
   await page.locator('.lab').getByRole('button', { name: 'Reset' }).click();
   await lab(page, 'Everyone has passed').click();
   await new Table(page).expectPhase('Status');
+  await page.clock.fastForward(FANFARE_MS + 100);
   await expect(board.root).toBeHidden();
 });
 
@@ -168,11 +171,13 @@ test('a scoreboard opened by hand stays up when the round moves on', async ({ pa
   const table = await openDemo(page);
   const board = new Board(page);
   await lab(page, 'Everyone has passed').click();
+  await page.clock.fastForward(FANFARE_MS + 100);
   await board.close();
   await board.open();
   await table.center.getByRole('button', { name: "Everyone's ready" }).click({ force: true }).catch(() => {});
-  // The table is covered by the scoreboard, so ready everyone with their buttons instead.
-  for (const name of ['Mike', 'Sarah', 'Dave', 'Jen', 'Kyle', 'Steph']) await table.tap(name);
+  // The table is covered by the scoreboard, so use the buttons instead: scoring in initiative order, then everyone taps in.
+  for (const name of DEMO_ORDER) await table.tap(name);
+  for (const name of DEMO) await table.tap(name);
   await table.expectPhase('Strategy');
   await expect(board.root).toBeVisible();
 });

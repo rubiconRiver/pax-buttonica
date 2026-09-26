@@ -32,7 +32,18 @@ function onOutline(angle: number): [number, number] {
   return [dx * best, dy * best];
 }
 
-export function seatPosition(i: number, n: number) {
+export interface SeatPos {
+  /** Percentages of the table box, from its centre. */
+  x: number;
+  y: number;
+  /** Nameplate above the button rather than below it. */
+  above: boolean;
+  /** Stereo position of this seat's sounds, -1 (left) to 1 (right). */
+  pan: number;
+}
+
+/** Round the table: seat spot `i` of `n`, from the bottom clockwise, on the table's edge. */
+export function seatPosition(i: number, n: number): SeatPos {
   const angle = Math.PI / 2 + (i * 2 * Math.PI) / n;
   const [x, y] = onOutline(angle);
   return {
@@ -43,6 +54,15 @@ export function seatPosition(i: number, n: number) {
     pan: Math.cos(angle) * 0.7,
   };
 }
+
+/** In a row across the top of the stage: place `rank` of `n` in the order of play, first on the left. */
+export function rankPosition(rank: number, n: number): SeatPos {
+  const step = Math.min(17, 92 / n);
+  const x = (rank - (n - 1) / 2) * step;
+  return { x, y: ROW_Y, above: false, pan: (x / 46) * 0.7 };
+}
+/** How far above the table's centre the row sits, in percent. */
+export const ROW_Y = -33;
 
 export function formatClock(ms: number): string {
   const s = Math.floor(ms / 1000);

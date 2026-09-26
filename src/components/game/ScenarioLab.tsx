@@ -1,5 +1,5 @@
 import { sfx } from '../../audio/synth';
-import { pendingAcks, unusedCards } from '../../engine/engine';
+import { currentScorer, pendingAcks, unusedCards } from '../../engine/engine';
 import type { Action, GameState } from '../../engine/types';
 import { IconFlask } from '../Icons';
 
@@ -54,13 +54,14 @@ export function ScenarioLab({ game, dispatch, onReset, onJump }: Props) {
         { label: 'Late in the round', hint: 'Every strategy card has been played, so passing is allowed', enabled: true, run: () => onJump('late') },
         { label: 'Pass too early', hint: "Denied: can't pass with an unplayed card", enabled: inAction && !!active && unusedCards(active).length > 0 && !game.strategyPlay, run: () => dispatch({ type: 'INPUT', seat: game.active!, input: 'pass', at }) },
         { label: 'Pass', hint: 'Button goes dark, turn moves on', enabled: inAction && !!active && unusedCards(active).length === 0 && !game.actedThisTurn, run: () => dispatch({ type: 'INPUT', seat: game.active!, input: 'pass', at }) },
-        { label: 'Everyone has passed', hint: 'Jump to the status phase ready-check', enabled: game.phase === 'action', run: () => dispatch({ type: 'ADVANCE', at }) },
+        { label: 'Everyone has passed', hint: 'Jump to the status phase: every light celebrates, then scoring goes round', enabled: game.phase === 'action', run: () => dispatch({ type: 'ADVANCE', at }) },
+        { label: 'Next scorer is done', hint: 'Scoring moves on to the next player in initiative order', enabled: currentScorer(game) != null, run: () => dispatch({ type: 'SCORED', seat: currentScorer(game)!, at }) },
       ],
     },
     {
       title: 'Between rounds',
       items: [
-        { label: 'One player ready', hint: 'Status phase: white breathing → settled', enabled: game.phase === 'status', run: () => dispatch({ type: 'INPUT', seat: game.ready.indexOf(false), input: 'tap', at }) },
+        { label: 'One player ready', hint: 'Tidy-up: white breathing → settled', enabled: game.phase === 'status' && game.statusStep === 'tidy', run: () => dispatch({ type: 'INPUT', seat: game.ready.indexOf(false), input: 'tap', at }) },
         { label: 'Agenda phase', hint: 'Voting goes round the table, speaker last', enabled: game.phase === 'action' || game.phase === 'status', run: () => { dispatch({ type: 'SET_CUSTODIANS', removed: true }); if (game.phase === 'action') dispatch({ type: 'ADVANCE', at }); dispatch({ type: 'READY_ALL', at }); } },
         { label: 'Victory', hint: 'Winner goes rainbow, fanfare plays', enabled: game.phase !== 'finished', run: () => dispatch({ type: 'VP', seat: game.active ?? 0, delta: game.vpTarget, at }) },
       ],
