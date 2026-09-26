@@ -64,7 +64,8 @@ M3_HEAD_D = 6.2
 # ── press feel ──────────────────────────────────────────────────────────────
 TRAVEL = 2.8             # cap travel to the hard stop: DISC_GAP of free travel, the dome's ~0.3, then the flexures take the rest
 PRELOAD = 0.0            # (the disc floats: see DISC_GAP)
-DISC_GAP = 2.0           # the disc hangs this far above the Atom's face at rest
+DISC_GAP = 2.0           # the nub under the disc hangs this far above the button's top at rest
+NUB_D = 12.0             # the nub under the disc that presses the middle of the panel, well inside the frame
 FLEX_T = 1.0             # the spiral flexures' thickness
 FLEX_W = 2.2             # and width
 FLEX_R = 16.0            # the flexures reach the plate at this radius
@@ -83,7 +84,10 @@ HEX_EAR_R = 16.0                # ear hole centres from the middle (2 mm holes)
 HEX_BOARD_T = 2.0               # board plus LEDs
 HEX_UNDER = 7.6                 # sockets below the board (9.55 overall)
 HEX_SOCKETS = (24.0, 22.0)      # the socket cluster on the back, as a box                  MEASURE
-ATOM = (24.0, 24.0, 9.5)        # AtomS3 Lite in the middle, face up: the face is the button. USB-C toward -x, Grove toward +x
+ATOM = (24.0, 24.0, 9.5)        # AtomS3 Lite in the middle, face up. USB-C toward -x, Grove toward +x
+ATOM_BUTTON_W = 17.0            # the square panel on its top is the button (M5's drawing: BUTTON G41)  MEASURE
+ATOM_RECESS_W = 19.0            # the frame opening the panel sits in                            MEASURE
+ATOM_BUTTON_DROP = 1.0          # how far the panel's top sits below the Atom's rim (0 = flush)  MEASURE
 ATOM_USB_Z = 4.75               # USB-C centre above the floor when it lies flat            MEASURE
 SPLITTER = (12.0, 24.0, 8.0)    # Unit Hub 1-to-3                                           MEASURE
 RIDER = (41.0, 25.0, 8.0)       # Seeed Lipo Rider Plus lying flat, USB-C on its +x end       MEASURE (which end; the switch)
@@ -163,8 +167,8 @@ BEZEL_TOP = WALL_TOP + BEZEL_H
 FLANGE_BOTTOM = WALL_TOP + TRAVEL
 SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - CHAMBER_CLEARANCE
 KEY_Y0 = -KEY_CAP_FROM_SOCKET                        # the case's -y end; keycap centre at y = 0
-KEYCAP_TOP = ATOM[2]                                 # the Atom's face: what gets pressed
-PAD_BOTTOM = KEYCAP_TOP + DISC_GAP                   # the cage's disc floats here, above the face
+KEYCAP_TOP = ATOM[2] - ATOM_BUTTON_DROP              # the button's top: what gets pressed
+PAD_BOTTOM = ATOM[2] + DISC_GAP                      # the cage's disc floats here, above the rim; its nub reaches the button
 HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.3    # underside of the hex board
 HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
 INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
@@ -321,6 +325,8 @@ def cage():
     # that hole on three spiral flexures, so once the dome has clicked the disc can give another millimetre
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG)
+    # the nub reaches down into the recess in the Atom's top and floats DISC_GAP above the button
+    disc += cyl(NUB_D, ATOM_BUTTON_DROP + 0.01, z=PAD_BOTTOM - ATOM_BUTTON_DROP, seg=48)
     flex = []
     reach = math.sqrt(FLEX_R ** 2 - SADDLE_BRIM_R ** 2)           # a tangent from the disc's edge out to the plate
     for a in (0, 120, 240):
@@ -376,7 +382,8 @@ def bought_parts(pressed=False):
     hexboard += cbox(0, 0, HEX_BOTTOM - HEX_UNDER + dz, HEX_SOCKETS[0], HEX_SOCKETS[1], HEX_UNDER)
     return {
         'hex': hexboard,
-        'atom': cbox(0, 0, 0, *ATOM) + cbox(-ATOM[0] / 2 - 6, 0, 2.5, 12, 8, 5),   # and its USB-C plug, toward -x
+        'atom': cbox(0, 0, 0, *ATOM) - cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP, ATOM_RECESS_W, ATOM_RECESS_W, ATOM_BUTTON_DROP + 1) + cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP - 1, ATOM_BUTTON_W, ATOM_BUTTON_W, 1)
+                + cbox(-ATOM[0] / 2 - 6, 0, 2.5, 12, 8, 5),   # recess, button, and its USB-C plug toward -x
         'cell': cbox(0, 0, CELL_Z, *CELL),
         'rider': box(RIDER_X0, -RIDER[1] / 2, RIDER_Z, *RIDER),
         'card': cbox(0, 0, 0, CARD[0], CARD[2], CARD[1]).rotate([-SLOT_LEAN, 0, 0]).translate([0, RAIL_Y0 + RAIL_D / 2 + 0.5 + 1.5 * math.sin(math.radians(SLOT_LEAN)), RAIL_TOP - SLOT_DEPTH + 1.5]),
