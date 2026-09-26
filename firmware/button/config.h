@@ -24,7 +24,7 @@
 // an unconnected pin, pulled up, reads "not pressed".
 #define BUTTON_COUNT 1
 static const int BUTTON_PINS[3] = {-1, -1, -1};            // unused on this board; see BIG_BUTTON_PINS
-static const int BIG_BUTTON_PINS[] = {1, 8};               // any of these low = button 0 pressed
+static const int BIG_BUTTON_PINS[] = {1, 8, 41};           // any of these low = button 0 pressed: the key on G1 (Atom socket) or G8 (PortABC), or the Atom's own face button on G41
 // Where the hex is plugged in. The printed shell uses a Unit Hub splitter on the Atom's own socket;
 // the bench rig uses the PortABC base. Pick one.
 #define HEX_ON_PORT_A         // PortABC base, Port A: data on G38   (the bench rig, until the splitters arrive)
