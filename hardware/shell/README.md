@@ -10,6 +10,10 @@ About 90 mm across the flats (104 corner to corner, 115 with the rail), 71 mm ta
 
 This revision uses the Atom's own socket plus a **Unit Hub 1-to-3 splitter** (U006), not the PortABC base: the base with the Atom on it is 60 mm long including the plugs and doesn't lie beside a centred key unit inside the turret. The firmware pins for the splitter wiring are the Atom's own: hex data on G2, key on G1.
 
+## The mini (make_shell_mini.py, stl-mini/)
+
+The same shell with the Key Unit and the splitter taken out: the AtomS3 sits in the middle, the hex plugs straight into it, and the cap presses the **Atom's own face button** through the cage. 76 mm across the flats, 56 mm tall, 56 mm cap: close to half the table of v0.5. The press is built so it doesn't feel like a tactile dome: the springs give 2 mm of free travel, then the cage's disc lands on the Atom's face and the dome clicks, then the stop, and the disc hangs on three 1 mm spiral flexures that absorb up to a millimetre of overtravel so the click always comes before the stop. The Atom's USB-C is inside (the Rider's cable comes up through a floor hole): flash by lifting the cap, or over the air. **To try the feel:** print `stl-mini/` body, cap, cage, bezel and three springs (the deck can wait), drop the Atom in its fence, hex into the cage, cap on, bezel on three standoffs. Firmware 0.2.0 already reads the Atom's face as the big button.
+
 ## What's where
 
 - **Key Unit** on the body floor, dropped onto two pegs that fit its own mounting holes, keycap on the axis. Its cable leaves toward −y.

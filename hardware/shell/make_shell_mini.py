@@ -1,9 +1,12 @@
 """
 The MINI shell: no Key Unit, no splitter. The AtomS3 Lite sits in the middle under the hex and its own face
 button is the switch; the cap presses it through the cage. Smaller (76 mm across the flats, 56 mm tall) and
-simpler, at the cost of the press: a tactile dome with about 0.3 mm of travel instead of a mechanical key,
-so the cap can only move about half a millimetre. Same tray, Rider, cell and card rail as make_shell.py,
-which this file is a copy of with the middle changed.
+simpler. The press is built from first principles: the printed springs give the travel, the cage's disc
+floats DISC_GAP above the Atom's face at rest so the cap moves freely first, then the disc lands and the
+dome clicks, then the stop; and the disc hangs on three spiral flexures that take up the overtravel, so
+the click always comes before the stop whatever the print's tolerances did. The Atom's USB-C is inside
+(the Rider's cable comes up through the floor to it): flash by lifting the cap, or over the air.
+Same tray, Rider, cell and card rail as make_shell.py, which this file is a copy of with the middle changed.
 
 Generates the Pax Buttonica button shell for the no-solder build: printable STLs and cutaways.
 
@@ -59,8 +62,12 @@ M3_CLEAR_D = 3.4
 M3_HEAD_D = 6.2
 
 # ── press feel ──────────────────────────────────────────────────────────────
-TRAVEL = 0.6             # cap travel to the hard stop: the Atom's dome clicks at ~0.3 mm; the cap is rigid on it
-PRELOAD = 0.1            # how far the cap's disc sits into the Atom's face at rest
+TRAVEL = 2.8             # cap travel to the hard stop: DISC_GAP of free travel, the dome's ~0.3, then the flexures take the rest
+PRELOAD = 0.0            # (the disc floats: see DISC_GAP)
+DISC_GAP = 2.0           # the disc hangs this far above the Atom's face at rest
+FLEX_T = 1.0             # the spiral flexures' thickness
+FLEX_W = 2.2             # and width
+FLEX_R = 16.0            # the flexures reach the plate at this radius
 SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
 
 # ── the bought parts (M5Stack drawings; MEASURE = not on a drawing) ──────────
@@ -115,7 +122,7 @@ SPRING_W = 3.6           # radial width (the zigzag's amplitude)
 SPRING_D = 10.0          # tangential depth (the print's Z height)
 SPRING_B = 1.0           # beam thickness. Stiffer: 1.2. Softer: 0.8.
 SPRING_FOLDS = 4
-SPRING_FREE = 13.0       # free length; it sits about 1.7 mm compressed at rest
+SPRING_FREE = 15.3       # free length; it sits about 1.7 mm compressed at rest
 CABLE_ARCH_ANGLES = ()           # no arches: nothing crosses the floor
 
 # ── cap and bezel ───────────────────────────────────────────────────────────
@@ -151,7 +158,7 @@ FLANGE_BOTTOM = WALL_TOP + TRAVEL
 SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - CHAMBER_CLEARANCE
 KEY_Y0 = -KEY_CAP_FROM_SOCKET                        # the case's -y end; keycap centre at y = 0
 KEYCAP_TOP = ATOM[2]                                 # the Atom's face: what gets pressed
-PAD_BOTTOM = KEYCAP_TOP - PRELOAD                    # the cage's disc rests here, on the face
+PAD_BOTTOM = KEYCAP_TOP + DISC_GAP                   # the cage's disc floats here, above the face
 HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.3    # underside of the hex board
 HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
 INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
@@ -169,7 +176,7 @@ RIDER_WINDOW = (12.0, 8.0)
 RAIL_Y0 = TURRET_F / 2 / math.cos(math.radians(30))              # the turret's back corner
 DECK_SCREWS = [(BEZEL_SCREW_R * math.cos(math.radians(a)), BEZEL_SCREW_R * math.sin(math.radians(a))) for a in DECK_SCREW_ANGLES]
 
-assert TRAVEL <= 1.0, 'the cap is rigid on the dome: it cannot travel more than the dome plus a little flex'
+assert DISC_GAP + 0.3 < TRAVEL <= DISC_GAP + 0.3 + 1.0, 'the dome must click before the stop, and the flexures can only give about a millimetre'
 assert math.hypot(ATOM[0] / 2 + 12, ATOM[1] / 2) < BORE_R, 'the Atom plus its USB plug does not fit in the bore'
 _pocket_apex = (TURRET_F - 2 * DECK_WALL) / 2 / math.cos(math.radians(30))
 assert RIDER_X0 > -_pocket_apex / 2, 'the Rider does not fit across the deck'
@@ -299,10 +306,18 @@ def cage():
     for a in CAGE_ANGLES:
         leg = box(CAGE_R0, -w / 2, PAD_BOTTOM, t, w, top - PAD_BOTTOM)
         leg += box(CAGE_R0 - LEDGE, -w / 2, HEX_BOTTOM - 0.3 - 1.2, LEDGE + 0.01, w, 1.2)
-        leg += box(SADDLE_BRIM_R - 3.5, -w / 2, PAD_BOTTOM, CAGE_R0 + t - (SADDLE_BRIM_R - 3.5), w, PAD_T)
         parts.append(leg.rotate([0, 0, a]))
-    # the disc that presses the middle of the Atom's face; flat underneath, prints disc-down
-    parts.append(cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG))
+    # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
+    # that hole on three spiral flexures, so once the dome has clicked the disc can give another millimetre
+    plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
+    disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG)
+    flex = []
+    reach = math.sqrt(FLEX_R ** 2 - SADDLE_BRIM_R ** 2)           # a tangent from the disc's edge out to the plate
+    for a in (0, 120, 240):
+        # each bar leaves the disc's edge along a tangent and buries its far end in the plate
+        bar = box(-FLEX_W / 2, -0.5, PAD_BOTTOM, FLEX_W, reach + 2.5, FLEX_T).translate([SADDLE_BRIM_R, 0, 0])
+        flex.append(bar.rotate([0, 0, a]))
+    parts += [plate, disc] + flex
     return union(parts)
 
 
