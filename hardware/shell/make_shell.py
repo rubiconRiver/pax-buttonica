@@ -11,24 +11,28 @@ What goes inside (all M5Stack, all plug-together; sizes from M5's dimension draw
   AtomS3     lying flat against the +x wall with its USB-C in a window: the battery plug (or the
              laptop) plugs in from OUTSIDE, so flashing needs no disassembly
   splitter   a Grove 1-to-3 (Unit Hub) taped on the Atom, so key and hex share its socket
-  AA holder  in a pocket under the plinth, cover and switch facing the table
+  Lipo Rider Plus + a 3.7 V pouch cell   stacked in a tray under the turret (cell below, Rider above);
+             the Rider's USB-C (charging) comes out of the same face as the Atom's, one above the other,
+             and its USB-A feeds the Atom through a short cable that loops between the two windows
 
-Five printed parts, none of which needs supports:
-  plinth  hex base with the battery pocket underneath. Depends only on the holder.
-  body    hex turret: floor, key pegs, Atom bay, USB window, four screw posts.
+Six printed parts, none of which needs supports:
+  deck    hex tray under the turret: the cell and the Rider live in it, screws go up into the body's
+          corners, and a rail on the back holds one or two strategy cards leaning back.
+  body    hex turret: floor, key pegs, Atom bay, USB window.
   cap     the part you hit, with the hex cage hanging from its ceiling.
   cage    four legs that clip round the hex and end in the cup over the keycap; pushes up into the cap.
   bezel   screws onto the body over the cap: guides the skirt, holds the flange in.
   spring  print three: zigzags that stand under the cap's flange and give the return force.
 
-A slap goes cap flange -> top of the body wall -> plinth -> table. The keycap only ever sees
+A slap goes cap flange -> top of the body wall -> deck -> table. The keycap only ever sees
 TRAVEL + PRELOAD of movement, less than the switch's own travel.
 
 Millimetres. x to the right (USB window on the +x flat), y away from you (the key's cable leaves
 toward -y), z up, z = 0 at the top of the body's floor. STLs come out already turned the way they print.
 
-STATUS: v0.4. v0.3 was printed 2026-09-24 and lit up; v0.4 lowers the bezel to a 9 mm ring, adds an
-inner collar as the cap's guide, drops 4 mm of height, and takes M3 x 5 screws or brass standoffs.
+STATUS: v0.6 (2026-09-26): the AA plinth becomes a tray for a lithium cell and a Lipo Rider, so the
+base shrinks from 106 to 90 mm across the flats; a card rail on the back. v0.5 was printed and felt
+good (springs optional). Not yet printed.
 The soldered carrier-board version of this shell is make_shell_pcb.py.
 """
 import math
@@ -69,7 +73,10 @@ HEX_SOCKETS = (24.0, 22.0)      # the socket cluster on the back, as a box      
 ATOM = (24.0, 24.0, 9.5)        # AtomS3 Lite lying flat, USB-C on its +x edge
 ATOM_USB_Z = 4.75               # USB-C centre above the floor when it lies flat            MEASURE
 SPLITTER = (12.0, 24.0, 8.0)    # Unit Hub 1-to-3                                           MEASURE
-HOLDER = (63.5, 57.6, 16.0)     # Adafruit 830 4xAA holder, leads out of its +x end         MEASURE
+RIDER = (41.0, 25.0, 8.0)       # Seeed Lipo Rider Plus lying flat, USB-C on its +x end       MEASURE (which end; the switch)
+RIDER_USB_Z = 3.5               # its USB-C centre above its underside                        MEASURE
+CELL = (34.0, 50.0, 9.6)        # EEMB 963450 pouch, x, y, z, JST lead out of its +y end
+CARD = (70.0, 120.0, 1.2)       # a TI4 strategy card, tarot size, sleeved                    MEASURE
 
 # ── body ────────────────────────────────────────────────────────────────────
 TURRET_F = 90.0          # across the flats of the hexagon
@@ -80,9 +87,8 @@ COLLAR_H = 36.0          # an inner collar the cap's skirt slides over: the real
 COLLAR_T = 2.0
 COLLAR_GAPS = ((-28, 28), (250, 290))   # no collar where the Atom bay and the key's cable are
 ATOM_X0 = 13.0           # Atom bay from here to ATOM_X0 + 24 (its corners must stay inside the bore)
-POSTS = [(33, 20), (-33, 20), (-33, -20), (33, -20)]   # screws up from the plinth
+DECK_SCREW_ANGLES = (30, 90, 270, 330)   # M3 up from under the deck into the body's corners, at BEZEL_SCREW_R; not the -x corners, the cell is there
 USB_WINDOW = (14.0, 9.0)
-LEAD_GROOVE_W = 6.0      # the battery leads run up the outside of the +x flat in this groove
 
 # ── the cage in the cap, and the saddle ─────────────────────────────────────
 LED_GAP = 9.0            # hex LEDs to the underside of the diffuser
@@ -116,10 +122,17 @@ BEZEL_H = 9.0            # a low ring: it retains the flange and guides the top 
 BEZEL_SCREW_R = 46.0
 BEZEL_FLANGE_T = 2.5     # plastic under each screw head. Screws: M3 x 5, or the brass M3 6+6 standoffs used as bolts
 
-# ── plinth ──────────────────────────────────────────────────────────────────
-WIRE_RELIEF = 2.5        # extra pocket length at each end for the leads to turn
-DECK_T = 4.4
+# ── deck: the tray under the turret ─────────────────────────────────────────
+DECK_WALL = 2.5
+DECK_FLOOR = 1.6
+LAYER_GAP = 0.8          # between the cell and the Rider above it
 FOOT_D = 10.5
+RAIL_W = 64.0            # the card rail across the back: a card is 70, so it overhangs a little each side
+RAIL_D = 11.0            # how far the rail stands out behind the turret's back corner
+RAIL_TOP = 6.0           # the rail's top, above the body floor
+SLOT_W = 4.5             # the groove: one sleeved card loosely, two snugly
+SLOT_DEPTH = 14.0
+SLOT_LEAN = 12.0         # degrees back from vertical
 
 # ── derived ─────────────────────────────────────────────────────────────────
 SEG = 128
@@ -139,14 +152,23 @@ HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
 INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
 CAP_TOP = INNER_TOP + CAP_TOP_T
 CAP_EXPOSED = CAP_TOP - BEZEL_TOP
-POCKET = (HOLDER[0] + 2 * (PART_CLEARANCE + WIRE_RELIEF), HOLDER[1] + 2 * PART_CLEARANCE, HOLDER[2] + 1)
-PLINTH_H = POCKET[2] + DECK_T
-PLINTH_F = TURRET_F + 16
 FLAT_X = TURRET_F / 2
-LEAD_SLOT_X = FLAT_X + 1.5
+DECK_POCKET_H = CELL[2] + LAYER_GAP + RIDER[2] + PART_CLEARANCE    # both layers plus a little air
+DECK_H = DECK_FLOOR + DECK_POCKET_H
+DECK_Z0 = -FLOOR_T - DECK_H                                      # underside of the deck: the table
+DECK_TOP = -FLOOR_T                                              # the body sits here
+CELL_Z = DECK_Z0 + DECK_FLOOR
+RIDER_Z = CELL_Z + CELL[2] + LAYER_GAP
+RIDER_X0 = FLAT_X - DECK_WALL - RIDER[0] - PART_CLEARANCE        # its USB-C end touches the wall's inside
+RIDER_WINDOW = (12.0, 8.0)
+RAIL_Y0 = TURRET_F / 2 / math.cos(math.radians(30))              # the turret's back corner
+DECK_SCREWS = [(BEZEL_SCREW_R * math.cos(math.radians(a)), BEZEL_SCREW_R * math.sin(math.radians(a))) for a in DECK_SCREW_ANGLES]
 
 assert TRAVEL + PRELOAD <= SWITCH_TRAVEL_MIN, 'the cap would bottom the switch out before the shell stops it'
 assert math.hypot(ATOM_X0 + ATOM[0], ATOM[1] / 2) < BORE_R, 'the Atom does not fit in the bore'
+_pocket_apex = (TURRET_F - 2 * DECK_WALL) / 2 / math.cos(math.radians(30))
+assert RIDER_X0 > -_pocket_apex / 2, 'the Rider does not fit across the deck'
+assert abs(CELL[1] / 2 + PART_CLEARANCE) < _pocket_apex - (CELL[0] / 2 + PART_CLEARANCE) * math.tan(math.radians(30)), 'the cell does not fit in the deck'
 assert CAP_EXPOSED - TRAVEL >= 8, 'the cap should stand well proud of the bezel even when pressed'
 COLLAR_R = CAP_R - CAP_WALL - SLIDE_CLEARANCE          # outer face of the collar
 SPRING_R0 = CAP_R + 0.6                                # springs stand just outside the skirt, under the flange
@@ -192,7 +214,6 @@ def corners(r):
 # ── body ────────────────────────────────────────────────────────────────────
 def body():
     solid = hex_prism(TURRET_F, FLOOR_T + WALL_TOP, z=-FLOOR_T, cb=0.6) - cyl(2 * BORE_R, WALL_TOP + 1, seg=SEG)
-    solid += union(cyl(7.5, 6, x, y) for x, y in POSTS)
     # the inner collar: the cap's skirt slides over it, so a 70 mm cap can't rock however it's hit
     collar = cyl(2 * COLLAR_R, COLLAR_H, seg=SEG) - cyl(2 * (COLLAR_R - COLLAR_T), COLLAR_H + 2, z=-1, seg=SEG)
     for a0, a1 in COLLAR_GAPS:
@@ -218,15 +239,14 @@ def body():
     fence -= box(ax0, ay0, -1, ATOM[0] + 2 * PART_CLEARANCE + 5, ATOM[1] + 2 * PART_CLEARANCE, 4)
     fence -= box(ax0 - 3, -60, -1, 3.01, 120, 4)                                              # no wall on the key's side: the Atom's cable leaves there
     solid += fence
-    cuts = [cyl(TAP_D, FLOOR_T + 6 + 2, x, y, -FLOOR_T - 1, seg=24) for x, y in POSTS]
+    # the deck's screws come up into the corners of the wall from below
+    cuts = [cyl(TAP_D, FLOOR_T + 8, x, y, -FLOOR_T - 1, seg=24) for x, y in DECK_SCREWS]
     # shallow pockets that locate the springs' feet
     for a in SPRING_ANGLES:
         cuts.append(box(SPRING_R0 - 0.3, -SPRING_D / 2 - 0.3, -1.2, SPRING_W + 0.6, SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     # USB-C window through the +x flat, with a recess outside for the plug's body
     cuts.append(cbox(FLAT_X, 0, ATOM_USB_Z - USB_WINDOW[1] / 2, 2 * (FLAT_X - BORE_R + 2), USB_WINDOW[0], USB_WINDOW[1]))
     cuts.append(cbox(FLAT_X, 0, -FLOOR_T - 1, 6, USB_WINDOW[0] + 6, FLOOR_T + 1 + ATOM_USB_Z + USB_WINDOW[1] / 2 + 3))
-    # the battery leads run up the outside of that flat in a groove
-    cuts.append(cbox(FLAT_X, 0, -FLOOR_T - 1, 6, LEAD_GROOVE_W, FLOOR_T + 1 + ATOM_USB_Z))
     cuts += [cyl(TAP_D, 9.01, x, y, WALL_TOP - 9, seg=24) for x, y in corners(BEZEL_SCREW_R)]
     return solid - union(cuts)
 
@@ -314,21 +334,36 @@ def cage():
     return union(parts) - cavity
 
 
-# ── plinth (built hanging under the body) ───────────────────────────────────
-def plinth():
-    z0 = -FLOOR_T - PLINTH_H
-    roof = z0 + POCKET[2]
-    cuts = [cbox(0, 0, z0 - 1, POCKET[0], POCKET[1], POCKET[2] + 1)]
-    # the leads leave the holder's +x end, cross the roof in a groove and go up through a slot beside the turret
-    cuts.append(box(POCKET[0] / 2 - 4, -4, roof - 0.01, LEAD_SLOT_X + 3 - (POCKET[0] / 2 - 4), 8, 3))
-    cuts.append(cbox(LEAD_SLOT_X, 0, roof - 0.01, 6, 8, DECK_T + 1))
-    for x, y in POSTS:
-        cuts.append(cyl(M3_CLEAR_D, DECK_T + 2, x, y, roof - 1, seg=24))
-        cuts.append(cyl(M3_HEAD_D, DECK_T - 1.6 + 0.01, x, y, roof - 0.01, seg=32))
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            cuts.append(cyl(FOOT_D, 1.01, sx * 30, sy * (PLINTH_F / 2 - 9), z0 - 0.01))
-    return hex_prism(PLINTH_F, PLINTH_H, z=z0, ct=4, cb=0.6) - union(cuts)
+# ── deck: the tray under the turret, with the card rail on its back ────────
+def deck_outline(h, z, ct=0.0, cb=0.0):
+    """The hexagon plus the rail behind it, as one hull, so the outline stays clean."""
+    rail = box(-RAIL_W / 2, RAIL_Y0 - 3, z, RAIL_W, RAIL_D + 3, h)
+    return Manifold.batch_hull([hex_prism(TURRET_F, h, z=z, ct=ct, cb=cb), rail])
+
+def deck():
+    z0 = DECK_Z0
+    solid = deck_outline(DECK_H, z0, cb=0.6)
+    # the rail rises past the body floor; the body's hex sits inside it, so it also locates the body
+    rail = box(-RAIL_W / 2, RAIL_Y0 - 3, z0, RAIL_W, RAIL_D + 3, DECK_H + FLOOR_T + RAIL_TOP)
+    rail -= hex_prism(TURRET_F + 2 * PART_CLEARANCE, 40, z=DECK_TOP - 0.01)
+    solid += rail
+    # the pocket, and the screw columns standing in it
+    pocket = hex_prism(TURRET_F - 2 * DECK_WALL, DECK_POCKET_H + 1, z=z0 + DECK_FLOOR)
+    solid -= pocket
+    solid += union(cyl(8.0, DECK_POCKET_H, x, y, z0 + DECK_FLOOR, seg=32) for x, y in DECK_SCREWS)
+    cuts = []
+    for x, y in DECK_SCREWS:
+        cuts.append(cyl(M3_CLEAR_D, DECK_H + 2, x, y, z0 - 1, seg=24))
+        cuts.append(cyl(M3_HEAD_D, 3.0 + 0.01, x, y, z0 - 0.01, seg=32))
+    # the Rider's USB-C, through the +x wall, right under the Atom's window
+    cuts.append(cbox(FLAT_X, 0, RIDER_Z + RIDER_USB_Z - RIDER_WINDOW[1] / 2, 2 * DECK_WALL + 4, RIDER_WINDOW[0], RIDER_WINDOW[1]))
+    # the card slot: a groove leaning back, open at the top of the rail
+    slot = cbox(0, 0, 0, CARD[0] + 4, SLOT_W, SLOT_DEPTH + 10).rotate([-SLOT_LEAN, 0, 0])   # longer than the rail: the card overhangs, and the hull's flanks must not pinch it
+    cuts.append(slot.translate([0, RAIL_Y0 + RAIL_D / 2 + 0.5, RAIL_TOP - SLOT_DEPTH]))
+    # feet
+    for x, y in [(30, -34), (-30, -34), (30, 34), (-30, 34)]:
+        cuts.append(cyl(FOOT_D, 1.01, x, y, z0 - 0.01))
+    return solid - union(cuts)
 
 
 def fit_test():
@@ -352,7 +387,9 @@ def bought_parts(pressed=False):
         'hex': hexboard,
         'atom': box(ATOM_X0, -ATOM[1] / 2, 0, *ATOM),
         'splitter': cbox(ATOM_X0 + ATOM[0] - SPLITTER[0] / 2, 0, ATOM[2], *SPLITTER),
-        'holder': cbox(0, 0, -FLOOR_T - DECK_T - HOLDER[2], *HOLDER),
+        'cell': cbox(-20, 0, CELL_Z, *CELL),
+        'rider': box(RIDER_X0, -RIDER[1] / 2, RIDER_Z, *RIDER),
+        'card': cbox(0, 0, 0, CARD[0], CARD[2], CARD[1]).rotate([-SLOT_LEAN, 0, 0]).translate([0, RAIL_Y0 + RAIL_D / 2 + 0.5 + 1.5 * math.sin(math.radians(SLOT_LEAN)), RAIL_TOP - SLOT_DEPTH + 1.5]),
     }
 
 
@@ -383,7 +420,7 @@ def section_svg(solids, colours, path, plane):
         if plane == 'yz':
             solid = solid.rotate([0, 0, -90])
         shapes.append((name, solid.rotate([90, 0, 0]).slice(0).to_polygons()))
-    lo_x, hi_x, lo_y, hi_y = -60, 60, -62, 30
+    lo_x, hi_x, lo_y, hi_y = -60, 70, -62, 30
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="{lo_x} {lo_y} {hi_x - lo_x} {hi_y - lo_y}" width="1320" height="968">',
            f'<rect x="{lo_x}" y="{lo_y}" width="{hi_x - lo_x}" height="{hi_y - lo_y}" fill="#f4f1ea"/>']
     for name, polys in shapes:
@@ -397,12 +434,12 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'plinth': plinth(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
-    flipped = {'plinth', 'cap'}               # flat face on the bed; the cage prints cup-down, legs up
+    printed = {'deck': deck(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
+    flipped = {'cap'}                          # flat face on the bed; the deck prints tray-up; the cage prints cup-down, legs up
     os.makedirs(os.path.join(HERE, 'stl'), exist_ok=True)
 
-    print(f'plinth {PLINTH_F:.0f} mm across flats, turret {TURRET_F:.0f} mm, '
-          f'{FLOOR_T + PLINTH_H + CAP_TOP:.1f} mm tall, cap top {CAP_D - 2 * CAP_CHAMFER:.0f} mm, '
+    print(f'base {TURRET_F:.0f} mm across flats plus a {RAIL_D:.0f} mm card rail behind, '
+          f'{CAP_TOP - DECK_Z0:.1f} mm tall, cap top {CAP_D - 2 * CAP_CHAMFER:.0f} mm, '
           f'keycap top {KEYCAP_TOP:.1f} above the floor, hex LEDs at {HEX_TOP:.1f}, cap shows {CAP_EXPOSED:.1f} above the bezel')
     for name, solid in {**printed, 'fit_test': fit_test()}.items():
         out = for_printing(solid, name in flipped)
@@ -428,8 +465,9 @@ if __name__ == '__main__':
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
 
-    colours = {'plinth': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff', 'springs': '#c9a227',
-               'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8', 'holder': '#15151a'}
+    colours = {'deck': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff', 'springs': '#c9a227',
+               'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8',
+               'cell': '#8a8a55', 'rider': '#1b5e20', 'card': '#c8a165'}
     everything = {k: v for k, v in printed.items() if k != 'spring'}
     everything.update(bought_parts()); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
     section_svg(everything, colours, os.path.join(HERE, 'section-front.svg'), 'xz')
