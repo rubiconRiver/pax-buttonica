@@ -85,3 +85,19 @@ static const int BIG_BUTTON_PINS[] = {3};
 
 // ── Radio ───────────────────────────────────────────────────────────────────
 #define ESPNOW_CHANNEL 1
+
+// ── Power ───────────────────────────────────────────────────────────────────
+// The radio sleeps and only listens for RADIO_WINDOW_MS out of every RADIO_INTERVAL_MS; the hub keeps
+// resending until a message lands in a window (about 100 mA down to about 10). After the button has
+// said something it holds the radio open for RADIO_HOLD_MS so the answer comes straight back.
+// RADIO_SAVE 0 keeps the radio always on (the old behaviour); cfg {"ps":0|1} switches at runtime.
+#define RADIO_SAVE 1
+#define RADIO_INTERVAL_MS 200
+#define RADIO_WINDOW_MS 30
+#define RADIO_HOLD_MS 500
+// The CPU has nothing hard to do; 80 MHz halves its share. The LEDs' timing comes from a hardware
+// peripheral and doesn't care.
+#define CPU_MHZ 80
+// "solid" lights the outer ring fully and the inside at this share: across a room you see the bright
+// rim, through the diffuser it still reads as full, and it draws about half the current. 1.0 = flat.
+#define SOLID_CORE 0.4f

@@ -37,6 +37,10 @@ Until the sticker has been read, `config.h` treats every pin Port B could be as 
 
 The Atom's tiny onboard pixel mirrors the button's colour, so a bare Atom on a cable still shows what it has been told.
 
+## Power
+
+Since 2026-09-26 the button's radio sleeps between 30 ms listening windows every 200 ms and the hub resends until it is heard; the CPU runs at 80 MHz and `solid` is a bright rim with a softer centre. All of it is in `config.h` under Power. The hub must be flashed too, or lights will only reach a sleeping button by luck. `cfg` `ps: 0` keeps a button's radio on for comparison on a USB power meter.
+
 ## Settings from the host
 
 `cfg` sets the hold time and blink period, and since 2026-09-26 also `bright` (0–100, a share of `MAX_BRIGHTNESS`) and `pulse` (how "your move" is drawn: `pulse`, `solid` or `heartbeat`). The host sends one per button, from its settings and the player's own choice on their phone.

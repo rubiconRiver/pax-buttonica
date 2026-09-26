@@ -159,11 +159,11 @@ A builder who wants their own button to chirp can fit one and report `caps.audio
 
 ## Power, honestly
 
-The button must be able to hear the hub within about a quarter of a second, which rules out deep sleep between presses.
+The button must be able to hear the hub within about a quarter of a second, which rules out deep sleep between presses. What the reference firmware does (since 2026-09-26):
 
-- **Poll, don't listen.** Wake every ~250 ms, ask the hub "anything for me?", listen ~10 ms for the reply, light-sleep again. The hub is mains-powered and always awake. Pressing the button sends immediately — only incoming changes wait for the next poll.
-- **The LED is the real battery hog**, not the radio. That's why the vocabulary has `off` and `dim`: only the player who needs to act is ever at full brightness.
-- **Four NiMH AAs** (~4.8 V) suit both the LEDs and a 3.3 V regulator. Three alkalines sag below regulator dropout long before they're empty.
+- **Listen in windows, not all the time.** The radio sleeps and opens for 30 ms in every 200. The hub is mains-powered and always awake, and it keeps resending a message every 12 ms until the button's radio acknowledges it, giving up after 600 ms (three windows); only then does the message count towards `lost`. Pressing the button sends immediately, and the button then holds its radio open for half a second so the answer comes straight back. So a light change reaches a sleeping button within about a fifth of a second, and a reaction to a press at once. The host may send `cfg` `ps: 0` to keep a button's radio always on (for measuring), `ps: 1` to let it sleep again.
+- **The lit LEDs during a turn are the real hog**, not the idle ones. So `solid` is drawn as a bright rim with a softer centre (about half the current, same visibility across a room), `off` and `dim` exist so only the player who needs to act is bright, and the host's brightness setting (`cfg` `bright`) is for setting the light to the room rather than to the maximum.
+- **One lithium cell** (3.7 V, protected, JST-PH 2.0) on a charger-plus-boost board, charged in place over USB-C. A button that runs low mid-game plays on from a phone charger.
 
 ## A reference build (untested, prices approximate)
 
@@ -172,7 +172,7 @@ The button must be able to hear the hub within about a quarter of a second, whic
 | Microcontroller | ESP32-C3 "Super Mini" (native USB, tiny) | $4–8 |
 | Light | 8–12 WS2812 pixels in a ring under the dome | $2–5 |
 | Switch | A microswitch under a printed plunger | $1–2 |
-| Power | 4×AA holder with a switch | $2–3 |
+| Power | 3.7 V lithium pouch, 1800–3700 mAh, on a Seeed Lipo Rider Plus (charges in place, switched 5 V out) | $28–35 |
 | Shell | Printed base + translucent printed dome | filament |
 
 The hub is the same ESP32-C3, alone, on a USB cable.

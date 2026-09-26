@@ -12,9 +12,9 @@
  *
  * UNTESTED ON HARDWARE. It compiles; nobody has flashed it yet.
  *
- * Power: this first version keeps the radio listening all the time (~80-100 mA
- * plus LEDs), which is simple and good for a day on four AAs. The poll-and-sleep
- * scheme in the standard is the next step once the basics are proven.
+ * Power (2026-09-26): the radio sleeps between short listening windows (the core is built with
+ * power saving allowed while not connected to an access point); the hub resends until a message
+ * lands in a window. CPU at 80 MHz. "solid" is a bright rim with a softer centre. See config.h.
  */
 #include <WiFi.h>
 #include <esp_now.h>
@@ -70,6 +70,9 @@ static uint32_t flashMs = 2000;
 static float brightScale = 1.0f;   // cfg "bright", 0..1: the host's share of MAX_BRIGHTNESS
 static Mode pulseLook = MODE_PULSE; // cfg "pulse": how "your move" is drawn (pulse, solid or heartbeat)
 static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
+static bool radioSave = RADIO_SAVE; // radio sleeps between listening windows
+static bool radioHeld = false;      // radio forced awake while we wait for an answer
+static uint32_t radioHoldUntil = 0;
 static uint32_t pressedAt = 0;     // for the press blip
 
 static Overlay overlay = FX_NONE;
@@ -103,8 +106,37 @@ static void addPeer(const uint8_t *mac) {
   esp_now_add_peer(&peer);
 }
 
+// Keep the radio awake for a moment: whatever the hub answers with should arrive at once, not at the next window.
+static void holdRadio(uint32_t ms) {
+  radioHoldUntil = millis() + ms;
+  if (!radioHeld && radioSave) {
+    radioHeld = true;
+    esp_wifi_force_wakeup_acquire();
+  }
+}
+
+static void releaseRadio() {
+  if (!radioHeld) return;
+  radioHeld = false;
+  esp_wifi_force_wakeup_release();
+}
+
+// Sleepy radio on or off. The hub copes either way; off is for measuring the difference.
+static void applyRadioSave() {
+  releaseRadio();
+  if (radioSave) {
+    esp_wifi_set_ps(WIFI_PS_MIN_MODEM);
+    esp_wifi_connectionless_module_set_wake_interval(RADIO_INTERVAL_MS);
+    esp_now_set_wake_window(RADIO_WINDOW_MS);
+  } else {
+    esp_now_set_wake_window(65535);
+    esp_wifi_set_ps(WIFI_PS_NONE);
+  }
+}
+
 static void sendLine(const char *line) {
   esp_now_send(hubKnown ? hubMac : EVERYONE, (const uint8_t *)line, strlen(line));
+  holdRadio(RADIO_HOLD_MS);
 }
 
 static void sendHello() {
@@ -292,7 +324,7 @@ static float luminance(uint32_t now) {
   switch (drawn) {
     case MODE_OFF: return 0;
     case MODE_DIM: return DIM_LEVEL;
-    case MODE_SOLID: return 1;
+    case MODE_SOLID: return 1;   // per pixel: see pixelLuminance
     case MODE_RAINBOW: return 1;
     case MODE_PULSE: {
       const uint32_t T = period(1700);
@@ -322,6 +354,8 @@ static float luminance(uint32_t now) {
 static float pixelLuminance(int i, uint32_t now) {
   const uint32_t t = now - modeSince;
   const int r = ringOf[i];
+  // "solid", whether asked for or as the look of "your move": a full rim and a softer centre.
+  if (mode == MODE_SOLID || (mode == MODE_PULSE && pulseLook == MODE_SOLID)) return r == RINGS - 1 ? 1.0f : SOLID_CORE;
   switch (mode) {
     case MODE_RIPPLE_OUT:
     case MODE_RIPPLE_IN: {
@@ -545,6 +579,10 @@ static void handle(const Packet &p) {
       const Mode look = parseMode(doc["pulse"]);
       pulseLook = (look == MODE_SOLID || look == MODE_HEARTBEAT) ? look : MODE_PULSE;
     }
+    if (doc["ps"].is<int>()) {
+      radioSave = doc["ps"].as<int>() != 0;
+      applyRadioSave();
+    }
   } else if (!strcmp(type, "id")) {
     setOverlay(FX_IDENTIFY);
   } else if (!strcmp(type, "hub")) {
@@ -632,6 +670,7 @@ static void sleepUntilPressed() {
 // ── Arduino ─────────────────────────────────────────────────────────────────
 
 void setup() {
+  setCpuFrequencyMhz(CPU_MHZ);
   Serial.begin(115200);
   for (int i = 0; i < BIG_BUTTON_PIN_COUNT; i++) pinMode(BIG_BUTTON_PINS[i], INPUT_PULLUP);
   for (int i = 1; i < BUTTON_COUNT; i++) pinMode(BUTTON_PINS[i], INPUT_PULLUP);
@@ -667,6 +706,7 @@ void setup() {
   esp_now_register_recv_cb(onReceive);
   esp_now_register_send_cb(onSent);
   addPeer(EVERYONE);
+  applyRadioSave();
 
   prefs.begin("pax", false);
   if (prefs.getBytes("hub", hubMac, 6) == 6) {
@@ -685,6 +725,7 @@ void loop() {
 
   Packet p;
   while (xQueueReceive(inbox, &p, 0) == pdTRUE) handle(p);
+  if (radioHeld && (int32_t)(now - radioHoldUntil) >= 0) releaseRadio();
 
   // Eight failed sends in a row: the hub we knew is gone. Go back to looking for one.
   if (hubKnown && sendFails >= 8) {

@@ -11,7 +11,9 @@
  *   M5Stack AtomS3 Lite:  arduino-cli compile -b esp32:esp32:m5stack_atoms3 firmware/hub
  *   ESP32-C3 SuperMini:   arduino-cli compile -b esp32:esp32:esp32c3:CDCOnBoot=cdc firmware/hub
  *
- * UNTESTED ON HARDWARE. It compiles; nobody has flashed it yet.
+ * Ran on real parts 2026-09-24. Since 2026-09-26 the buttons sleep their radio between short listening
+ * windows, so the hub keeps each message and resends it every few ms until the button's radio
+ * acknowledges it (up to RETRY_FOR_MS); only after that does a message count as a failure.
  */
 #include <WiFi.h>
 #include <esp_now.h>
@@ -23,6 +25,9 @@
 #define MAX_LINE 250      // one ESP-NOW packet
 #define QUEUE_SLOTS 16
 #define LOST_AFTER_FAILS 5
+#define OUTBOX_SLOTS 6        // per button: a burst of cfg + led + fx while it sleeps
+#define RETRY_GAP_MS 12       // between attempts; a button listens 30 ms in every 200
+#define RETRY_FOR_MS 600      // give up on one message after this (three listening windows)
 
 struct Packet {
   uint8_t mac[6];
@@ -34,12 +39,22 @@ struct Packet {
 // Radio → serial. The receive callback runs on the Wi-Fi task, so it only queues.
 static QueueHandle_t inbox;
 
-// Delivery failures per known button, to report {"t":"lost"}.
+struct Outgoing {
+  uint8_t len;
+  char text[MAX_LINE + 1];
+};
+
+// Delivery failures per known button, to report {"t":"lost"}, and its outbox.
 struct Known {
   uint8_t mac[6];
   uint8_t fails;
   bool reportedLost;
   uint32_t lastRssiReport;
+  Outgoing outbox[OUTBOX_SLOTS];
+  uint8_t head, count;      // ring buffer: outbox[head] is being sent
+  bool inFlight;            // esp_now_send called, callback not yet back
+  uint32_t firstTry;        // when the message at head was first attempted
+  uint32_t nextTry;
 };
 static Known known[20];
 static int knownCount = 0;
@@ -53,6 +68,9 @@ static Known *lookup(const uint8_t *mac, bool create) {
   k->fails = 0;
   k->reportedLost = false;
   k->lastRssiReport = 0;
+  k->head = k->count = 0;
+  k->inFlight = false;
+  k->firstTry = k->nextTry = 0;
   esp_now_peer_info_t peer = {};
   memcpy(peer.peer_addr, mac, 6);
   peer.channel = ESPNOW_CHANNEL;
@@ -90,14 +108,49 @@ static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int 
   xQueueSend(inbox, &p, 0);
 }
 
+// The send callback runs on the Wi-Fi task: note the outcome, the loop does the rest.
+static volatile bool sentOk[20];
+static volatile bool sentDone[20];
+
 static void onSent(const wifi_tx_info_t *info, esp_now_send_status_t status) {
   Known *k = lookup(info->des_addr, false);
   if (!k) return;
-  if (status == ESP_NOW_SEND_SUCCESS) {
-    k->fails = 0;
-    k->reportedLost = false;
-  } else if (k->fails < 255) {
-    k->fails++;
+  const int i = k - known;
+  sentOk[i] = status == ESP_NOW_SEND_SUCCESS;
+  sentDone[i] = true;
+}
+
+// Push each button's outbox: one message in flight per button, retried until its radio acknowledges.
+static void pump() {
+  const uint32_t now = millis();
+  for (int i = 0; i < knownCount; i++) {
+    Known &k = known[i];
+    if (k.inFlight) {
+      if (!sentDone[i]) continue;
+      sentDone[i] = false;
+      k.inFlight = false;
+      if (sentOk[i]) {
+        k.fails = 0;
+        k.reportedLost = false;
+        k.head = (k.head + 1) % OUTBOX_SLOTS;
+        k.count--;
+        k.firstTry = 0;
+      } else if (now - k.firstTry >= RETRY_FOR_MS) {
+        // Its radio never answered in three windows: drop this one, count it, move on.
+        if (k.fails < 255) k.fails++;
+        k.head = (k.head + 1) % OUTBOX_SLOTS;
+        k.count--;
+        k.firstTry = 0;
+      } else {
+        k.nextTry = now + RETRY_GAP_MS;
+      }
+    }
+    if (k.count == 0 || k.inFlight || (int32_t)(now - k.nextTry) < 0) continue;
+    if (!k.firstTry) k.firstTry = now;
+    const Outgoing &o = k.outbox[k.head];
+    sentDone[i] = false;
+    k.inFlight = esp_now_send(k.mac, (const uint8_t *)o.text, o.len) == ESP_OK;
+    if (!k.inFlight) k.nextTry = now + RETRY_GAP_MS;
   }
 }
 
@@ -114,8 +167,16 @@ static void forward(char *line, size_t len) {
   }
   uint8_t mac[6];
   if (strlen(key + 7) < 12 || !hexToMac(key + 7, mac)) return;
-  if (!lookup(mac, true)) return;
-  esp_now_send(mac, (const uint8_t *)line, len);
+  Known *k = lookup(mac, true);
+  if (!k) return;
+  // Full: overwrite the newest waiting message rather than touch the one in flight (the newest light wins anyway).
+  if (k->count == OUTBOX_SLOTS) k->count--;
+  Outgoing &o = k->outbox[(k->head + k->count) % OUTBOX_SLOTS];
+  o.len = (uint8_t)len;
+  memcpy(o.text, line, len);
+  o.text[len] = 0;
+  k->count++;
+  pump();
 }
 
 void setup() {
@@ -161,6 +222,8 @@ void loop() {
       n = 0;  // oversized line: drop it
     }
   }
+
+  pump();
 
   // Radio → serial
   Packet p;
