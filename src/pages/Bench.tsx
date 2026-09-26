@@ -20,6 +20,8 @@ export function Bench() {
   useEffect(() => {
     let n = 0;
     setInputHandler((dev, input) => setPresses((p) => [{ id: ++n, dev, input }, ...p].slice(0, 8)));
+    // A hub this browser has been allowed before connects on its own.
+    void connectHub({ silent: true });
     return () => setInputHandler(null);
   }, []);
 
@@ -46,7 +48,7 @@ export function Bench() {
         <div className="panel bench__card"><p>This browser has no Web Serial. Use <b>Chrome</b> or <b>Edge</b> on a laptop, over HTTPS or localhost.</p></div>
       ) : !hub.connected ? (
         <div className="panel bench__card">
-          <p>The hub is an ESP32 on a USB cable. Your browser will ask which port it's on.</p>
+          <p>The hub is an ESP32 on a USB cable. A hub you've allowed before connects by itself; otherwise your browser asks which port it's on, once.</p>
           <button type="button" className="btn btn--gold btn--lg" onClick={() => void connectHub()}>Connect the hub</button>
           {hub.error && <p className="bench__error">{hub.error}</p>}
         </div>

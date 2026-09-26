@@ -100,7 +100,7 @@ export function TopBar({ game, demo, canUndo, canRedo, dispatch, onUndo, onRedo,
           </span>
         )}
         {serialSupported() && (
-          <button type="button" className="btn btn--sm" aria-pressed={hub.connected} title="Connect the USB hub (experimental — no hardware exists yet)" onClick={() => void connectHub()}>
+          <button type="button" className="btn btn--sm" aria-pressed={hub.connected} title="Connect the USB hub. An Atom you've allowed before connects by itself." onClick={() => void connectHub()}>
             <IconUsb /> {hub.connected ? `Hub · ${hub.devices.length}` : 'Hub'}
           </button>
         )}

@@ -56,12 +56,13 @@
   </header>
 
   <section class="panel chamfer"><div class="in chamfer">
-    <h2>1 · Who is this?</h2>
+    <h2>1 · What's plugged in</h2>
+    <div class="who" id="answer">Looking…</div>
     <div class="row">
-      <button class="btn primary" id="who">Ask the Atom</button>
-      <span class="who" id="answer">Plug one in and ask.</span>
+      <button class="btn" id="who">Ask again</button>
+      <button class="btn primary" id="add">Allow another Atom</button>
     </div>
-    <div class="hint">A button answers with its id and blinks white, so you can tell which one is on the cable. A hub answers as a hub. A brand-new Atom says nothing (it only has the factory firmware), which is also an answer.</div>
+    <div class="hint">Every Atom you've allowed this page to use before is asked who it is, with no popup: a button answers with its id and blinks white, a hub answers as a hub, a brand-new Atom says nothing (factory firmware). The popup only appears for an Atom you haven't allowed yet, once.</div>
   </section>
 
   <div class="grid2">
@@ -86,9 +87,9 @@
   <section class="panel chamfer"><div class="in chamfer">
     <h2>How it goes</h2>
     <ol>
-      <li>Plug the Atom in. Click <b>Ask the Atom</b> and pick the port called "USB JTAG/serial debug unit" (if two are listed, either works). It tells you what's on it now.</li>
-      <li>Click <b>Connect</b> under hub or button, pick the same port, choose <b>Install</b> in the dialog, wait for "Installation complete" (about 20 seconds), close it.</li>
-      <li>Click <b>Ask the Atom</b> again. It should now answer with the new version. Buttons blink white while they answer.</li>
+      <li>Plug the Atom in. The first time, click <b>Allow another Atom</b> and pick it in the popup; after that it's recognised on its own. The list above says what's on it now.</li>
+      <li>Click <b>Connect</b> under hub or button and pick it in the flasher's popup (that one is the flashing tool's own and can't be skipped; with two Atoms plugged in, the list above tells you which is which by unplugging one), choose <b>Install</b>, wait for "Installation complete" (about 20 seconds), close it.</li>
+      <li>Click <b>Ask again</b>. It should now answer with the new version. Buttons blink white while they answer.</li>
       <li>Do the hub first after a firmware change, then each button. A button flashed before its hub only reaches it by luck.</li>
     </ol>
     <div class="hint">If the install fails to connect, unplug and replug the Atom and try again; if it says the port is busy, another tab has it. The terminal alternative is <code>firmware/flash.sh hub</code> or <code>firmware/flash.sh button</code>.</div>
@@ -109,13 +110,8 @@
     fetch(`/firmware/${what}/manifest.json`).then((r) => r.json()).then((m) => { $(what + 'ver').textContent = 'firmware ' + m.version; }).catch(() => { $(what + 'ver').textContent = 'no image published'; });
   }
 
-  async function ask() {
-    const out = $('answer');
-    if (!navigator.serial) { out.innerHTML = '<span class="bad">This browser has no Web Serial. Use Chrome or Edge.</span>'; return; }
-    let port;
-    try { port = await navigator.serial.requestPort(); } catch { return; }
-    $('who').disabled = true;
-    out.textContent = 'Asking…';
+  // Open a port for a moment and ask what's on it; close it again.
+  async function whatIs(port) {
     let answered = null;
     try {
       await port.open({ baudRate: 115200 });
@@ -137,30 +133,49 @@
           buf = buf.slice(nl + 1);
           if (!line) continue;
           say('← ' + line);
-          try {
-            const msg = JSON.parse(line);
-            if (msg.t === 'hub' || msg.t === 'button') { answered = msg; break; }
-          } catch { /* boot chatter */ }
+          try { const msg = JSON.parse(line); if (msg.t === 'hub' || msg.t === 'button') { answered = msg; break; } } catch { /* boot chatter */ }
         }
       }
       reader.cancel().catch(() => {});
       reader.releaseLock();
-      await port.close();
     } catch (e) {
-      out.innerHTML = `<span class="bad">${e.message || e}</span>`;
-      $('who').disabled = false;
-      return;
+      say('(' + (e.message || e) + ')');
+      answered = { t: 'busy' };
     }
-    if (!answered) {
-      out.innerHTML = '<span class="bad">No answer.</span> Either a brand-new Atom, or something other than our firmware. Flash it.';
-    } else if (answered.t === 'hub') {
-      out.innerHTML = `This is the <b>hub</b>, firmware <b>${answered.fw}</b>.`;
-    } else {
-      out.innerHTML = `This is a <b>button</b>, id <span class="id">${answered.dev}</span>, firmware <b>${answered.fw}</b>${answered.hub ? ', and it remembers a hub' : ', not yet paired with a hub'}. It's blinking.`;
+    await port.close().catch(() => {});
+    return answered;
+  }
+
+  const describe = (a) => !a ? '<span class="bad">no answer</span>, factory firmware or not ours: flash it'
+    : a.t === 'busy' ? '<span class="bad">busy</span>, another tab has it'
+    : a.t === 'hub' ? `the <b>hub</b>, firmware <b>${a.fw}</b>`
+    : `a <b>button</b>, id <span class="id">${a.dev}</span>, firmware <b>${a.fw}</b>${a.hub ? ', paired with a hub' : ', no hub yet'}`;
+
+  // Every Atom this page has been allowed before, asked in turn. No popup.
+  async function ask() {
+    const out = $('answer');
+    if (!navigator.serial) { out.innerHTML = '<span class="bad">This browser has no Web Serial. Use Chrome or Edge.</span>'; return; }
+    $('who').disabled = true;
+    const ports = await (navigator.serial.getPorts?.() ?? []);
+    if (!ports.length) { out.innerHTML = 'No Atom allowed yet. Plug one in and click <b>Allow another Atom</b>.'; $('who').disabled = false; return; }
+    out.textContent = 'Asking…';
+    const lines = [];
+    for (const port of ports) {
+      const a = await whatIs(port);
+      lines.push(`Atom ${lines.length + 1}: ${describe(a)}${a && a.t === 'button' ? ' · blinking' : ''}`);
+      out.innerHTML = lines.join('<br>');
     }
     $('who').disabled = false;
   }
+
+  async function add() {
+    if (!navigator.serial) return;
+    try { await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] }); } catch { return; }
+    await ask();
+  }
   $('who').onclick = ask;
+  $('add').onclick = add;
+  ask();
 </script>
 </body>
 </html>

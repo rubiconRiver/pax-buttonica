@@ -4,7 +4,7 @@ import { seatSpots, simDevice, turnElapsed } from '../../engine/engine';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
-import { hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
+import { connectHub, hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
 import { snapshotOf } from '../../remote/messages';
 import { IconClose } from '../Icons';
 import { Scoreboard } from './Scoreboard';
@@ -85,6 +85,10 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     setInputHandler((dev, input) => dispatch({ type: 'DEVICE_INPUT', dev, input, at: Date.now() }));
     return () => setInputHandler(null);
   }, [dispatch]);
+  // A hub this browser has been allowed before connects on its own, with no chooser.
+  useEffect(() => {
+    if (!demo) void connectHub({ silent: true });
+  }, [demo]);
 
   // Someone changed their entrance music mid-game: it applies from their next turn.
   useEffect(() => {

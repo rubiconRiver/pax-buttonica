@@ -206,10 +206,45 @@
     if (isBtn && msg.b === 0 && pairs[msg.e]) { const p = pairs[msg.e]; if (p.sound) playSound(p.sound); if (p.fx) send({ t: 'fx', k: p.fx, dev: msg.dev }); }
   }
 
-  async function connect() {
-    if (!navigator.serial) { setStatus('This browser has no Web Serial. Use Chrome or Edge.'); return; }
+  // Ask a port what it is (hub, button, or nothing) and close it again.
+  async function whatIs(p) {
+    let answer = null;
     try {
-      port = await navigator.serial.requestPort();
+      await p.open({ baudRate: 115200 });
+      const w = p.writable.getWriter(); await w.write(new TextEncoder().encode('{"t":"hub?"}\n')); w.releaseLock();
+      const reader = p.readable.getReader(); const dec = new TextDecoder(); let buf = ''; const until = Date.now() + 1500;
+      while (!answer && Date.now() < until) {
+        const chunk = await Promise.race([reader.read(), new Promise((r) => setTimeout(() => r({ done: false }), until - Date.now()))]);
+        if (chunk.done) break; if (!chunk.value) continue;
+        buf += dec.decode(chunk.value);
+        for (const line of buf.split('\n').slice(0, -1)) { try { const m = JSON.parse(line.trim()); if (m.t === 'hub' || m.t === 'button') answer = m; } catch {} }
+        buf = buf.slice(buf.lastIndexOf('\n') + 1);
+      }
+      await reader.cancel().catch(() => {}); reader.releaseLock();
+    } catch {}
+    await p.close().catch(() => {});
+    return answer;
+  }
+
+  // Atoms this page has been allowed before, asked who they are: the hub connects itself, no chooser.
+  async function findHub(silent) {
+    const seen = [];
+    for (const p of await (navigator.serial.getPorts?.() ?? [])) {
+      const who = await whatIs(p);
+      if (who) seen.push(who.t === 'hub' ? `hub ${who.fw}` : `button ${who.dev.slice(-4)} (${who.fw})`);
+      if (who?.t === 'hub') { setStatus(`On USB: <b>${seen.join(' · ')}</b>`); return p; }
+    }
+    if (seen.length) setStatus(`On USB: <b>${seen.join(' · ')}</b>, no hub among them`);
+    if (silent) return null;
+    return navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] });
+  }
+
+  async function connect(silent = false) {
+    if (!navigator.serial) { setStatus('This browser has no Web Serial. Use Chrome or Edge.'); return; }
+    if (port) return;
+    try {
+      port = await findHub(silent);
+      if (!port) return;
       await port.open({ baudRate: 115200 });
       writer = port.writable.getWriter();
       renderDevices();
@@ -218,8 +253,9 @@
       let buf = '';
       await writer.write(new TextEncoder().encode('{"t":"hi"}\n'));
       for (;;) { const { value, done } = await reader.read(); if (done) break; buf += value; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) handle(l); } }
-    } catch (e) { setStatus('Serial error: ' + e.message); }
+    } catch (e) { port = null; if (e.name !== 'NotFoundError') setStatus('Serial error: ' + e.message); }
   }
+  if (navigator.serial) connect(true);
 
   // ── build the controls ────────────────────────────────────────────────────
   for (const [name, hex] of COLOURS) { const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(hex === colour)); b.style.setProperty('--sw', '#' + hex); b.onclick = () => { colour = hex; document.querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-checked', String(s === b))); }; $('swatches').appendChild(b); }
@@ -240,7 +276,7 @@
   }
   $('speed').oninput = (e) => { speed = +e.target.value; $('speedv').textContent = speed ? speed + ' ms' : 'mode default'; };
   $('speeddef').onclick = () => { speed = 0; $('speed').value = 0; $('speedv').textContent = 'mode default'; };
-  $('connect').onclick = connect;
+  $('connect').onclick = () => connect(false);
   $('audio').onclick = () => { ensureAudio(); playSound('blip'); $('audio').textContent = 'Sound on'; };
   $('rawsend').onclick = () => { try { send(JSON.parse($('raw').value)); } catch (e) { log('out', 'not JSON: ' + e.message); } };
   $('raw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('rawsend').click(); });

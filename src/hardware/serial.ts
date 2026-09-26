@@ -16,9 +16,13 @@ interface SerialPortLike {
   writable: WritableStream<Uint8Array> | null;
 }
 interface SerialLike {
-  requestPort(): Promise<SerialPortLike>;
+  requestPort(options?: { filters?: { usbVendorId: number }[] }): Promise<SerialPortLike>;
+  /** Ports this site has been allowed before; they can be opened again without a chooser. */
+  getPorts?(): Promise<SerialPortLike[]>;
 }
 const serial = (): SerialLike | undefined => (navigator as unknown as { serial?: SerialLike }).serial;
+/** Espressif's USB vendor id: every Atom, and nothing else on the laptop, so the chooser doesn't list Bluetooth. */
+const ESPRESSIF = 0x303a;
 
 export const serialSupported = () => !!serial();
 
@@ -179,21 +183,74 @@ async function readLoop(p: SerialPortLike) {
   }
 }
 
-/** Must be called from a click: the browser shows its own port picker. */
-export async function connectHub() {
-  const api = serial();
-  if (!api) return;
+/**
+ * Open a port for a moment and ask what's on it. A hub says so; a button says so too (and blinks). Anything else,
+ * or silence, is null. The port is closed again either way.
+ */
+async function whatIs(p: SerialPortLike): Promise<'hub' | 'button' | null> {
+  let answer: 'hub' | 'button' | null = null;
   try {
-    port = await api.requestPort();
-    await port.open({ baudRate: 115200 });
-    writer = port.writable!.getWriter();
-    lastFrames.clear();
-    prefs.clear();
-    hubStatus.set({ connected: true, devices: [], log: [] });
-    // Anything without a "dev" makes the hub announce itself, and buttons re-announce on their heartbeat.
-    void writer.write(enc.encode('{"t":"hub?"}\n'));
-    void readLoop(port);
+    await p.open({ baudRate: 115200 });
+    const w = p.writable!.getWriter();
+    await w.write(enc.encode('{"t":"hub?"}\n'));
+    w.releaseLock();
+    const reader = p.readable!.getReader();
+    const dec = new TextDecoder();
+    let buf = '';
+    const until = Date.now() + 1500;
+    while (!answer && Date.now() < until) {
+      const chunk = await Promise.race([reader.read(), new Promise<{ value?: Uint8Array; done: boolean }>((r) => setTimeout(() => r({ done: false }), until - Date.now()))]);
+      if (chunk.done) break;
+      if (!chunk.value) continue;
+      buf += dec.decode(chunk.value);
+      for (const line of buf.split('\n').slice(0, -1)) {
+        try {
+          const t = (JSON.parse(line.trim()) as { t?: string }).t;
+          if (t === 'hub' || t === 'button') answer = t;
+        } catch { /* boot chatter */ }
+      }
+      buf = buf.slice(buf.lastIndexOf('\n') + 1);
+    }
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
+  } catch { /* busy, unplugged, or not ours */ }
+  await p.close().catch(() => {});
+  return answer;
+}
+
+async function openHub(p: SerialPortLike) {
+  await p.open({ baudRate: 115200 });
+  port = p;
+  writer = p.writable!.getWriter();
+  lastFrames.clear();
+  prefs.clear();
+  hubStatus.set({ connected: true, devices: [], log: [] });
+  // Anything without a "dev" makes the hub announce itself, and buttons re-announce on their heartbeat.
+  void writer.write(enc.encode('{"t":"hub?"}\n'));
+  void readLoop(p);
+}
+
+/**
+ * Connect to the hub. Atoms this site has been allowed before are tried first, silently: each is asked what it is
+ * and the one that says "hub" is used, so a plugged-in hub connects with no chooser at all. Only if none of them is
+ * the hub does the browser's chooser appear (which needs a click), and it lists Espressif chips only.
+ * `silent` never shows the chooser: for connecting on page load.
+ */
+export async function connectHub({ silent = false } = {}) {
+  const api = serial();
+  if (!api || port) return;
+  try {
+    for (const p of (await api.getPorts?.()) ?? []) {
+      if ((await whatIs(p)) === 'hub') {
+        await openHub(p);
+        return;
+      }
+    }
+    if (silent) return;
+    await openHub(await api.requestPort({ filters: [{ usbVendorId: ESPRESSIF }] }));
   } catch (e) {
+    port = null;
+    writer = null;
     if ((e as DOMException).name !== 'NotFoundError') hubStatus.set((s) => ({ ...s, error: String(e) }));
   }
 }
