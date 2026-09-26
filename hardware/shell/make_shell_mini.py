@@ -65,7 +65,9 @@ M3_HEAD_D = 7.0               # a pan head or the brass standoff's hex, with roo
 TRAVEL = 2.8             # cap travel to the hard stop: DISC_GAP of free travel, the dome's ~0.3, then the flexures take the rest
 PRELOAD = 0.0            # (the disc floats: see DISC_GAP)
 DISC_GAP = 2.0           # the nub under the disc hangs this far above the button's top at rest
-NUB_D = 12.0             # the nub under the disc that presses the middle of the panel, well inside the frame
+NUB_D = 12.0             # the peg's head, which presses the middle of the panel, well inside the frame
+NUB_STEM = 6.0           # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
+PLATE_CLEAR = 0.2        # the cage's plate never comes closer than this to the Atom's rim, fully pressed
 FLEX_T = 1.0             # the spiral flexures' thickness
 FLEX_W = 2.2             # and width
 FLEX_R = 16.0            # the flexures reach the plate at this radius
@@ -167,8 +169,9 @@ BEZEL_TOP = WALL_TOP + BEZEL_H
 FLANGE_BOTTOM = WALL_TOP + TRAVEL
 SEAT_Z = FLANGE_BOTTOM + FLANGE_LAND - CHAMBER_CLEARANCE
 KEY_Y0 = -KEY_CAP_FROM_SOCKET                        # the case's -y end; keycap centre at y = 0
-KEYCAP_TOP = ATOM[2] - ATOM_BUTTON_DROP              # the button's top: what gets pressed
-PAD_BOTTOM = ATOM[2] + DISC_GAP                      # the cage's disc floats here, above the rim; its nub reaches the button
+KEYCAP_TOP = ATOM[2] - ATOM_BUTTON_DROP              # the panel's top: what gets pressed
+PAD_BOTTOM = ATOM[2] + TRAVEL + PLATE_CLEAR          # the cage's plate and disc: clear of the rim even fully pressed
+NUB_H = PAD_BOTTOM - (KEYCAP_TOP + DISC_GAP)         # the peg's head reaches down so its tip floats DISC_GAP above the panel
 HEX_BOTTOM = PAD_BOTTOM + PAD_T + HEX_UNDER + 0.3    # underside of the hex board
 HEX_TOP = HEX_BOTTOM + HEX_BOARD_T
 INNER_TOP = HEX_TOP + LED_GAP                        # underside of the diffuser
@@ -324,9 +327,8 @@ def cage():
     # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
     # that hole on three spiral flexures, so once the dome has clicked the disc can give another millimetre
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
-    disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG)
-    # the nub reaches down into the recess in the Atom's top and floats DISC_GAP above the button
-    disc += cyl(NUB_D, ATOM_BUTTON_DROP + 0.01, z=PAD_BOTTOM - ATOM_BUTTON_DROP, seg=48)
+    # the disc, with a hole in the middle for the peg's stem (see nub())
+    disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
     flex = []
     reach = math.sqrt(FLEX_R ** 2 - SADDLE_BRIM_R ** 2)           # a tangent from the disc's edge out to the plate
     for a in (0, 120, 240):
@@ -335,6 +337,11 @@ def cage():
         flex.append(bar.rotate([0, 0, a]))
     parts += [plate, disc] + flex
     return union(parts)
+
+
+def nub():
+    """The peg that presses the Atom's panel: a head under the disc and a stem through it. Prints head-down."""
+    return cyl(NUB_D, NUB_H, z=PAD_BOTTOM - NUB_H, seg=48) + cyl(NUB_STEM, NUB_H + PAD_T - 0.01, z=PAD_BOTTOM - NUB_H, seg=32)
 
 
 # ── deck: the tray under the turret, with the card rail on its back ────────
@@ -382,7 +389,9 @@ def bought_parts(pressed=False):
     hexboard += cbox(0, 0, HEX_BOTTOM - HEX_UNDER + dz, HEX_SOCKETS[0], HEX_SOCKETS[1], HEX_UNDER)
     return {
         'hex': hexboard,
-        'atom': cbox(0, 0, 0, *ATOM) - cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP, ATOM_RECESS_W, ATOM_RECESS_W, ATOM_BUTTON_DROP + 1) + cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP - 1, ATOM_BUTTON_W, ATOM_BUTTON_W, 1)
+        # pressed: the panel is down by the dome's travel plus what the flexures give, which is all the peg sinks
+        'atom': cbox(0, 0, 0, *ATOM) - cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP - 1.5, ATOM_RECESS_W, ATOM_RECESS_W, ATOM_BUTTON_DROP + 3)   # the recess, with room under the panel for it to move
+                + cbox(0, 0, ATOM[2] - ATOM_BUTTON_DROP - 1 - (TRAVEL - DISC_GAP if pressed else 0), ATOM_BUTTON_W, ATOM_BUTTON_W, 1)
                 + cbox(-ATOM[0] / 2 - 6, 0, 2.5, 12, 8, 5),   # recess, button, and its USB-C plug toward -x
         'cell': cbox(0, 0, CELL_Z, *CELL),
         'rider': box(RIDER_X0, -RIDER[1] / 2, RIDER_Z, *RIDER),
@@ -431,7 +440,7 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
+    printed = {'body': body(), 'cap': cap(), 'cage': cage(), 'nub': nub(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
     if not USB_POWERED:
         printed['deck'] = deck()
     flipped = {'cap'}                          # flat face on the bed; the deck prints tray-up; the cage prints cup-down, legs up
@@ -457,11 +466,11 @@ if __name__ == '__main__':
         if pressed:
             state['cap'] = state['cap'].translate([0, 0, -TRAVEL])
             state['cage'] = state['cage'].translate([0, 0, -TRAVEL])
+            state['nub'] = state['nub'].translate([0, 0, -TRAVEL])
         names = list(state)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
                 overlap = (state[a] ^ state[b]).volume()
-                if {a, b} == {'cage', 'atom'}: continue   # the disc sits into the face by design: PRELOAD at rest, TRAVEL more when pressed
                 if overlap > 0.5:
                     clashes += 1
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
@@ -469,7 +478,7 @@ if __name__ == '__main__':
 
     colours = {'deck': '#2a2a2e', 'body': '#3a3a40', 'bezel': '#55555c', 'cage': '#8a8a92', 'cap': '#ffffff', 'springs': '#c9a227',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8',
-               'cell': '#8a8a55', 'rider': '#1b5e20', 'card': '#c8a165'}
+               'cell': '#8a8a55', 'rider': '#1b5e20', 'card': '#c8a165', 'nub': '#e07b39'}
     everything = {k: v for k, v in printed.items() if k != 'spring'}
     everything.update({k: v for k, v in bought_parts().items() if not (USB_POWERED and k in ('cell', 'rider', 'card'))}); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
     section_svg(everything, colours, os.path.join(HERE, 'section-mini-front.svg'), 'xz')
