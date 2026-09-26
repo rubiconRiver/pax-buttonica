@@ -1,4 +1,5 @@
 import { FACTION_GROUPS, PLAYER_COLORS } from '../engine/data';
+import { clampBrightness, isTurnLook, type TurnLook } from '../engine/outputs';
 import type { PlayerSetup, SoundRef } from '../engine/types';
 import { createStore } from './createStore';
 
@@ -12,6 +13,10 @@ export interface Profile extends Omit<PlayerSetup, 'profileId'> {
   id: string;
   /** Milliseconds since the epoch; the newest edit wins when browsers disagree. */
   updatedAt: number;
+  /** How this player likes "your move" drawn on their button. Unset: whatever the host chose for the table. */
+  light?: TurnLook;
+  /** Their own button's brightness, as a share of the table's (0.1–1). Unset: the table's. */
+  brightness?: number;
 }
 
 export type ProfilePatch = Partial<Omit<Profile, 'id' | 'updatedAt'>>;
@@ -69,5 +74,7 @@ export function sanitizePatch(raw: unknown, jingleIds: string[]): ProfilePatch {
     if (s?.kind === 'none') out[slot] = { kind: 'none' };
     else if (s?.kind === 'jingle' && jingleIds.includes(s.id)) out[slot] = { kind: 'jingle', id: s.id };
   }
+  if (isTurnLook(r.light)) out.light = r.light;
+  if (typeof r.brightness === 'number') out.brightness = clampBrightness(r.brightness);
   return out;
 }

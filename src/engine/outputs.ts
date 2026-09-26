@@ -8,6 +8,25 @@ import type { GameState } from './types';
  */
 export type LedMode = 'off' | 'dim' | 'solid' | 'pulse' | 'flash' | 'rainbow';
 
+/**
+ * How a button draws `pulse` ("your move"). The meaning on the wire never changes; this is taste, chosen by the
+ * host for the table and by each player for their own light. Solid is the default: a breathing light all
+ * evening turned out to be a lot.
+ */
+export type TurnLook = 'solid' | 'pulse' | 'heartbeat';
+
+export const TURN_LOOKS: { id: TurnLook; name: string; hint: string }[] = [
+  { id: 'solid', name: 'Solid', hint: 'Steady, full brightness' },
+  { id: 'pulse', name: 'Breathe', hint: 'Slowly swells and fades' },
+  { id: 'heartbeat', name: 'Heartbeat', hint: 'Two quick beats, then a rest' },
+];
+
+export const isTurnLook = (x: unknown): x is TurnLook => x === 'solid' || x === 'pulse' || x === 'heartbeat';
+
+/** Brightness is a share of the button's full output, kept off the floor so a light can't be "set" to invisible. */
+export const MIN_BRIGHTNESS = 0.1;
+export const clampBrightness = (b: unknown): number => (typeof b === 'number' && Number.isFinite(b) ? Math.min(1, Math.max(MIN_BRIGHTNESS, b)) : 1);
+
 export interface DeviceOutput {
   color: string;
   mode: LedMode;

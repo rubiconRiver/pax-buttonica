@@ -2,7 +2,7 @@
  * EXPERIMENTAL — written against the draft standard, not yet tested on real
  * hardware (none exists yet). Web Serial needs Chrome or Edge, and HTTPS.
  */
-import type { DeviceOutput } from '../engine/outputs';
+import { clampBrightness, type DeviceOutput, type TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import { createStore } from '../state/createStore';
 import { settingsStore } from '../state/settings';
@@ -52,6 +52,29 @@ let logSeq = 0;
 const lastFrames = new Map<string, string>();
 const enc = new TextEncoder();
 
+/** How each seat likes its button: the player's own taste on top of the table's. */
+export interface SeatPrefs {
+  look: TurnLook;
+  /** Their share of the table's brightness, 0.1–1. */
+  bright: number;
+}
+/** What each button was last told about its taste, so a cfg only goes out when that changes. */
+const prefs = new Map<string, SeatPrefs>();
+
+/** Everything a button is configured with: hold and blink times for the table, look and brightness for its seat. */
+function cfgFrame(dev: string): ToDevice {
+  const { holdMs, flashMs, turnLight, brightness } = settingsStore.get();
+  const mine = prefs.get(dev);
+  return {
+    t: 'cfg',
+    dev,
+    hold: holdMs,
+    flash: flashMs,
+    bright: Math.round(clampBrightness(brightness) * (mine?.bright ?? 1) * 100),
+    pulse: mine?.look ?? turnLight,
+  };
+}
+
 /** Inputs are reported by device id; the game decides which seat that is. */
 export function setInputHandler(fn: typeof onInput) {
   onInput = fn;
@@ -84,8 +107,7 @@ function patch(dev: string, next: Partial<HubDevice>) {
   }));
   if (!known) {
     lastFrames.delete(dev);
-    const { holdMs, flashMs } = settingsStore.get();
-    sendToDevice({ t: 'cfg', dev, hold: holdMs, flash: flashMs });
+    sendToDevice(cfgFrame(dev));
   }
 }
 
@@ -100,10 +122,7 @@ function handle(msg: FromDevice) {
       const known = hubStatus.get().devices.some((d) => d.dev === msg.dev);
       lastFrames.delete(msg.dev);
       patch(msg.dev, { fw: msg.fw, caps: msg.caps, lost: false });
-      if (known) {
-        const { holdMs, flashMs } = settingsStore.get();
-        sendToDevice({ t: 'cfg', dev: msg.dev, hold: holdMs, flash: flashMs });
-      }
+      if (known) sendToDevice(cfgFrame(msg.dev));
       break;
     }
     case 'bat':
@@ -125,10 +144,9 @@ function handle(msg: FromDevice) {
   }
 }
 
-// Hold time and blink speed follow the settings, live.
+// Hold time, blink speed, brightness and the table's look follow the settings, live.
 settingsStore.subscribe(() => {
-  const { holdMs, flashMs } = settingsStore.get();
-  for (const d of hubStatus.get().devices) sendToDevice({ t: 'cfg', dev: d.dev, hold: holdMs, flash: flashMs });
+  for (const d of hubStatus.get().devices) sendToDevice(cfgFrame(d.dev));
 });
 
 async function readLoop(p: SerialPortLike) {
@@ -170,6 +188,7 @@ export async function connectHub() {
     await port.open({ baudRate: 115200 });
     writer = port.writable!.getWriter();
     lastFrames.clear();
+    prefs.clear();
     hubStatus.set({ connected: true, devices: [], log: [] });
     // Anything without a "dev" makes the hub announce itself, and buttons re-announce on their heartbeat.
     void writer.write(enc.encode('{"t":"hub?"}\n'));
@@ -184,12 +203,20 @@ const DARK: DeviceOutput = { color: '#000000', mode: 'off', reason: '' };
 /**
  * Push light states to real buttons; only what changed goes over the wire.
  * `unclaimed` is what buttons without a seat should show (null = stay dark).
+ * `seatPrefs`, per seat, is how that player likes their button drawn; a button without a seat follows the table.
  */
-export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[], unclaimed: DeviceOutput | null) {
+export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[], unclaimed: DeviceOutput | null, seatPrefs: (SeatPrefs | undefined)[] = []) {
   if (!writer) return;
   for (const { dev, lost } of hubStatus.get().devices) {
     if (lost) continue;
     const seat = bindings.indexOf(dev);
+    const mine = seat >= 0 ? seatPrefs[seat] : undefined;
+    const was = prefs.get(dev);
+    if (mine?.look !== was?.look || mine?.bright !== was?.bright) {
+      if (mine) prefs.set(dev, mine);
+      else prefs.delete(dev);
+      sendToDevice(cfgFrame(dev));
+    }
     const o = seat >= 0 ? outputs[seat] : unclaimed ?? DARK;
     const key = `${o.color}|${o.mode}`;
     if (lastFrames.get(dev) === key) continue;

@@ -37,6 +37,10 @@ Until the sticker has been read, `config.h` treats every pin Port B could be as 
 
 The Atom's tiny onboard pixel mirrors the button's colour, so a bare Atom on a cable still shows what it has been told.
 
+## Settings from the host
+
+`cfg` sets the hold time and blink period, and since 2026-09-26 also `bright` (0–100, a share of `MAX_BRIGHTNESS`) and `pulse` (how "your move" is drawn: `pulse`, `solid` or `heartbeat`). The host sends one per button, from its settings and the player's own choice on their phone.
+
 ## How buttons find the hub
 
 A button broadcasts `hello` until anything answers; whoever answers is the hub, and its address is saved to flash. Everything after that is unicast. A heartbeat `hello` every 10 s lets a reloaded web app rediscover buttons. Both ends sit on Wi-Fi channel 1 and never join a network. After 10 minutes without a hub the button deep-sleeps; pressing it wakes it.

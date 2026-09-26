@@ -1,3 +1,4 @@
+import type { TurnLook } from '../engine/outputs';
 import { createStore } from './createStore';
 
 export interface Settings {
@@ -15,6 +16,10 @@ export interface Settings {
   primaryStage: boolean;
   /** Put the scoreboard up by itself whenever the status phase begins. */
   autoScoreboard: boolean;
+  /** How "your move" is drawn on every button that hasn't chosen for itself. */
+  turnLight: TurnLook;
+  /** Real buttons only: a share of their full brightness, 0.1–1. */
+  brightness: number;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -26,6 +31,8 @@ export const DEFAULT_SETTINGS: Settings = {
   explainLights: true,
   primaryStage: true,
   autoScoreboard: true,
+  turnLight: 'solid',
+  brightness: 1,
 };
 
 export const settingsStore = createStore<Settings>(DEFAULT_SETTINGS, 'pb.settings.v1');

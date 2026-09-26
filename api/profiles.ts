@@ -36,7 +36,17 @@ function clean(raw: unknown) {
   return {
     id: p.id,
     updatedAt: Math.min(updatedAt, Date.now() + 60_000),
-    data: { name, color: p.color, faction: String(p.faction ?? '').slice(0, 40), buttons: p.buttons === 3 ? 3 : 1, intro, outro },
+    data: {
+      name,
+      color: p.color,
+      faction: String(p.faction ?? '').slice(0, 40),
+      buttons: p.buttons === 3 ? 3 : 1,
+      intro,
+      outro,
+      // How they like their light: optional, and only the values the app knows.
+      ...(p.light === 'solid' || p.light === 'pulse' || p.light === 'heartbeat' ? { light: p.light } : {}),
+      ...(typeof p.brightness === 'number' && Number.isFinite(p.brightness) ? { brightness: Math.min(1, Math.max(0.1, p.brightness)) } : {}),
+    },
   };
 }
 

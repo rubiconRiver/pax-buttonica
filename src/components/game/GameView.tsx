@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import { unlockAudio } from '../../audio/synth';
 import { seatSpots, simDevice, turnElapsed } from '../../engine/engine';
 import { cardByNumber, colorById } from '../../engine/data';
-import { UNCLAIMED, deriveOutputs } from '../../engine/outputs';
+import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
 import { snapshotOf } from '../../remote/messages';
@@ -60,6 +60,14 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const devices = useRef<(DeviceHandle | null)[]>([]);
   const dispatch = useCallback((a: Action) => store.dispatch(a), [store]);
   const outputs = useMemo(() => deriveOutputs(game), [game]);
+  // How each seat likes its light: their own choice from their phone, else the table's.
+  const seatPrefs = useMemo(
+    () => game.players.map((p) => {
+      const mine = p.profileId ? profiles.find((x) => x.id === p.profileId) : undefined;
+      return { look: mine?.light ?? settings.turnLight, bright: clampBrightness(mine?.brightness) };
+    }),
+    [game.players, profiles, settings.turnLight],
+  );
   const spots = useMemo(() => seatSpots(game), [game]);
   const now = useNow(game.clockStartedAt != null);
   const liveMs = turnElapsed(game, now);
@@ -71,8 +79,8 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   // spoken up (switched on late, fresh batteries) is told its light straight away, not at the next change.
   const hubDevices = useSyncExternalStore(hubStatus.subscribe, () => hubStatus.get().devices);
   useEffect(() => {
-    syncOutputs(game.bindings, outputs, game.seating ? UNCLAIMED : null);
-  }, [game.bindings, game.seating, outputs, hubDevices]);
+    syncOutputs(game.bindings, outputs, game.seating ? UNCLAIMED : null, seatPrefs);
+  }, [game.bindings, game.seating, outputs, seatPrefs, hubDevices]);
   useEffect(() => {
     setInputHandler((dev, input) => dispatch({ type: 'DEVICE_INPUT', dev, input, at: Date.now() }));
     return () => setInputHandler(null);
@@ -191,6 +199,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                     size={size}
                     holdMs={settings.holdMs}
                     output={UNCLAIMED}
+                    look={settings.turnLight}
                     onInput={(i) => dispatch({ type: 'DEVICE_INPUT', dev: simDevice(spot), input: i, at: Date.now() })}
                   />
                 );
@@ -204,6 +213,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                   count={n}
                   player={p}
                   output={outputs[seat]}
+                  look={seatPrefs[seat].look}
                   size={size}
                   holdMs={settings.holdMs}
                   isSpeaker={game.speaker === seat}

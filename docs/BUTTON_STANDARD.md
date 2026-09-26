@@ -125,14 +125,14 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 {"t":"led","dev":"A1B2C3D4E5F6","c":"ff8a1f","m":"pulse","p":640}
 {"t":"snd","dev":"A1B2C3D4E5F6","w":"square","n":[[72,110],[76,110],[79,110],[84,340]]}
 {"t":"fx","dev":"A1B2C3D4E5F6","k":"denied"}
-{"t":"cfg","dev":"A1B2C3D4E5F6","hold":2000,"flash":2000}
+{"t":"cfg","dev":"A1B2C3D4E5F6","hold":2000,"flash":2000,"bright":80,"pulse":"solid"}
 {"t":"id","dev":"A1B2C3D4E5F6"}
 ```
 
 - `led` — colour `c` and mode `m`. The only message a minimal device has to understand. For `pulse` and `flash` the host adds `p`: how many milliseconds into the cycle the light should already be. Start your animation there and the whole table breathes and blinks in step; ignore it and you'll merely be a little out of time.
 - `snd` — a jingle as `[midiNote, milliseconds]` pairs; note `0` is a rest. `w` is the waveform (`square`, `triangle`, `sawtooth`, `sine`) — a piezo can ignore it. Every built-in jingle fits in one packet.
 - `fx` — a canned reaction the device renders however it likes: `ack` (small happy blip), `denied` (red flash and a buzz), `confirm`. Optional extras a multi-pixel device may render: `ripple` (one front, centre to rim, in the current colour), `burst` (white flash that collapses outward), `sparkle` (half a second of twinkles). Unknown kinds are ignored.
-- `cfg` — settings, all in ms: `hold` is the hold time, `flash` is the full on-off cycle of `flash` mode.
+- `cfg` — settings. `hold` is the hold time and `flash` the full on-off cycle of `flash` mode, both in ms. `bright` (0–100, optional) is how much of the device's full output to use: the host's brightness slider times the player's own. `pulse` (optional) is how this button should draw the `pulse` mode: `pulse` (breathe, the default), `solid` or `heartbeat`. The meaning on the wire never changes — `pulse` still says "your move" — only the look does, because a light that breathes all evening turned out to be too much for some people. The host picks a table-wide look and each player can override it for their own button from their phone.
 - `id` — "blink white for a second" so a human can tell which button is which.
 
 Unknown message types and unknown fields must be ignored, by everyone. That's what lets v1 devices survive a v2 host.

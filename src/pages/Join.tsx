@@ -6,10 +6,10 @@ import { playSound, unlockAudio, type Playing } from '../audio/synth';
 import { Device } from '../components/Device';
 import { Scoreboard } from '../components/game/Scoreboard';
 import { useReactions } from '../components/game/useReactions';
-import { IconClose, IconPlay, IconUpload } from '../components/Icons';
+import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode } from '../engine/engine';
-import { UNCLAIMED, deriveOutputs, type DeviceOutput } from '../engine/outputs';
+import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook } from '../engine/outputs';
 import type { GameState, SoundRef } from '../engine/types';
 import type { GameRecord } from '../remote/sync';
 import { snapshotOf } from '../remote/messages';
@@ -166,6 +166,7 @@ function PhoneButton({ code }: { code: string }) {
   const profiles = useStore(profilesStore);
   const [view, setView] = useState<'button' | 'table'>('button');
   const [editing, setEditing] = useState(false);
+  const [tuning, setTuning] = useState(false);
   const [oops, setOops] = useState<string | null>(null);
   /** null: not decided yet (follows the game); true: showing the question; false: answered or skipped. */
   const [asking, setAsking] = useState<boolean | null>(null);
@@ -183,6 +184,9 @@ function PhoneButton({ code }: { code: string }) {
   const outputs = useMemo(() => (game ? deriveOutputs(game) : []), [game]);
   const reactions = useReactions(game ?? EMPTY);
   const output = seat >= 0 ? outputs[seat] : game?.seating ? UNCLAIMED : OFF;
+  // How "your move" is drawn: my own taste if I've set one, else the table's.
+  const tableLook: TurnLook = record?.settings.turnLight ?? 'pulse';
+  const look: TurnLook = me?.light ?? tableLook;
   const table = useMemo(() => (game ? snapshotOf(game) : null), [game]);
 
   // The question is asked once per game: the first time this phone shows up in a game that doesn't know it.
@@ -270,7 +274,10 @@ function PhoneButton({ code }: { code: string }) {
     >
       <header className="join__top">
         {me ? (
-          <button type="button" className="btn btn--sm" onClick={() => setEditing(true)}>{me.name} · profile</button>
+          <span className="join__me">
+            <button type="button" className="btn btn--sm" onClick={() => setEditing(true)}>{me.name} · profile</button>
+            <button type="button" className="btn btn--sm btn--icon btn--ghost" title="Your light" aria-label="Your light" onClick={() => setTuning(true)}><IconGear /></button>
+          </span>
         ) : (
           <button type="button" className="btn btn--sm btn--ghost" onClick={() => setAsking(true)}>Who are you?</button>
         )}
@@ -282,6 +289,7 @@ function PhoneButton({ code }: { code: string }) {
       <Device
         color={live ? output.color : '#ffffff'}
         mode={live ? output.mode : 'off'}
+        look={look}
         size={size}
         holdMs={record?.settings.holdMs ?? 2000}
         label="Your button"
@@ -301,6 +309,9 @@ function PhoneButton({ code }: { code: string }) {
       <p className="join__help">Game {code} · Tap: done · Double-tap: strategy card · Hold: end turn</p>
       {tabs}
 
+      {tuning && me && (
+        <LightSheet me={me} tableLook={tableLook} onEdit={(patch) => patchProfile(me.id, patch)} onClose={() => setTuning(false)} />
+      )}
       {editing && me && (
         <ProfileSheet
           me={me}
@@ -353,6 +364,45 @@ export function WhoAreYou({ profiles, first = [], onPick, onCreate, onSkip, eyeb
         <button type="submit" className="btn btn--gold" disabled={!name.trim()}>That's me</button>
       </form>
       {onSkip && <button type="button" className="btn btn--sm btn--ghost" onClick={onSkip}>Skip: just be a button</button>}
+    </div>
+  );
+}
+
+/** The cog: how this player's own light behaves. Saved with their profile, so it follows them to the next game. */
+export function LightSheet({ me, tableLook, onEdit, onClose }: {
+  me: Pick<Profile, 'light' | 'brightness'>;
+  tableLook: TurnLook;
+  onEdit(patch: { light?: TurnLook; brightness?: number }): void;
+  onClose(): void;
+}) {
+  const bright = clampBrightness(me.brightness);
+  return (
+    <div className="sheet" role="dialog" aria-label="Your light">
+      <div className="sheet__card panel">
+        <div className="sheet__head">
+          <span className="eyebrow">Your light</span>
+          <button type="button" className="tour__close" aria-label="Close" onClick={onClose}><IconClose /></button>
+        </div>
+        <div className="field" role="radiogroup" aria-label="When it's your move">
+          <span>When it's your move</span>
+          <div className="looks">
+            <button type="button" role="radio" aria-checked={!me.light} title="Whatever the host picked for the table" onClick={() => onEdit({ light: undefined })}>Table's</button>
+            {TURN_LOOKS.map((l) => (
+              <button key={l.id} type="button" role="radio" aria-checked={me.light === l.id} title={l.hint} onClick={() => onEdit({ light: l.id })}>{l.name}</button>
+            ))}
+          </div>
+          <small className="muted">{me.light ? TURN_LOOKS.find((l) => l.id === me.light)!.hint : `The table's choice right now: ${TURN_LOOKS.find((l) => l.id === tableLook)!.name.toLowerCase()}`}</small>
+        </div>
+        <label className="field">
+          <span>Brightness <b className="mono-num">{Math.round(bright * 100)}%</b></span>
+          <input type="range" min={0.1} max={1} step={0.05} value={bright} onChange={(e) => onEdit({ brightness: +e.target.value })} />
+          <small className="muted">Your real button, if you have one. Your phone stays as it is.</small>
+        </label>
+        <div className="sheet__foot">
+          <span />
+          <button type="button" className="btn btn--gold" onClick={onClose}>Done</button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -13,6 +13,7 @@
   -webkit-user-select: none;
 }
 .join__top { width: 100%; display: flex; justify-content: space-between; align-items: center; }
+.join__me { display: inline-flex; align-items: center; gap: 6px; }
 .join__link { font: 700 11px/1 var(--font-d); letter-spacing: 0.18em; text-transform: uppercase; color: var(--ok); }
 .join__link[data-link='lost'], .join__link[data-link='connecting'] { color: var(--gold); animation: blink 1.2s steps(2) infinite; }
 .join__who {

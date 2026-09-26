@@ -1,8 +1,8 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import type { LedMode } from '../engine/outputs';
+import type { LedMode, TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
-import { PULSE_MS } from '../hardware/protocol';
+import { HEARTBEAT_MS, PULSE_MS } from '../hardware/protocol';
 import '../styles/device.css';
 
 /** Presses shorter than this are taps; longer ones that let go early are abandoned holds. */
@@ -18,6 +18,8 @@ export interface DeviceHandle {
 interface Props {
   color: string;
   mode: LedMode;
+  /** How `pulse` is drawn: the player's or the table's taste. Defaults to breathing. */
+  look?: TurnLook;
   size?: number;
   holdMs?: number;
   /** 1 = just the dome. 3 = dome plus strategy and pass shortcuts. */
@@ -32,7 +34,7 @@ interface Props {
 }
 
 export const Device = forwardRef<DeviceHandle, Props>(function Device(
-  { color, mode, size = 140, holdMs = 2000, buttons = 1, pan = 0, label, hotkey, react, silent, onInput },
+  { color, mode, look = 'pulse', size = 140, holdMs = 2000, buttons = 1, pan = 0, label, hotkey, react, silent, onInput },
   ref,
 ) {
   const [pressed, setPressed] = useState(false);
@@ -52,9 +54,9 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
-    const period = mode === 'pulse' ? PULSE_MS : mode === 'flash' ? parseFloat(getComputedStyle(el).getPropertyValue('--flash-ms')) || 2000 : 0;
+    const period = mode === 'pulse' ? (look === 'heartbeat' ? HEARTBEAT_MS : look === 'solid' ? 0 : PULSE_MS) : mode === 'flash' ? parseFloat(getComputedStyle(el).getPropertyValue('--flash-ms')) || 2000 : 0;
     el.style.animationDelay = period ? `-${Date.now() % period}ms` : '';
-  }, [mode]);
+  }, [mode, look]);
 
   const clear = () => {
     timers.current.forEach((t) => window.clearTimeout(t));
@@ -126,6 +128,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
       className="dev"
       style={style}
       data-mode={mode}
+      data-look={mode === 'pulse' && look !== 'pulse' ? look : undefined}
       data-pressed={pressed || undefined}
       data-holding={(pressed && !held) || undefined}
       data-held={held || undefined}

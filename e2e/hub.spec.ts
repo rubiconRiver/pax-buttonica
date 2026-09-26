@@ -27,7 +27,8 @@ test('connecting asks the hub to announce itself and configures every button tha
   await startWithHub(page);
   const out = await sent(page);
   expect(out[0]).toEqual({ t: 'hub?' });
-  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 2000, flash: 2000 });
+  // Settings for the table, and how to draw "your move" (solid, unless the host or the player says otherwise) at full brightness.
+  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 2000, flash: 2000, bright: 100, pulse: 'solid' });
   // A later hello may be a heartbeat, or the same button back from a battery swap with its memory wiped.
   // Either way it is told its settings and its light again.
   const leds = (await sent(page)).filter((m) => m.t === 'led' && m.dev === A).length;
@@ -133,7 +134,26 @@ test('settings reach the buttons live', async ({ page }) => {
   const panel = await openSettings(page);
   await setSlider(panel.locator('input[type=range]').first(), 1500);
   await setSlider(panel.locator('input[type=range]').nth(1), 3000);
-  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000 });
+  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000, bright: 100, pulse: 'solid' });
+});
+
+test('the look of "your move" and the brightness are configuration, not a different light', async ({ page }) => {
+  const table = await startWithHub(page);
+  for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await table.expectPhase('Strategy');
+  // The wire still says pulse: the button decides what that looks like from its cfg.
+  expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse' });
+  const panel = await openSettings(page);
+  await panel.getByRole('radio', { name: 'Breathe' }).click();
+  await panel.getByRole('radio', { name: 'Heartbeat' }).click();
+  await setSlider(panel.locator('input[type=range]').nth(2), 0.5);
+  const cfgs = (await sent(page)).filter((m) => m.t === 'cfg' && m.dev === A);
+  expect(cfgs.at(-1)).toEqual({ t: 'cfg', dev: A, hold: 2000, flash: 2000, bright: 50, pulse: 'heartbeat' });
+  expect(cfgs.some((m) => m.pulse === 'pulse')).toBe(true);
+  // No new light was sent for it: the colour and meaning didn't change.
+  expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse' });
+  // The screen's button follows the same choice.
+  await expect(table.light('Ana')).toHaveAttribute('data-look', 'heartbeat');
 });
 
 test('a button that drops off is left alone, and caught up when it returns', async ({ page }) => {

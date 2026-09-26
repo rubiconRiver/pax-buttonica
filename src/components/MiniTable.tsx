@@ -89,6 +89,7 @@ function MiniTableView({ game }: { game: GameState }) {
             count={n}
             player={p}
             output={outputs[seat]}
+            look="pulse"
             size={92}
             holdMs={2000}
             isSpeaker={game.speaker === seat}

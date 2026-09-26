@@ -10,6 +10,7 @@ import { profilesStore } from '../state/profiles';
 import { createStore } from '../state/createStore';
 import { liveGame } from '../state/game';
 import { settingsStore } from '../state/settings';
+import type { TurnLook } from '../engine/outputs';
 import type { GameState } from '../engine/types';
 import type { GameEvent } from '../engine/engine';
 import { apiJson, hostKey } from './key';
@@ -17,7 +18,7 @@ import { apiJson, hostKey } from './key';
 /** What goes to the site: the whole state, plus the settings a phone needs to behave like a button. */
 export interface GameRecord {
   state: GameState;
-  settings: { holdMs: number; flashMs: number };
+  settings: { holdMs: number; flashMs: number; turnLight?: TurnLook };
   /** How the game began; with the events, enough to rebuild it anywhere. */
   base?: GameState;
 }
@@ -59,8 +60,8 @@ let started = false;
 let unsubscribe: (() => void)[] = [];
 
 const recordOf = (game: GameState): GameRecord => {
-  const { holdMs, flashMs } = settingsStore.get();
-  return { state: game, settings: { holdMs, flashMs } };
+  const { holdMs, flashMs, turnLight } = settingsStore.get();
+  return { state: game, settings: { holdMs, flashMs, turnLight } };
 };
 
 function listPhones() {

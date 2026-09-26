@@ -67,6 +67,8 @@ static Mode mode = MODE_OFF;
 static uint32_t modeSince = 0;
 static uint32_t holdMs = 2000;
 static uint32_t flashMs = 2000;
+static float brightScale = 1.0f;   // cfg "bright", 0..1: the host's share of MAX_BRIGHTNESS
+static Mode pulseLook = MODE_PULSE; // cfg "pulse": how "your move" is drawn (pulse, solid or heartbeat)
 static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
 static uint32_t pressedAt = 0;     // for the press blip
 
@@ -285,7 +287,9 @@ static float smooth(float p) { return 0.5f - 0.5f * cosf(p * 2.0f * PI); }   // 
 // How bright the whole button is right now, 0..1, for the uniform modes. Mirrors the simulator's CSS.
 static float luminance(uint32_t now) {
   const uint32_t t = now - modeSince;
-  switch (mode) {
+  // "pulse" means "your move"; the host says how each button should draw it
+  const Mode drawn = mode == MODE_PULSE ? pulseLook : mode;
+  switch (drawn) {
     case MODE_OFF: return 0;
     case MODE_DIM: return DIM_LEVEL;
     case MODE_SOLID: return 1;
@@ -367,7 +371,7 @@ static float pixelLuminance(int i, uint32_t now) {
 
 // Gamma-correct the colour, then scale it. Correcting after scaling crushed "dim" to nothing.
 static uint32_t scaled(uint8_t r, uint8_t g, uint8_t b, float level) {
-  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS;
+  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * brightScale;
   return ring.Color((uint8_t)(ring.gamma8(r) * level), (uint8_t)(ring.gamma8(g) * level), (uint8_t)(ring.gamma8(b) * level));
 }
 
@@ -377,7 +381,7 @@ static void render() {
   for (int i = 0; i < LED_COUNT; i++) {
     if (mode == MODE_RAINBOW) {
       const uint16_t hue = (uint16_t)((now * 30UL) + (uint32_t)(angOf[i] * 65536.0f));
-      ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * MAX_BRIGHTNESS))));
+      ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * MAX_BRIGHTNESS * brightScale))));
     } else {
       float lum = pixelLuminance(i, now);
       // a short brightening the instant the button goes down, so the press feels answered before the radio has spoken
@@ -536,6 +540,11 @@ static void handle(const Packet &p) {
   } else if (!strcmp(type, "cfg")) {
     holdMs = constrain((uint32_t)(doc["hold"] | (int)holdMs), 300UL, 10000UL);
     flashMs = constrain((uint32_t)(doc["flash"] | (int)flashMs), 300UL, 10000UL);
+    if (doc["bright"].is<int>()) brightScale = constrain((int)doc["bright"], 5, 100) / 100.0f;
+    if (doc["pulse"].is<const char*>()) {
+      const Mode look = parseMode(doc["pulse"]);
+      pulseLook = (look == MODE_SOLID || look == MODE_HEARTBEAT) ? look : MODE_PULSE;
+    }
   } else if (!strcmp(type, "id")) {
     setOverlay(FX_IDENTIFY);
   } else if (!strcmp(type, "hub")) {

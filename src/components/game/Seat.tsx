@@ -1,6 +1,6 @@
 import { forwardRef, type CSSProperties } from 'react';
 import { cardByNumber, colorById } from '../../engine/data';
-import type { DeviceOutput } from '../../engine/outputs';
+import type { DeviceOutput, TurnLook } from '../../engine/outputs';
 import type { DeviceInput, Player } from '../../engine/types';
 import { Device, type DeviceHandle } from '../Device';
 import { IconGavel } from '../Icons';
@@ -12,6 +12,8 @@ interface Props {
   count: number;
   player: Player;
   output: DeviceOutput;
+  /** How this player's "your move" is drawn. */
+  look: TurnLook;
   size: number;
   holdMs: number;
   isSpeaker: boolean;
@@ -24,7 +26,7 @@ interface Props {
 }
 
 export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
-  { spot, count, player, output, size, holdMs, isSpeaker, hasZero, isActive, liveMs, explain, react, onInput },
+  { spot, count, player, output, look, size, holdMs, isSpeaker, hasZero, isActive, liveMs, explain, react, onInput },
   ref,
 ) {
   const pos = seatPosition(spot, count);
@@ -41,6 +43,7 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
         ref={ref}
         color={output.color}
         mode={output.mode}
+        look={look}
         size={size}
         holdMs={holdMs}
         buttons={player.buttons}
@@ -84,12 +87,12 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
 });
 
 /** A button nobody has claimed yet. */
-export const OpenSpot = forwardRef<DeviceHandle, { spot: number; count: number; size: number; holdMs: number; output: DeviceOutput; onInput(input: DeviceInput): void }>(
-  function OpenSpot({ spot, count, size, holdMs, output, onInput }, ref) {
+export const OpenSpot = forwardRef<DeviceHandle, { spot: number; count: number; size: number; holdMs: number; output: DeviceOutput; look: TurnLook; onInput(input: DeviceInput): void }>(
+  function OpenSpot({ spot, count, size, holdMs, output, look, onInput }, ref) {
     const pos = seatPosition(spot, count);
     return (
       <div className="seat seat--open" data-above={pos.above || undefined} style={{ '--x': pos.x, '--y': pos.y, '--pc': '#ffffff', '--size': `${size}px` } as CSSProperties}>
-        <Device ref={ref} color={output.color} mode={output.mode} size={size} holdMs={holdMs} pan={pos.pan} hotkey={String(spot + 1)} label={`Unclaimed button ${spot + 1}`} onInput={onInput} />
+        <Device ref={ref} color={output.color} mode={output.mode} look={look} size={size} holdMs={holdMs} pan={pos.pan} hotkey={String(spot + 1)} label={`Unclaimed button ${spot + 1}`} onInput={onInput} />
         <div className="plate">
           <div className="plate__row"><span className="plate__name plate__name--open">Unclaimed</span></div>
         </div>

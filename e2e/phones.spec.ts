@@ -1,5 +1,5 @@
 import { FakeApi } from './api';
-import { Board, Table, expect, liveGame, readStorage, setUpGame, test } from './helpers';
+import { Board, Table, expect, liveGame, readStorage, setSlider, setUpGame, test } from './helpers';
 import { pickCards } from './flows';
 import { gameCode, openPhone, tick, tinyWav } from './phones';
 
@@ -139,6 +139,33 @@ test('two phones, two players: each sees only their own light', async ({ page, c
   await ana.expectLight('dim');
   await ben.expectLight('pulse');
   await table.expectActive('Ben');
+});
+
+test('the cog on the phone: how your own light shows "your move", saved with your profile and mirrored on the big screen', async ({ page, context }) => {
+  const { api, code, table } = await hostWithSite(page, context);
+  const phone = await openPhone(context, code);
+  await phone.iAm('Ana');
+  await tick([page, phone.page]);
+  await table.tapKey('2');
+  await table.tapKey('3');
+  await pickCards(table, SIX);
+  await tick([page, phone.page]);
+  await phone.expectLight('pulse');
+  await expect(phone.light, "the table's default: solid").toHaveAttribute('data-look', 'solid');
+
+  await phone.page.getByRole('button', { name: 'Your light' }).click();
+  const sheet = phone.page.getByRole('dialog', { name: 'Your light' });
+  await sheet.getByRole('radio', { name: 'Breathe' }).click();
+  await expect(phone.light).not.toHaveAttribute('data-look');
+  await sheet.getByRole('radio', { name: 'Heartbeat' }).click();
+  await expect(phone.light).toHaveAttribute('data-look', 'heartbeat');
+  await setSlider(sheet.locator('input[type=range]'), 0.5);
+  await tick([page, phone.page], 6);
+  await expect(table.light('Ana'), 'her own choice wins on the big screen too').toHaveAttribute('data-look', 'heartbeat');
+  expect(api.named('Ana')).toMatchObject({ light: 'heartbeat', brightness: 0.5 });
+  // Back to the table's choice.
+  await sheet.getByRole('radio', { name: "Table's" }).click();
+  await expect(phone.light).toHaveAttribute('data-look', 'solid');
 });
 
 test('someone new adds themselves from their phone; they are saved, but not seated', async ({ page, context }) => {

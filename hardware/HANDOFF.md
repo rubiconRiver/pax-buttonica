@@ -1,6 +1,6 @@
 # Hardware handoff
 
-Where the physical side stands, for whoever (or whichever session) picks it up. Updated 2026-09-24.
+Where the physical side stands, for whoever (or whichever session) picks it up. Updated 2026-09-26.
 
 ## First run on real parts: 2026-09-24
 
@@ -9,6 +9,14 @@ One hub Atom and one button Atom + Key Unit + NeoHEX on a PortABC base, both on 
 ## Deadline
 
 Game night is roughly the first days of October 2026. Six buttons and one hub have to work by then. Favour whatever gets working buttons on the table over elegance.
+
+## Light settings (2026-09-26)
+
+Garett found a button breathing all evening annoying, and wanted the brightness adjustable. Done across both lanes in one commit (the app checkout was clean, and he asked this session to do it): `cfg` now carries `bright` (0–100) and `pulse` (`pulse` | `solid` | `heartbeat`, how to draw "your move"); the wire's `led` still says `pulse`, so no light expectation changed. Host settings: "Your move" light (solid by default) and Button brightness. Each player has a cog on their phone ("Your light": Table's / Solid / Breathe / Heartbeat, and their own brightness), saved on their profile (`light`, `brightness`), so the host applies it per seat and it follows them to the next game. Firmware honours both; compiled, not yet flashed. **For the app session:** `src/hardware/serial.ts` gained `SeatPrefs` and `cfgFrame()`; `Device` has a `look` prop; the API's profile whitelist passes the two fields.
+
+## Power (2026-09-26)
+
+The 4×AA plan is being replaced by a 3.7 V pouch cell and a Seeed Lipo Rider Plus (DigiKey.ca 106990290, $7.18 CAD): USB-C in to charge, JST-PH 2.0 for the cell, switched 5 V USB-A out to the Atom over a short A-to-C cable. DigiKey.ca no longer stocks Adafruit or SparkFun cells; the pouch (EEMB, 3000–5000 mAh, JST-PH 2.0, with protection) comes from Amazon.ca. Check the JST polarity with the DMM before the first plug-in. The plinth in `make_shell.py` still models the AA holder and needs redoing once the cell size is known.
 
 ## Effects lab (2026-09-24)
 

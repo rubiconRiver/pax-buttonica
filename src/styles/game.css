@@ -82,6 +82,24 @@
 .field { display: grid; gap: 6px; font-size: 13px; color: var(--muted); }
 .field span { display: flex; justify-content: space-between; }
 .field b { color: var(--text); }
+.field small { display: block; font-size: 11.5px; line-height: 1.35; }
+/* A row of choices, one lit: how a light is drawn. */
+.looks { display: flex; border: 1px solid var(--line-2); background: #080b13; }
+.looks button {
+  flex: 1;
+  padding: 8px 4px;
+  border: 0;
+  border-right: 1px solid var(--line-2);
+  background: none;
+  color: var(--muted);
+  font: 700 11.5px/1 var(--font-d);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.looks button:last-child { border-right: 0; }
+.looks button:hover { color: var(--text); }
+.looks button[aria-checked='true'] { color: #fff; background: linear-gradient(180deg, rgba(242, 184, 75, 0.32), rgba(242, 184, 75, 0.12)); text-shadow: 0 0 10px rgba(242, 184, 75, 0.8); }
 .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .toggle input { accent-color: var(--gold); width: 15px; height: 15px; }
 .toggle:hover { color: var(--text); }

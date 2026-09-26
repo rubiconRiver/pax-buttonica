@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
 import { settingsStore } from '../../state/settings';
+import { TURN_LOOKS } from '../../engine/outputs';
 import { syncStatus } from '../../remote/sync';
 import { exportGame } from '../../state/archive';
 import { liveGame } from '../../state/game';
@@ -33,6 +34,19 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
       <label className="field">
         <span>Strategy card blink <b className="mono-num">{(s.flashMs / 1000).toFixed(1)}s</b></span>
         <input type="range" min={600} max={4000} step={100} value={s.flashMs} onChange={(e) => set({ flashMs: +e.target.value })} />
+      </label>
+      <div className="field" role="radiogroup" aria-label="Your-move light">
+        <span>"Your move" light</span>
+        <div className="looks">
+          {TURN_LOOKS.map((l) => (
+            <button key={l.id} type="button" role="radio" aria-checked={s.turnLight === l.id} title={l.hint} onClick={() => set({ turnLight: l.id })}>{l.name}</button>
+          ))}
+        </div>
+        <small className="muted">Players can pick their own from their phone.</small>
+      </div>
+      <label className="field" title="Real buttons only. The screen's buttons don't change.">
+        <span>Button brightness <b className="mono-num">{Math.round(s.brightness * 100)}%</b></span>
+        <input type="range" min={0.1} max={1} step={0.05} value={s.brightness} onChange={(e) => set({ brightness: +e.target.value })} />
       </label>
       <label className="field">
         <span>Volume <b className="mono-num">{Math.round(s.volume * 100)}%</b></span>
