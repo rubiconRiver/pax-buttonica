@@ -156,7 +156,7 @@ SLOT_LEAN = 12.0         # degrees back from vertical
 # ── which build ─────────────────────────────────────────────────────────────
 # USB_POWERED: no deck; the body sits on the table and the laptop's USB-C cable runs out through a notch
 # in the bottom of the -x wall. False: the battery build, with the Rider's cable up through the floor.
-USB_POWERED = True
+USB_POWERED = os.environ.get('PAX_BATTERY', '0') != '1'   # PAX_BATTERY=1 .venv/bin/python make_shell_mini.py -> the battery build into stl-mini-battery/
 USB_NOTCH = (12.0, 8.0)  # width, height of that notch
 
 # ── derived ─────────────────────────────────────────────────────────────────
@@ -444,14 +444,15 @@ if __name__ == '__main__':
     if not USB_POWERED:
         printed['deck'] = deck()
     flipped = {'cap'}                          # flat face on the bed; the deck prints tray-up; the cage prints cup-down, legs up
-    os.makedirs(os.path.join(HERE, 'stl-mini'), exist_ok=True)
+    OUT = 'stl-mini' if USB_POWERED else 'stl-mini-battery'
+    os.makedirs(os.path.join(HERE, OUT), exist_ok=True)
 
     print(f'base {TURRET_F:.0f} mm across flats plus a {RAIL_D:.0f} mm card rail behind, '
           f'{CAP_TOP - DECK_Z0:.1f} mm tall, cap top {CAP_D - 2 * CAP_CHAMFER:.0f} mm, '
           f'Atom face {KEYCAP_TOP:.1f} above the floor, hex LEDs at {HEX_TOP:.1f}, cap shows {CAP_EXPOSED:.1f} above the bezel')
     for name, solid in {**printed, 'fit_test': fit_test()}.items():
         out = for_printing(solid, name in flipped)
-        write_stl(out, os.path.join(HERE, 'stl-mini', f'{name}.stl'))
+        write_stl(out, os.path.join(HERE, OUT, f'{name}.stl'))
         bb = out.bounding_box()
         print(f'  {name:9s} {bb[3] - bb[0]:6.1f} x {bb[4] - bb[1]:5.1f} x {bb[5] - bb[2]:5.1f} mm  '
               f'{out.volume() / 1000:6.1f} cm3 solid  genus {out.genus()}')
@@ -481,5 +482,5 @@ if __name__ == '__main__':
                'cell': '#8a8a55', 'rider': '#1b5e20', 'card': '#c8a165', 'nub': '#e07b39'}
     everything = {k: v for k, v in printed.items() if k != 'spring'}
     everything.update({k: v for k, v in bought_parts().items() if not (USB_POWERED and k in ('cell', 'rider', 'card'))}); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
-    section_svg(everything, colours, os.path.join(HERE, 'section-mini-front.svg'), 'xz')
-    section_svg(everything, colours, os.path.join(HERE, 'section-mini-side.svg'), 'yz')
+    section_svg(everything, colours, os.path.join(HERE, f'section-{OUT}-front.svg'), 'xz')
+    section_svg(everything, colours, os.path.join(HERE, f'section-{OUT}-side.svg'), 'yz')
