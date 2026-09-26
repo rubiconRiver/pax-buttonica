@@ -147,6 +147,12 @@ SLOT_W = 4.5             # the groove: one sleeved card loosely, two snugly
 SLOT_DEPTH = 14.0
 SLOT_LEAN = 12.0         # degrees back from vertical
 
+# ── which build ─────────────────────────────────────────────────────────────
+# USB_POWERED: no deck; the body sits on the table and the laptop's USB-C cable runs out through a notch
+# in the bottom of the -x wall. False: the battery build, with the Rider's cable up through the floor.
+USB_POWERED = True
+USB_NOTCH = (12.0, 8.0)  # width, height of that notch
+
 # ── derived ─────────────────────────────────────────────────────────────────
 SEG = 128
 CAP_R = CAP_D / 2
@@ -239,8 +245,12 @@ def body():
     cuts = [cyl(TAP_D, FLOOR_T + 8, x, y, -FLOOR_T - 1, seg=24) for x, y in DECK_SCREWS]
     for a in SPRING_ANGLES:
         cuts.append(box(SPRING_R0 - 0.3, -SPRING_D / 2 - 0.3, -1.2, SPRING_W + 0.6, SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
-    # the Rider's cable comes up through the floor beside the Atom's USB-C and plugs in
-    cuts.append(cbox(-ATOM[0] / 2 - 15, 0, -FLOOR_T - 1, 8, 10, FLOOR_T + 2))
+    if USB_POWERED:
+        # the laptop's cable plugs into the Atom and runs out along the table through the -x wall
+        cuts.append(cbox(-FLAT_X, 0, -FLOOR_T - 1, 2 * (FLAT_X - BORE_R) + 4, USB_NOTCH[0], USB_NOTCH[1] + FLOOR_T + 1))
+    else:
+        # the Rider's cable comes up through the floor beside the Atom's USB-C and plugs in
+        cuts.append(cbox(-ATOM[0] / 2 - 15, 0, -FLOOR_T - 1, 8, 10, FLOOR_T + 2))
     cuts += [cyl(TAP_D, 9.01, x, y, WALL_TOP - 9, seg=24) for x, y in corners(BEZEL_SCREW_R)]
     return solid - union(cuts)
 
@@ -414,7 +424,9 @@ def section_svg(solids, colours, path, plane):
 
 
 if __name__ == '__main__':
-    printed = {'deck': deck(), 'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
+    printed = {'body': body(), 'cap': cap(), 'cage': cage(), 'bezel': bezel(), 'spring': spring(SPRING_FREE)}
+    if not USB_POWERED:
+        printed['deck'] = deck()
     flipped = {'cap'}                          # flat face on the bed; the deck prints tray-up; the cage prints cup-down, legs up
     os.makedirs(os.path.join(HERE, 'stl-mini'), exist_ok=True)
 
@@ -432,6 +444,8 @@ if __name__ == '__main__':
     for pressed in (False, True):
         state = {**printed, **bought_parts(pressed)}
         del state['spring']
+        if USB_POWERED:
+            for k in ('cell', 'rider', 'card'): state.pop(k, None)
         state['springs'] = springs_in_place((FLANGE_BOTTOM - 1.2 if not pressed else WALL_TOP - 1.2) - 0.05)   # as compressed by the flange
         if pressed:
             state['cap'] = state['cap'].translate([0, 0, -TRAVEL])
@@ -450,6 +464,6 @@ if __name__ == '__main__':
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'splitter': '#d8d8d8',
                'cell': '#8a8a55', 'rider': '#1b5e20', 'card': '#c8a165'}
     everything = {k: v for k, v in printed.items() if k != 'spring'}
-    everything.update(bought_parts()); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
+    everything.update({k: v for k, v in bought_parts().items() if not (USB_POWERED and k in ('cell', 'rider', 'card'))}); everything['springs'] = springs_in_place(FLANGE_BOTTOM - 1.25)
     section_svg(everything, colours, os.path.join(HERE, 'section-mini-front.svg'), 'xz')
     section_svg(everything, colours, os.path.join(HERE, 'section-mini-side.svg'), 'yz')
