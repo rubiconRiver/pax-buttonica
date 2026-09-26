@@ -19,7 +19,7 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.2.0"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet

@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<title>Pax Buttonica Flasher</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600;700&display=swap">
+<script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+<style>
+  :root {
+    --bg: #04060b; --bg-2: #0a0e18; --panel: #0d121e; --line: rgba(150, 172, 225, 0.16); --line-2: rgba(150, 172, 225, 0.32);
+    --text: #e6ebf7; --muted: #8d97af; --faint: #5b6480; --gold: #f2b84b; --gold-2: #ffdf9a; --ok: #3ce08a; --cyan: #5ad1ff; --danger: #ff5468;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 860px; margin-inline: auto; display: grid; gap: 18px; }
+  h1, h2 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
+  h1 { font-size: 28px; font-weight: 700; }
+  h2 { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 70ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 16px 18px 18px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1d2437, #121727); border: 1px solid var(--line-2); padding: 9px 14px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn.primary { color: var(--bg); background: linear-gradient(#ffd47c, #e9a02b); border-color: transparent; }
+  .btn:disabled { opacity: 0.5; cursor: default; }
+  .hint { color: var(--faint); font-size: 12.5px; }
+  .who { font: 600 16px var(--font-d); min-height: 1.4em; }
+  .who b { color: var(--gold-2); }
+  .who .id { color: var(--cyan); font-family: ui-monospace, Menlo, monospace; font-size: 14px; }
+  .who .bad { color: var(--danger); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+  .ver { color: var(--muted); font-size: 12.5px; }
+  ol { margin: 0; padding-left: 20px; color: var(--muted); }
+  ol li { margin: 4px 0; }
+  esp-web-install-button::part(button) { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg); background: linear-gradient(#ffd47c, #e9a02b); border: 0; border-radius: 0; padding: 10px 16px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  esp-web-install-button { --esp-tools-button-color: var(--gold); --esp-tools-button-text-color: var(--bg); }
+  .log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); max-height: 160px; overflow: auto; background: var(--bg-2); padding: 10px 12px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · hardware</div>
+    <h1>Flasher</h1>
+    <p class="lede">Plug an Atom into this laptop with a data cable, find out what it is, and put the latest hub or button firmware on it. Nothing to install: the browser does the flashing. Chrome or Edge only. Close any other tab that has the hub connected first.</p>
+  </header>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>1 · Who is this?</h2>
+    <div class="row">
+      <button class="btn primary" id="who">Ask the Atom</button>
+      <span class="who" id="answer">Plug one in and ask.</span>
+    </div>
+    <div class="hint">A button answers with its id and blinks white, so you can tell which one is on the cable. A hub answers as a hub. A brand-new Atom says nothing (it only has the factory firmware), which is also an answer.</div>
+  </section>
+
+  <div class="grid2">
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>2a · Make it a hub</h2>
+      <p class="hint">The one that stays on the laptop's USB. Only one of these.</p>
+      <div class="row">
+        <esp-web-install-button manifest="/firmware/hub/manifest.json"><span slot="unsupported">This browser can't flash; use Chrome or Edge.</span></esp-web-install-button>
+        <span class="ver" id="hubver"></span>
+      </div>
+    </div></section>
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>2b · Make it a button</h2>
+      <p class="hint">The ones in the shells, with a key and a hex. Same firmware on every button; they tell themselves apart by their own ids.</p>
+      <div class="row">
+        <esp-web-install-button manifest="/firmware/button/manifest.json"><span slot="unsupported">This browser can't flash; use Chrome or Edge.</span></esp-web-install-button>
+        <span class="ver" id="buttonver"></span>
+      </div>
+    </div></section>
+  </div>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>How it goes</h2>
+    <ol>
+      <li>Plug the Atom in. Click <b>Ask the Atom</b> and pick the port called "USB JTAG/serial debug unit" (if two are listed, either works). It tells you what's on it now.</li>
+      <li>Click <b>Connect</b> under hub or button, pick the same port, choose <b>Install</b> in the dialog, wait for "Installation complete" (about 20 seconds), close it.</li>
+      <li>Click <b>Ask the Atom</b> again. It should now answer with the new version. Buttons blink white while they answer.</li>
+      <li>Do the hub first after a firmware change, then each button. A button flashed before its hub only reaches it by luck.</li>
+    </ol>
+    <div class="hint">If the install fails to connect, unplug and replug the Atom and try again; if it says the port is busy, another tab has it. The terminal alternative is <code>firmware/flash.sh hub</code> or <code>firmware/flash.sh button</code>.</div>
+  </section>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>What the Atom said</h2>
+    <div class="log" id="log"></div>
+  </section>
+</div>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const say = (t) => { const l = $('log'); l.textContent += t + '\n'; l.scrollTop = l.scrollHeight; };
+
+  // The versions on offer come from the manifests, so this page never lies about what it flashes.
+  for (const what of ['hub', 'button']) {
+    fetch(`/firmware/${what}/manifest.json`).then((r) => r.json()).then((m) => { $(what + 'ver').textContent = 'firmware ' + m.version; }).catch(() => { $(what + 'ver').textContent = 'no image published'; });
+  }
+
+  async function ask() {
+    const out = $('answer');
+    if (!navigator.serial) { out.innerHTML = '<span class="bad">This browser has no Web Serial. Use Chrome or Edge.</span>'; return; }
+    let port;
+    try { port = await navigator.serial.requestPort(); } catch { return; }
+    $('who').disabled = true;
+    out.textContent = 'Asking…';
+    let answered = null;
+    try {
+      await port.open({ baudRate: 115200 });
+      const writer = port.writable.getWriter();
+      await writer.write(new TextEncoder().encode('{"t":"who"}\n'));
+      writer.releaseLock();
+      const reader = port.readable.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      const until = Date.now() + 1800;
+      while (Date.now() < until && !answered) {
+        const chunk = await Promise.race([reader.read(), new Promise((r) => setTimeout(() => r({ value: null, done: false }), until - Date.now()))]);
+        if (chunk.done) break;
+        if (!chunk.value) continue;
+        buf += dec.decode(chunk.value);
+        let nl;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) continue;
+          say('← ' + line);
+          try {
+            const msg = JSON.parse(line);
+            if (msg.t === 'hub' || msg.t === 'button') { answered = msg; break; }
+          } catch { /* boot chatter */ }
+        }
+      }
+      reader.cancel().catch(() => {});
+      reader.releaseLock();
+      await port.close();
+    } catch (e) {
+      out.innerHTML = `<span class="bad">${e.message || e}</span>`;
+      $('who').disabled = false;
+      return;
+    }
+    if (!answered) {
+      out.innerHTML = '<span class="bad">No answer.</span> Either a brand-new Atom, or something other than our firmware. Flash it.';
+    } else if (answered.t === 'hub') {
+      out.innerHTML = `This is the <b>hub</b>, firmware <b>${answered.fw}</b>.`;
+    } else {
+      out.innerHTML = `This is a <b>button</b>, id <span class="id">${answered.dev}</span>, firmware <b>${answered.fw}</b>${answered.hub ? ', and it remembers a hub' : ', not yet paired with a hub'}. It's blinking.`;
+    }
+    $('who').disabled = false;
+  }
+  $('who').onclick = ask;
+</script>
+</body>
+</html>

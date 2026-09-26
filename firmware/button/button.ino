@@ -32,7 +32,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.1.0"
+#define FW_VERSION "0.2.0"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -590,6 +590,29 @@ static void handle(const Packet &p) {
   }
 }
 
+// ── USB serial ──────────────────────────────────────────────────────────────
+
+// Plugged into a laptop, the button says what it is when asked (the flashing page does this) and blinks
+// so you can see which one it is. Any line of JSON with no "dev" counts as "who are you?".
+static void serviceSerial() {
+  static char line[96];
+  static size_t n = 0;
+  while (Serial.available()) {
+    const char ch = (char)Serial.read();
+    if (ch == '\n' || ch == '\r') {
+      if (n > 0 && line[0] == '{' && !strstr(line, "\"dev\"")) {
+        Serial.printf("{\"t\":\"button\",\"dev\":\"%s\",\"fw\":\"%s\",\"hub\":%s}\n", devId, FW_VERSION, hubKnown ? "true" : "false");
+        setOverlay(FX_IDENTIFY);
+      }
+      n = 0;
+    } else if (n < sizeof(line) - 1) {
+      line[n++] = ch;
+    } else {
+      n = 0;
+    }
+  }
+}
+
 // ── Buttons ─────────────────────────────────────────────────────────────────
 
 // The big button may be wired to any of several pins (see config.h); an unconnected pin, pulled up, reads high.
@@ -714,7 +737,7 @@ void setup() {
     addPeer(hubMac);
   }
 
-  Serial.printf("Pax Buttonica button %s, fw %s\n", devId, FW_VERSION);
+  Serial.printf("{\"t\":\"button\",\"dev\":\"%s\",\"fw\":\"%s\",\"hub\":%s}\n", devId, FW_VERSION, hubKnown ? "true" : "false");
   setOverlay(FX_IDENTIFY);  // a blink on power-up: "I'm alive"
   sendHello();
 }
@@ -740,6 +763,7 @@ void loop() {
   if (SLEEP_AFTER_MINUTES > 0 && now - lastContact > (uint32_t)SLEEP_AFTER_MINUTES * 60000UL && !buttons[0].down) sleepUntilPressed();
 
   serviceButtons();
+  serviceSerial();
   audioService();
 
   if (now - lastFrame >= 16) {

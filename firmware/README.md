@@ -37,6 +37,10 @@ Until the sticker has been read, `config.h` treats every pin Port B could be as 
 
 The Atom's tiny onboard pixel mirrors the button's colour, so a bare Atom on a cable still shows what it has been told.
 
+## Flashing without a terminal
+
+`/flash.html` on the site flashes either sketch from Chrome over Web Serial, and its "Ask the Atom" button tells you what an Atom is running (a button answers with its id and blinks white; a hub answers as a hub). The images it serves live in `public/firmware/`; regenerate them with `firmware/export.sh` after changing firmware, then commit and deploy. `firmware/flash.sh hub|button` does the same from a terminal and finds the port itself.
+
 ## Power
 
 Since 2026-09-26 the button's radio sleeps between 30 ms listening windows every 200 ms and the hub resends until it is heard; the CPU runs at 80 MHz and `solid` is a bright rim with a softer centre. All of it is in `config.h` under Power. The hub must be flashed too, or lights will only reach a sleeping button by luck. `cfg` `ps: 0` keeps a button's radio on for comparison on a USB power meter.
