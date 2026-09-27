@@ -81,7 +81,7 @@
   <header style="display:flex;flex-direction:column;gap:10px">
     <div class="eyebrow">Pax Buttonica · no-solder build</div>
     <h1>Order sheet: six buttons and a hub</h1>
-    <p class="lede">Everything plugs together: the clicky key and the hex light board click into the ESP32 with short cables, and a lithium cell on a charger board runs it and charges in place over USB-C. No soldering iron. This is the second order, for the other five buttons and the power; the AA plan is gone. Prices read 2026-09-26.</p>
+    <p class="lede">Everything plugs together: the hex light board plugs straight into the ESP32, whose own button is the switch, and a lithium cell on a charger board runs it and charges in place over USB-C. No soldering iron. This is the second order, for the other five buttons and the power; the key, the splitter and the AA plan are gone. Prices read 2026-09-26.</p>
     <div class="progress"><div class="bar"><i id="fill"></i></div><div class="count" id="count">0 of 0</div></div>
   </header>
 
@@ -93,28 +93,20 @@
   </div></section>
 
   <section class="panel chamfer"><div class="in chamfer">
-    <div class="head"><div><h2>1 · DigiKey.ca, one order</h2><div class="sub">Free shipping over $100, usually next day. Prices read 2026-09-26.</div></div><div class="sum">about $190 before tax</div></div>
-    <div class="chain"><b>cell</b><i>JST →</i><b>Lipo Rider</b><i>USB-A → USB-C →</i><b>AtomS3 Lite</b><i>socket →</i><b>splitter</b><i>→</i><b>Key unit</b><i>+</i><b>NeoHEX</b></div>
-
-    <label class="item"><span><input type="checkbox" id="u144"><span class="box"></span></span>
-      <span><span class="name">M5Stack Mechanical Key Unit <small>U144</small></span><br><span class="note">The clicky switch under the cap. You have one; five more makes six.</span></span>
-      <span class="side"><span class="qty">5 <span>× $6.17</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/U144/16679757">DigiKey</a></span></label>
+    <div class="head"><div><h2>1 · DigiKey.ca, one order</h2><div class="sub">Free shipping over $100, usually next day. Prices read 2026-09-26.</div></div><div class="sum">about $120 before tax</div></div>
+    <div class="chain"><b>cell</b><i>JST →</i><b>Lipo Rider</b><i>USB-A → USB-C →</i><b>AtomS3 Lite</b><i>socket →</i><b>NeoHEX</b></div>
 
     <label class="item"><span><input type="checkbox" id="a035b"><span class="box"></span></span>
-      <span><span class="name">M5Stack NeoHEX 37-LED board <small>A045-B</small></span><br><span class="note">The light. You have one; five more. The firmware runs it at half brightness and still fills a room.</span></span>
+      <span><span class="name">M5Stack NeoHEX 37-LED board <small>A045-B</small></span><br><span class="note">The light. You have one; five more. It plugs straight into the Atom, whose own face button is the switch (the mini shell, 2026-09-26): no Key Unit, no splitter.</span></span>
       <span class="side"><span class="qty">5 <span>× $12.42</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/A045-B/16679754">DigiKey</a></span></label>
-
-    <label class="item"><span><input type="checkbox" id="u006"><span class="box"></span></span>
-      <span><span class="name">M5Stack Unit Hub, 1-to-3 splitter <small>U006</small></span><br><span class="note">One per button: the key and the hex share the Atom's own socket through it. Comes with a 20 cm cable you won't use.</span></span>
-      <span class="side"><span class="qty">6 <span>× $5.13</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/m5stack-technology-co-ltd/U006/12088551">DigiKey</a></span></label>
 
     <label class="item"><span><input type="checkbox" id="rider"><span class="box"></span></span>
       <span><span class="name">Seeed Lipo Rider Plus <small>106990290</small></span><br><span class="note">Charger and 5 V booster on one 25 × 41 mm board: USB-C in to charge (the port in the shell), JST-PH 2.0 for the cell, switched USB-A out to the Atom. Charges while the button runs. One spare.</span></span>
       <span class="side"><span class="qty">7 <span>× $7.18</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/detail/seeed-technology-co-ltd/106990290/10451861">DigiKey</a></span></label>
 
     <label class="item"><span><input type="checkbox" id="grove5"><span class="box"></span></span>
-      <span><span class="name">Grove 4-pin cables, 5 cm, 5-pack <small>Seeed 110990036</small></span><br><span class="note">Three short leads a button (key → splitter, hex → splitter, splitter → Atom) instead of the 20 cm ones the parts come with. Four packs is twenty, two spare.</span></span>
-      <span class="side"><span class="qty">4 <span>packs × ~$3</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/result?keywords=110990036">DigiKey</a></span></label>
+      <span><span class="name">Grove 4-pin cables, 5 cm, 5-pack <small>Seeed 110990036</small></span><br><span class="note">One short lead a button, hex to Atom, instead of the 20 cm one the hex comes with. Two packs is ten, four spare.</span></span>
+      <span class="side"><span class="qty">2 <span>packs × ~$3</span></span><a class="go" target="_blank" rel="noopener" href="https://www.digikey.ca/en/products/result?keywords=110990036">DigiKey</a></span></label>
   </div></section>
 
   <section class="panel chamfer"><div class="in chamfer">
@@ -158,18 +150,19 @@
   </div></section>
 
   <section class="panel chamfer"><div class="in chamfer">
-    <div class="head"><div><h2>What it comes to</h2><div class="sub">Six buttons and a hub, with a spare Rider and cell. Atoms, one key, one hex, screws and filament already owned.</div></div><div class="sum">about $400 before tax</div></div>
+    <div class="head"><div><h2>What it comes to</h2><div class="sub">Six buttons and a hub, with a spare Rider and cell. Atoms, one hex, screws and filament already owned.</div></div><div class="sum">about $330 before tax</div></div>
     <ul class="plain" style="list-style:none;padding-left:0;font-variant-numeric:tabular-nums">
-      <li><b>DigiKey.ca</b> · about $190 · free shipping, no brokerage</li>
+      <li><b>DigiKey.ca</b> · about $120 · free shipping over $100, no brokerage</li>
       <li><b>Amazon.ca cells</b> · $147</li>
       <li><b>Amazon.ca small stuff</b> (cables, meter, tape, feet) · about $65</li>
-      <li><b>With tax</b> · about $450</li>
+      <li><b>With tax</b> · about $375</li>
     </ul>
   </div></section>
 
   <section class="panel hold chamfer"><div class="in chamfer">
     <div class="head"><div><h2>Hold or skip</h2><div class="sub">Not needed any more</div></div></div>
     <ul class="plain">
+      <li><b>The Key Unit and the splitter:</b> the mini shell presses the Atom's own button and the hex plugs straight into the Atom. The one key you have stays a spare.</li>
       <li><b>The AA plan:</b> 4 × AA holders, USB-C screw-terminal plugs, 1N5817 diodes, Wago clips. Replaced by the Rider and a cell.</li>
       <li><b>The soldered design:</b> the JLCPCB carrier board, ESP32-C3 SuperMinis, 8-LED rings, microswitches, perfboard, a soldering iron.</li>
     </ul>
