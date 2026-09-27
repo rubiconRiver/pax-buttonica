@@ -54,7 +54,7 @@ from manifold3d import CrossSection, Manifold, OpType
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 # ── fit: tune these with the fit_test rings ─────────────────────────────────
-SLIDE_CLEARANCE = 0.40   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar
+SLIDE_CLEARANCE = 0.25   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar. Check with fit_test; 0.4 rocked
 CHAMBER_CLEARANCE = 1.6  # radial gap round the cap's flange inside the bezel (it never guides, so it can be loose; the springs live under it)
 PART_CLEARANCE = 0.5     # around every bought part in its pocket
 TAP_D = 2.8              # an M3 screw cuts its own thread in a hole this size
@@ -102,8 +102,14 @@ TURRET_F = 76.0          # across the flats of the hexagon
 BORE_R = 33.0            # round bore inside it
 FLOOR_T = 1.6
 WALL_TOP = 12.0          # top of the body wall = the hard stop
-COLLAR_H = 22.0          # an inner collar the cap's skirt slides over: the real guide, hidden inside
-COLLAR_T = 2.0
+COLLAR_H = None          # set below
+COLLAR_T = 1.6
+# The guide. A sleeve hangs from the cap's ceiling, inside the chamfer and outside the cage; the platform's collar
+# stands round it with SLIDE_CLEARANCE. 14 mm of overlap at rest, 17 pressed: twice what the skirt gave, which is
+# why an off-centre press used to bind (a plunger jams when the press is more than half the guide length divided
+# by the friction coefficient off centre). Dry PTFE on the collar does the rest.
+SLEEVE_R = 20.0          # the sleeve's inside radius: outside the cage's legs and plate
+SLEEVE_T = 1.6
 COLLAR_GAPS = ((-22, 22), (158, 202))   # no collar where the Atom's Grove (+x) and USB (-x) cables leave
 ATOM_X0 = 13.0           # Atom bay from here to ATOM_X0 + 24 (its corners must stay inside the bore)
 DECK_SCREW_ANGLES = (30, 90, 270, 330)   # M3 up from under the deck into the body's corners, at BEZEL_SCREW_R; not the -x corners, the cell is there
@@ -195,8 +201,13 @@ _pocket_apex = (TURRET_F - 2 * DECK_WALL) / 2 / math.cos(math.radians(30))
 assert RIDER_X0 > -_pocket_apex / 2, 'the Rider does not fit across the deck'
 assert abs(CELL[1] / 2 + PART_CLEARANCE) < _pocket_apex - (CELL[0] / 2 + PART_CLEARANCE) * math.tan(math.radians(30)), 'the cell does not fit in the deck'
 assert CAP_EXPOSED - TRAVEL >= 8, 'the cap should stand well proud of the bezel even when pressed'
-COLLAR_R = CAP_R - CAP_WALL - SLIDE_CLEARANCE          # outer face of the collar
+SLEEVE_BOTTOM = FLANGE_BOTTOM + 1.0                    # the sleeve stops just above the skirt's bottom edge
+COLLAR_R = SLEEVE_R + SLEEVE_T + COLLAR_T + SLIDE_CLEARANCE   # outer face of the collar; its inner face clears the sleeve by SLIDE_CLEARANCE
+# The collar's top is chamfered at 45 like the cap's ceiling, so its outer edge stays under the chamfer when pressed.
+COLLAR_H = INNER_TOP - (COLLAR_R - (CAP_R - CAP_WALL - (CAP_CHAMFER + CAP_WALL * math.sqrt(2) - CAP_WALL))) - TRAVEL - 0.5 + COLLAR_T
+assert SLEEVE_R > CAGE_R0 + CAGE_LEG[1] + 0.5, 'the sleeve must clear the cage legs'
 SPRING_R0 = CAP_R + 0.6                                # springs stand just outside the skirt, under the flange
+assert COLLAR_R < SPRING_R0 - 0.5, 'the collar must clear the springs'
 assert SPRING_R0 + SPRING_W < BORE_R - 0.5, 'springs hit the wall'
 assert SPRING_R0 + 1.5 < FLANGE_R, 'the flange must reach over the springs'
 assert SPRING_R0 + SPRING_W < CHAMBER_R - 0.3, 'the springs must clear the bezel'
@@ -236,14 +247,20 @@ def corners(r):
     return [(r * math.cos(math.radians(a)), r * math.sin(math.radians(a))) for a in range(30, 390, 60)]
 
 
+def collar():
+    """The guide the cap's sleeve slides in, standing on the floor, its outer top edge chamfered at 45 degrees."""
+    outer = cyl(2 * COLLAR_R, COLLAR_H - COLLAR_T, seg=SEG) + cyl(2 * COLLAR_R, COLLAR_T, z=COLLAR_H - COLLAR_T, d2=2 * (COLLAR_R - COLLAR_T) + 0.02, seg=SEG)
+    c = outer - cyl(2 * (COLLAR_R - COLLAR_T), COLLAR_H + 2, z=-1, seg=SEG)
+    for a0, a1 in COLLAR_GAPS:
+        wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(COLLAR_H + 2).translate([0, 0, -1])
+        c -= wedge
+    return c
+
+
 # ── body ────────────────────────────────────────────────────────────────────
 def body():
     solid = hex_prism(TURRET_F, FLOOR_T + WALL_TOP, z=-FLOOR_T, cb=0.6) - cyl(2 * BORE_R, WALL_TOP + 1, seg=SEG)
-    collar = cyl(2 * COLLAR_R, COLLAR_H, seg=SEG) - cyl(2 * (COLLAR_R - COLLAR_T), COLLAR_H + 2, z=-1, seg=SEG)
-    for a0, a1 in COLLAR_GAPS:
-        wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(COLLAR_H + 2).translate([0, 0, -1])
-        collar -= wedge
-    solid += collar
+    solid += collar()
     # a low fence round the Atom, open on +x (Grove) and -x (USB-C)
     fence = cbox(0, 0, 0, ATOM[0] + 2 * PART_CLEARANCE + 3, ATOM[1] + 2 * PART_CLEARANCE + 3, 2.5)
     fence -= cbox(0, 0, -1, ATOM[0] + 2 * PART_CLEARANCE, ATOM[1] + 2 * PART_CLEARANCE, 5)
@@ -312,7 +329,13 @@ def cap():
         boss = box(CAGE_R0 - 2.5, -w / 2 - 2.5, INNER_TOP - SOCKET_H, t + 5, w + 5, SOCKET_H + 0.01)
         boss -= box(CAGE_R0 - SOCKET_FIT, -w / 2 - SOCKET_FIT, INNER_TOP - SOCKET_H - 1, t + 2 * SOCKET_FIT, w + 2 * SOCKET_FIT, SOCKET_H + 0.4)   # pocket, 0.6 of ceiling left
         bosses.append(boss.rotate([0, 0, a]))
-    return shell + union(bosses)
+    # the guide sleeve, hanging from the ceiling, with gaps where the Atom's two plugs stick out
+    sleeve = cyl(2 * (SLEEVE_R + SLEEVE_T), INNER_TOP - SLEEVE_BOTTOM + 0.01, z=SLEEVE_BOTTOM, seg=SEG) - cyl(2 * SLEEVE_R, INNER_TOP - SLEEVE_BOTTOM + 2, z=SLEEVE_BOTTOM - 1, seg=SEG)
+    for a0, a1 in COLLAR_GAPS:
+        wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(INNER_TOP + 2).translate([0, 0, -1])
+        sleeve -= wedge
+    # the bosses' outer corners are trimmed to the sleeve, so the collar outside it never touches them
+    return shell + (union(bosses) ^ cyl(2 * (SLEEVE_R + SLEEVE_T), 60, z=-10, seg=SEG)) + sleeve
 
 
 # ── cage: carries the hex under the cap and ends in the cup over the keycap ──
@@ -339,9 +362,11 @@ def cage():
     return union(parts)
 
 
-def nub():
-    """The peg that presses the Atom's panel: a head under the disc and a stem through it. Prints head-down."""
-    return cyl(NUB_D, NUB_H, z=PAD_BOTTOM - NUB_H, seg=48) + cyl(NUB_STEM, NUB_H + PAD_T - 0.01, z=PAD_BOTTOM - NUB_H, seg=32)
+def nub(h=None):
+    """The peg that presses the Atom's panel: a head under the disc and a stem through it. Prints head-down.
+    h is the head's height; shorter pegs click later. The default is what the drawing says; print a few."""
+    h = NUB_H if h is None else h
+    return cyl(NUB_D, h, z=PAD_BOTTOM - h, seg=48) + cyl(NUB_STEM, h + PAD_T - 0.01, z=PAD_BOTTOM - h, seg=32)
 
 
 # ── deck: the tray under the turret, with the card rail on its back ────────
@@ -450,7 +475,8 @@ if __name__ == '__main__':
     print(f'base {TURRET_F:.0f} mm across flats plus a {RAIL_D:.0f} mm card rail behind, '
           f'{CAP_TOP - DECK_Z0:.1f} mm tall, cap top {CAP_D - 2 * CAP_CHAMFER:.0f} mm, '
           f'Atom face {KEYCAP_TOP:.1f} above the floor, hex LEDs at {HEX_TOP:.1f}, cap shows {CAP_EXPOSED:.1f} above the bezel')
-    for name, solid in {**printed, 'fit_test': fit_test()}.items():
+    pegs = {f'nub-{h:.1f}': nub(h) for h in (0.5, 1.0, 1.5, 2.0, 2.5)}
+    for name, solid in {**printed, **pegs, 'fit_test': fit_test()}.items():
         out = for_printing(solid, name in flipped)
         write_stl(out, os.path.join(HERE, OUT, f'{name}.stl'))
         bb = out.bounding_box()

@@ -95,11 +95,7 @@ def housing():
 
 def platform():
     solid = cyl(2 * PLATFORM_R, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T, seg=m.SEG)
-    collar = cyl(2 * m.COLLAR_R, m.COLLAR_H, seg=m.SEG) - cyl(2 * (m.COLLAR_R - m.COLLAR_T), m.COLLAR_H + 2, z=-1, seg=m.SEG)
-    for a0, a1 in m.COLLAR_GAPS:
-        wedge = CrossSection([[(0, 0)] + [(60 * math.cos(math.radians(a)), 60 * math.sin(math.radians(a))) for a in range(a0, a1 + 1)]]).extrude(m.COLLAR_H + 2).translate([0, 0, -1])
-        collar -= wedge
-    solid += collar
+    solid += m.collar()
     fence = cbox(0, 0, 0, m.ATOM[0] + 2 * m.PART_CLEARANCE + 3, m.ATOM[1] + 2 * m.PART_CLEARANCE + 3, 2.5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 2 * m.PART_CLEARANCE, m.ATOM[1] + 2 * m.PART_CLEARANCE, 5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 20, 14, 5)
