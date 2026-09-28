@@ -25,12 +25,15 @@
  * "hub" line in 0.2.2, which buttons answer with a hello, which the hub answered, without end). Buttons from 0.3.7
  * believe in a hub only while it keeps doing that (before, six buttons on a desk paired with each other).
  * This is the one message the hub reads the type of.
+ *
+ * 0.2.4 (2026-09-28): serial output never waits for a reader, so the hub serves its buttons whether or not
+ * a page is connected.
  */
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.2.3"
+#define FW_VERSION "0.2.4"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -196,6 +199,10 @@ static void forward(char *line, size_t len) {
 
 void setup() {
   Serial.setRxBufferSize(4096);   // an image over the air arrives in bursts; the default 256 dropped most of it
+  // Never wait on the laptop. With nothing reading the port (no page open, or a page reloading) the output
+  // backs up, and a print that waits stalls the loop that answers the buttons: seen 2026-09-28, a hub plugged
+  // in with no page open linked three buttons of six, then none. With no wait, unread lines are dropped.
+  Serial.setTxTimeoutMs(0);
   Serial.begin(115200);
   inbox = xQueueCreate(QUEUE_SLOTS, sizeof(Packet));
 

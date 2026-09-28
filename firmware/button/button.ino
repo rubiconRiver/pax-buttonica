@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.7"
+#define FW_VERSION "0.3.8"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -633,8 +633,9 @@ static void renderTurnFx(uint32_t t) {
 //   amber, blinking        looking for the hub
 //   green, steady          linked to the hub, waiting for the game
 // In a game the light belongs to the host; if the hub goes away an amber dot blinks in the middle of it.
-// The Atom's own tiny pixel always shows the same state (blue while a new image is arriving), so a bare
-// Atom on a desk, with no hex plugged in, can be read too.
+// The Atom's own tiny pixel does the same, and once the host has spoken it shows the game's light (the
+// average of what the hex is showing), so a bare Atom with no hex plugged in is still a working button light.
+// It never goes fully dark while linked: "off" in a game leaves a faint green, which says "powered and linked".
 static bool pilotPixel(int i, bool wide) {
 #if LED_COUNT == 37
   return ringOf[i] == 0 || (wide && ringOf[i] == 1);
@@ -657,14 +658,32 @@ static void drawLink(uint32_t now) {
 
 static void showLink(uint32_t now) {
 #if STATUS_LED_PIN >= 0
-  static uint32_t shown = 0xFFFFFFFF;
+  static uint32_t shown = 0xFFFFFFFF, shownAt = 0;
   uint8_t r = 0, g = 0, b = 0;
+  const bool amber = !linked && (now / 500) % 2 == 0;
   if (otaActive) b = 40;
-  else if (linked) g = 24;
-  else if ((now / 500) % 2 == 0) { r = 48; g = 24; }
+  else if (amber) { r = 48; g = 24; }
+  else if (!ledSet) { if (linked) g = 24; }
+  else {
+    // the game's light: what the hex is showing, averaged (0.3.7 showed the link here always, so a bare Atom stayed green all game)
+    if (mode == MODE_RAINBOW && overlay == FX_NONE) {
+      // every hue at once averages to a dull white: follow one pixel, so the colours go round as they do on the hex
+      const uint32_t c = ring.getPixelColor(0);
+      r = (c >> 16) & 0xFF; g = (c >> 8) & 0xFF; b = c & 0xFF;
+    } else {
+      uint32_t sr = 0, sg = 0, sb = 0;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const uint32_t c = ring.getPixelColor(i);
+        sr += (c >> 16) & 0xFF; sg += (c >> 8) & 0xFF; sb += c & 0xFF;
+      }
+      r = sr / LED_COUNT; g = sg / LED_COUNT; b = sb / LED_COUNT;
+    }
+    if (r < 2 && g < 2 && b < 2 && linked) g = 4;
+  }
   const uint32_t want = ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
-  if (want == shown) return;      // only on a change: the pixel latches, and the hex shares the timing hardware
+  if (want == shown || now - shownAt < 30) return;   // on a change, and not more than 30 times a second
   shown = want;
+  shownAt = now;
   rgbLedWrite(STATUS_LED_PIN, r, g, b);
 #else
   (void)now;
