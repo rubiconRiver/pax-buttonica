@@ -1,8 +1,8 @@
 {
   "name": "Pax Buttonica hub",
-  "version": "0.2.4",
-  "size": 869776,
-  "md5": "437d442edc5875feec7dcac35a507eb8",
+  "version": "0.2.5",
+  "size": 869984,
+  "md5": "50993d11f50cfdfc9559c5157f851b58",
   "new_install_prompt_erase": false,
   "builds": [
     {

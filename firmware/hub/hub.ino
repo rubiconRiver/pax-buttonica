@@ -28,12 +28,17 @@
  *
  * 0.2.4 (2026-09-28): serial output never waits for a reader, so the hub serves its buttons whether or not
  * a page is connected.
+ *
+ * 0.2.5 (2026-09-28): a light's phase "p" is kept true while the message waits. The host stamps it on
+ * sending, but a sleeping button hears it up to 200 ms later, more with messages queued ahead, and one
+ * button in a game was seen breathing out of step with the rest. The hub adds the wait to the number at
+ * each send attempt, so the phase is right on arrival. The second thing the hub reads inside a message.
  */
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.2.4"
+#define FW_VERSION "0.2.5"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -56,6 +61,12 @@ static QueueHandle_t inbox;
 struct Outgoing {
   uint8_t len;
   char text[MAX_LINE + 1];
+  // A light's phase, "p": how far into its cycle it should be when it ARRIVES. The host stamps it when it
+  // sends; the wait in this outbox (a sleeping radio, messages ahead of it) is added at each attempt.
+  uint32_t queuedAt;
+  uint32_t phase;
+  int16_t phaseAt;      // where the number starts in text, -1 if the line has none
+  uint8_t phaseLen;     // how many digits it had
 };
 
 // Delivery failures per known button, to report {"t":"lost"}, and its outbox.
@@ -166,8 +177,16 @@ static void pump() {
     if (k.count == 0 || k.inFlight || (int32_t)(now - k.nextTry) < 0) continue;
     if (!k.firstTry) k.firstTry = now;
     const Outgoing &o = k.outbox[k.head];
+    const char *data = o.text;
+    size_t len = o.len;
+    static char aged[MAX_LINE + 12];
+    if (o.phaseAt >= 0) {
+      const int n = snprintf(aged, sizeof(aged), "%.*s%lu%s", (int)o.phaseAt, o.text,
+                             (unsigned long)(o.phase + (now - o.queuedAt)), o.text + o.phaseAt + o.phaseLen);
+      if (n > 0 && n <= MAX_LINE) { data = aged; len = (size_t)n; }
+    }
     sentDone[i] = false;
-    k.inFlight = esp_now_send(k.mac, (const uint8_t *)o.text, o.len) == ESP_OK;
+    k.inFlight = esp_now_send(k.mac, (const uint8_t *)data, len) == ESP_OK;
     if (!k.inFlight) k.nextTry = now + RETRY_GAP_MS;
   }
 }
@@ -193,6 +212,16 @@ static void forward(char *line, size_t len) {
   o.len = (uint8_t)len;
   memcpy(o.text, line, len);
   o.text[len] = 0;
+  o.queuedAt = millis();
+  o.phaseAt = -1;
+  const char *ph = strstr(o.text, "\"p\":");
+  if (ph && isdigit((unsigned char)ph[4])) {
+    const char *end = ph + 4;
+    while (isdigit((unsigned char)*end)) end++;
+    o.phaseAt = (int16_t)(ph + 4 - o.text);
+    o.phaseLen = (uint8_t)(end - (ph + 4));
+    o.phase = strtoul(ph + 4, nullptr, 10);
+  }
   k->count++;
   pump();
 }
