@@ -48,9 +48,10 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 SLIDE_CLEARANCE = 0.40   # radial gap between the cap's skirt and the bezel's bore, and round the inner collar
 CHAMBER_CLEARANCE = 1.6  # radial gap round the cap's flange inside the bezel (it never guides, so it can be loose; the springs live under it)
 PART_CLEARANCE = 0.5     # around every bought part in its pocket
-TAP_D = 2.8              # an M3 screw cuts its own thread in a hole this size
-M3_CLEAR_D = 3.6              # printed holes come out a few tenths small
-M3_HEAD_D = 7.0               # a pan head or the brass standoff's hex, with room for the print's shrink
+HOLE_SHRINK = 0.0        # how much smaller your printer makes holes than drawn; measure a printed 3.6 mm hole and put the shortfall here
+TAP_D = 3.0 + HOLE_SHRINK   # a sharp M3 screw cuts its own thread in a hole this size (brass standoff studs are blunt and won't)
+M3_CLEAR_D = 3.6 + HOLE_SHRINK
+M3_HEAD_D = 7.0 + HOLE_SHRINK   # a pan head or the brass standoff's hex
 
 # ── press feel ──────────────────────────────────────────────────────────────
 TRAVEL = 2.8             # how far the cap moves before plastic meets plastic
