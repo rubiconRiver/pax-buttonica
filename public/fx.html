@@ -96,7 +96,7 @@
 
     <section class="panel chamfer"><div class="in chamfer">
       <h2>Turn effects (the game's catalogue)</h2>
-      <p class="muted">What a player can pick for the start of their turn, sent as <code>fx</code> by name. Dimmed ones the firmware doesn't draw yet: the button ignores them.</p>
+      <p class="muted">What a player can pick for the start of their turn, sent as <code>fx</code> by name. Buttons on firmware 0.3.6 or later draw all of them; older ones ignore what they don't know.</p>
       <div class="row" id="turnfx"></div>
     </div></section>
 
@@ -155,8 +155,8 @@
     ['disco', 'Disco', 'Every colour, fast'], ['glitch', 'Glitch', 'Green, jittery, briefly broken'],
     ['neon', 'Neon', 'Flickers on like a neon sign'], ['alarm', 'Alarm', 'Three red strobes'], ['thump', 'Thump', 'Two big beats'],
   ];
-  /** What the firmware draws today; everything else on the list is a wish for it. */
-  const DRAWN = new Set(['burst', 'ripple', 'sparkle']);
+  /** What the firmware draws (all of them since button 0.3.6); anything added here later is a wish until it does. */
+  const DRAWN = new Set(TURN_FX.map(([k]) => k));
 
   // ── sounds ────────────────────────────────────────────────────────────────
   let ac = null;

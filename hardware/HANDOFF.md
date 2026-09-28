@@ -71,3 +71,7 @@ Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for 
 ## Over the air (2026-09-28)
 
 Button firmware 0.3.0 receives a new image through the hub (`ota` messages, `docs/BUTTON_STANDARD.md`) and reboots into it; the hub is unchanged (0.2.0). `/flash.html` section 3 and `firmware/ota.py` drive it. One USB flash to 0.3.0 per button, then never again. Not yet run on a real button: written 2026-09-28, waiting for an Atom on the bench. For the app session: the game already knows which `dev` sits in which seat, so an "update this button" entry in the play screen's settings could send the same messages over the port it already holds; the page version is enough for now.
+
+## Turn effects in the firmware (2026-09-28, app session)
+
+Button 0.3.6 draws every turn effect in the app's catalogue as an `fx` kind: `rainbow`, `cop`, `explosion`, `fireworks`, `lightning`, `fire`, `siren`, `laser`, `comet`, `warp`, `confetti`, `disco`, `glitch`, `neon`, `alarm`, `thump` (the ring is sent as `burst`; `ripple` and `sparkle` were already there). They live in `renderTurnFx()` in `button.ino`, one case each, with the same names and roughly the same timings as the simulator's CSS; the parser has a `TURN_FX` table. No new modes, no protocol change beyond the names, which `docs/BUTTON_STANDARD.md` now lists. Nothing for the app session to add in `src/`: it already sends these names. Source and docs only; not exported, not deployed, not flashed.

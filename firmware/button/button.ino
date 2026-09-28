@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.5"
+#define FW_VERSION "0.3.6"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -51,7 +51,16 @@ static I2SClass i2s;
 
 enum Mode { MODE_OFF, MODE_DIM, MODE_SOLID, MODE_PULSE, MODE_FLASH, MODE_RAINBOW,
             MODE_RIPPLE_OUT, MODE_RIPPLE_IN, MODE_RINGS, MODE_SPIN, MODE_SPARKLE, MODE_WAVE, MODE_HEARTBEAT };
-enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE };
+enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE,
+               // the game's turn effects (TURN_EFFECTS in the app), by name; the ring is sent as "burst"
+               FX_RAINBOW, FX_COP, FX_EXPLOSION, FX_FIREWORKS, FX_LIGHTNING, FX_FIRE, FX_SIREN, FX_LASER,
+               FX_COMET, FX_WARP, FX_CONFETTI, FX_DISCO, FX_GLITCH, FX_NEON, FX_ALARM, FX_THUMP };
+static const struct { const char *kind; Overlay fx; } TURN_FX[] = {
+  {"rainbow", FX_RAINBOW}, {"cop", FX_COP}, {"explosion", FX_EXPLOSION}, {"fireworks", FX_FIREWORKS},
+  {"lightning", FX_LIGHTNING}, {"fire", FX_FIRE}, {"siren", FX_SIREN}, {"laser", FX_LASER}, {"comet", FX_COMET},
+  {"warp", FX_WARP}, {"confetti", FX_CONFETTI}, {"disco", FX_DISCO}, {"glitch", FX_GLITCH}, {"neon", FX_NEON},
+  {"alarm", FX_ALARM}, {"thump", FX_THUMP},
+};
 enum Wave { WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAW, WAVE_SINE };
 
 static Adafruit_NeoPixel ring(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
@@ -420,6 +429,197 @@ static uint32_t scaled(uint8_t r, uint8_t g, uint8_t b, float level) {
   return ring.Color((uint8_t)(ring.gamma8(r) * level), (uint8_t)(ring.gamma8(g) * level), (uint8_t)(ring.gamma8(b) * level));
 }
 
+// A pixel in a hue (16-bit, round the wheel) at a level, gamma-corrected like everything else.
+static void hsvPixel(int i, uint16_t hue, float level) {
+  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * brightScale;
+  ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * level))));
+}
+static void fillAll(uint8_t r, uint8_t g, uint8_t b, float level) {
+  for (int i = 0; i < LED_COUNT; i++) ring.setPixelColor(i, scaled(r, g, b, level));
+}
+// Left or right half of the board, by angle (0 and 1 are the left edge, 0.5 the right).
+static bool leftHalf(int i) { return angOf[i] < 0.25f || angOf[i] > 0.75f; }
+
+// The turn effects: each runs for its own length, then hands the board back. Timings follow the simulator.
+static void renderTurnFx(uint32_t t) {
+  switch (overlay) {
+    case FX_RAINBOW:
+      // a second of every colour, spinning fast
+      if (t >= 1200) { overlay = FX_NONE; break; }
+      for (int i = 0; i < LED_COUNT; i++) hsvPixel(i, (uint16_t)(t * 60UL + (uint32_t)(angOf[i] * 65536.0f)), 1);
+      break;
+    case FX_COP: {
+      // red one side, blue the other, swapping every 200 ms
+      if (t >= 1600) { overlay = FX_NONE; break; }
+      const bool swap = (t / 200) % 2;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const bool red = leftHalf(i) != swap;
+        ring.setPixelColor(i, red ? scaled(255, 30, 40, 1) : scaled(40, 90, 255, 1));
+      }
+      break;
+    }
+    case FX_EXPLOSION: {
+      // a white flash, an orange front out to the rim, and glowing debris that dies away
+      if (t >= 1200) { overlay = FX_NONE; break; }
+      if (t < 80) { fillAll(255, 255, 255, 1); break; }
+      const float head = (t - 80) / 600.0f * (RINGS + 1);
+      const float env = t < 500 ? 1 : 1 - (t - 500) / 700.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const float d = head - ringOf[i];
+        if (d >= 0 && d < 2.0f) ring.setPixelColor(i, scaled(255, 120, 20, 1 - d / 2.0f));
+        const float s = sinf((t / 150.0f + frac(i * 0.618034f)) * 2.0f * PI);
+        if (t > 300 && s > 0.5f) ring.setPixelColor(i, scaled(255, 200, 60, env * (s - 0.5f) / 0.5f));
+      }
+      break;
+    }
+    case FX_FIREWORKS: {
+      // three bursts, each in its own colour, from the centre out
+      if (t >= 1700) { overlay = FX_NONE; break; }
+      for (int k = 0; k < 3; k++) {
+        const int32_t tb = (int32_t)t - k * 550;
+        if (tb < 0 || tb >= 550) continue;
+        const uint16_t hue = (uint16_t)(k * 21845 + 9000);
+        if (tb < 40) { fillAll(255, 255, 255, 1); continue; }
+        const float head = (tb - 40) / 480.0f * (RINGS + 1);
+        for (int i = 0; i < LED_COUNT; i++) {
+          const float d = head - ringOf[i];
+          const float twinkle = 0.6f + 0.4f * sinf((tb / 90.0f + frac(i * 0.618034f)) * 2.0f * PI);
+          if (d >= 0 && d < 1.8f) hsvPixel(i, hue + ringOf[i] * 3000, (1 - d / 1.8f) * twinkle);
+        }
+      }
+      break;
+    }
+    case FX_LIGHTNING: {
+      // flickers of white
+      if (t >= 900) { overlay = FX_NONE; break; }
+      static const uint16_t on[][2] = {{0, 60}, {130, 150}, {220, 235}, {400, 470}, {520, 545}};
+      for (const auto &w : on) if (t >= w[0] && t < w[1]) { fillAll(255, 255, 255, 1); break; }
+      break;
+    }
+    case FX_FIRE: {
+      // orange and yellow flicker, hottest in the middle, dying down at the end
+      if (t >= 1500) { overlay = FX_NONE; break; }
+      const float env = t < 1200 ? 1 : 1 - (t - 1200) / 300.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const float ph = frac(i * 0.618034f);
+        const float f = 0.55f + 0.45f * sinf((t / 110.0f + ph * 7) * 2.0f * PI) * sinf((t / 37.0f + ph * 3) * 2.0f * PI);
+        const uint16_t hue = (uint16_t)(800 + 6500 * ph * f);   // red through orange to yellow
+        const float heat = ringOf[i] == 0 ? 1.0f : ringOf[i] == 1 ? 0.85f : 0.6f;
+        hsvPixel(i, hue, env * heat * (0.35f + 0.65f * f));
+      }
+      break;
+    }
+    case FX_SIREN: {
+      // two beacon wedges, opposite each other, sweeping round twice in the button's colour
+      if (t >= 1400) { overlay = FX_NONE; break; }
+      const float head = t / 700.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        if (ringOf[i] == 0) continue;
+        const float d1 = frac(head - angOf[i]);
+        const float d2 = frac(d1 + 0.5f);
+        const float b = max(0.0f, 1 - min(d1, d2) * 6);
+        if (b > 0) ring.setPixelColor(i, scaled(ledR, ledG, ledB, b));
+      }
+      break;
+    }
+    case FX_LASER: {
+      // one thin bright wedge, three fast turns
+      if (t >= 1200) { overlay = FX_NONE; break; }
+      const float head = t / 400.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        if (ringOf[i] == 0) continue;
+        const float b = max(0.0f, 1 - frac(head - angOf[i]) * 14);
+        if (b > 0) ring.setPixelColor(i, scaled(255, 255, 255, b));
+      }
+      break;
+    }
+    case FX_COMET: {
+      // a bright dot racing round the rim with a tail behind it, two laps
+      if (t >= 1300) { overlay = FX_NONE; break; }
+      const float head = t / 650.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        if (ringOf[i] < RINGS - 2) continue;
+        const float d = frac(head - angOf[i]);
+        const float b = max(0.0f, 1 - d * 2.2f);
+        const float rim = ringOf[i] == RINGS - 1 ? 1.0f : 0.45f;
+        if (b <= 0) continue;
+        if (d < 0.06f) ring.setPixelColor(i, scaled(255, 255, 255, rim));
+        else ring.setPixelColor(i, scaled(ledR, ledG, ledB, rim * b * b));
+      }
+      break;
+    }
+    case FX_WARP: {
+      // rings fall inward, then a flash
+      if (t >= 1100) { overlay = FX_NONE; break; }
+      if (t >= 800) { fillAll(255, 255, 255, 1 - (t - 800) / 300.0f); break; }
+      const float head = t / 800.0f * (RINGS + 1);
+      for (int i = 0; i < LED_COUNT; i++) {
+        const float d = head - (RINGS - 1 - ringOf[i]);
+        if (d >= 0 && d < 1.6f) ring.setPixelColor(i, scaled(ledR, ledG, ledB, 1 - d / 1.6f));
+      }
+      break;
+    }
+    case FX_CONFETTI: {
+      // every pixel flashes its own colours in its own time, then it all settles
+      if (t >= 1600) { overlay = FX_NONE; break; }
+      const float env = t < 1200 ? 1 : 1 - (t - 1200) / 400.0f;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const float s = sinf((t / 220.0f + frac(i * 0.618034f)) * 2.0f * PI);
+        if (s > 0.3f) hsvPixel(i, (uint16_t)(i * 7000 + t * 20), env * (s - 0.3f) / 0.7f);
+      }
+      break;
+    }
+    case FX_DISCO: {
+      // eight colours in a second
+      if (t >= 1200) { overlay = FX_NONE; break; }
+      static const uint8_t pal[8][3] = {{255, 59, 59}, {255, 210, 31}, {47, 140, 255}, {255, 77, 210}, {60, 224, 138}, {255, 138, 31}, {162, 75, 255}, {255, 255, 255}};
+      const uint8_t *c = pal[(t / 150) % 8];
+      fillAll(c[0], c[1], c[2], 1);
+      break;
+    }
+    case FX_GLITCH: {
+      // green, jittery, briefly pink: half the board at a time, jumping about
+      if (t >= 900) { overlay = FX_NONE; break; }
+      const int step = t / 90;
+      const bool pink = step % 5 == 2;
+      const bool dark = step % 3 == 1;
+      for (int i = 0; i < LED_COUNT; i++) {
+        const bool lit = frac(angOf[i] + step * 0.37f) < 0.5f;
+        if (dark) ring.setPixelColor(i, scaled(57, 255, 20, lit ? 0.2f : 0.05f));
+        else if (pink) ring.setPixelColor(i, scaled(255, 43, 214, lit ? 1 : 0.1f));
+        else ring.setPixelColor(i, scaled(57, 255, 20, lit ? 1 : 0.1f));
+      }
+      break;
+    }
+    case FX_NEON: {
+      // stutters on like a neon sign, then holds
+      if (t >= 1200) { overlay = FX_NONE; break; }
+      float b = 1;
+      if (t < 60) b = 0.08f; else if (t < 140) b = 1; else if (t < 260) b = 0.45f; else if (t < 360) b = 0.08f;
+      else if (t < 420) b = 1; else if (t < 480) b = 0.08f;
+      fillAll(ledR, ledG, ledB, b);
+      break;
+    }
+    case FX_ALARM:
+      // three red strobes
+      if (t >= 900) { overlay = FX_NONE; break; }
+      if ((t / 150) % 2 == 0) fillAll(255, 45, 69, 1);
+      break;
+    case FX_THUMP: {
+      // two big beats: the whole board swells from the rim in, twice
+      if (t >= 1000) { overlay = FX_NONE; break; }
+      const uint32_t beat = t < 560 ? t : t - 560;
+      const float b = beat < 120 ? 1 : max(0.0f, 1 - (beat - 120) / 320.0f);
+      for (int i = 0; i < LED_COUNT; i++) {
+        const float level = b * (ringOf[i] == RINGS - 1 ? 1.0f : 0.55f + 0.45f * b);
+        if (level > DIM_LEVEL) ring.setPixelColor(i, scaled(ledR, ledG, ledB, level));
+      }
+      break;
+    }
+    default: overlay = FX_NONE;
+  }
+}
+
 static void render() {
   const uint32_t now = millis();
 
@@ -505,7 +705,7 @@ static void render() {
         }
         break;
       }
-      default: overlay = FX_NONE;
+      default: renderTurnFx(t);
     }
   }
   ring.show();
@@ -648,6 +848,7 @@ static void handle(const Packet &p) {
     else if (!strcmp(kind, "ripple")) setOverlay(FX_RIPPLE);
     else if (!strcmp(kind, "burst")) setOverlay(FX_BURST);
     else if (!strcmp(kind, "sparkle")) setOverlay(FX_SPARKLE);
+    else for (const auto &e : TURN_FX) if (!strcmp(kind, e.kind)) setOverlay(e.fx);
   } else if (!strcmp(type, "cfg")) {
     holdMs = constrain((uint32_t)(doc["hold"] | (int)holdMs), 300UL, 10000UL);
     flashMs = constrain((uint32_t)(doc["flash"] | (int)flashMs), 300UL, 10000UL);
