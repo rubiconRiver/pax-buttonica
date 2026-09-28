@@ -101,6 +101,19 @@
     </div></section>
 
     <section class="panel chamfer"><div class="in chamfer">
+      <h2>Feel: ending a turn</h2>
+      <div class="row">
+        <button class="btn primary" id="yourmove">Your move</button>
+        <button class="btn on" id="h1">Hold ends the turn</button>
+        <button class="btn" id="h0">Hold is refused</button>
+        <label class="f">Hold time <input type="range" id="hold" min="500" max="3000" step="50" value="900"> <span id="holdv">0.90 s</span></label>
+        <label class="f"><input type="checkbox" id="loop" checked> keep going</label>
+      </div>
+      <div class="hint">Your move lights the button in the chosen colour. Press: a front of light runs out from the centre at once. Hold: the rim fills inward, slowly then quickly, from the colour to white, and bursts when the time is up; let go early and it runs back out. With "Hold is refused" the rim shakes red for as long as it is held, as it would when other players still owe a response. With "keep going" on, a finished hold dims the button for a moment and then it is your move again. All of it is drawn by the button itself (firmware 0.3.9), before the radio has said anything.</div>
+      <div class="status" id="feel"></div>
+    </div></section>
+
+    <section class="panel chamfer"><div class="in chamfer">
       <h2>Power</h2>
       <div class="row">
         <button class="btn on" id="ps1">Radio sleepy</button>
@@ -211,7 +224,8 @@
     if (!targets.length) { log('out', '(no buttons heard yet) ' + JSON.stringify(msg)); return; }
     for (const dev of targets) { const line = JSON.stringify({ ...msg, dev }); log('out', line); await writer.write(new TextEncoder().encode(line + '\n')); }
   }
-  const sendLed = (m, d) => send({ t: 'led', c: colour, m, ...(d ? { d } : {}) });
+  let holdOk = true;
+  const sendLed = (m, d, dev) => send({ t: 'led', c: colour, m, ...(d ? { d } : {}), ...(holdOk ? {} : { h: 0 }), ...(dev ? { dev } : {}) });
   const sendFx = (k) => (k === 'id' ? send({ t: 'id' }) : send({ t: 'fx', k }));
 
   function renderDevices() {
@@ -228,6 +242,10 @@
     log('in', line, isBtn ? 'btnev' : '');
     if (msg.dev) { const d = devices.get(msg.dev) || {}; if (msg.t === 'rssi') d.dbm = msg.dbm; if (isBtn) d.last = msg.e + ' · ' + new Date().toLocaleTimeString(); devices.set(msg.dev, d); renderDevices(); }
     if (msg.t === 'hello') send({ ...cfg(), dev: msg.dev });
+    if (isBtn && msg.b === 0 && msg.e === 'hold') {
+      $('feel').textContent = holdOk ? `Turn ended by ${msg.dev.slice(-4)} at ${new Date().toLocaleTimeString()}` : `${msg.dev.slice(-4)} held, refused`;
+      if (holdOk && $('loop').checked) { setTimeout(() => sendLed('dim', 0, msg.dev), 350); setTimeout(() => sendLed('solid', 0, msg.dev), 2000); }
+    }
     if (isBtn && msg.b === 0 && pairs[msg.e]) { const p = pairs[msg.e]; if (p.sound) playSound(p.sound); if (p.fx) send({ t: 'fx', k: p.fx, dev: msg.dev }); }
   }
 
@@ -284,11 +302,16 @@
 
   // ── build the controls ────────────────────────────────────────────────────
   for (const [name, hex] of COLOURS) { const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(hex === colour)); b.style.setProperty('--sw', '#' + hex); b.onclick = () => { colour = hex; document.querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-checked', String(s === b))); }; $('swatches').appendChild(b); }
-  const cfg = () => ({ t: 'cfg', hold: 2000, flash: 2000, bright: +$('bright').value, ps: $('ps1').classList.contains('on') ? 1 : 0 });
+  const cfg = () => ({ t: 'cfg', hold: +$('hold').value, flash: 2000, bright: +$('bright').value, ps: $('ps1').classList.contains('on') ? 1 : 0 });
   $('ps1').onclick = () => { $('ps1').classList.add('on'); $('ps0').classList.remove('on'); send(cfg()); };
   $('ps0').onclick = () => { $('ps0').classList.add('on'); $('ps1').classList.remove('on'); send(cfg()); };
   $('bright').oninput = () => { $('brightv').textContent = $('bright').value + '%'; };
   $('bright').onchange = () => send(cfg());
+  $('hold').oninput = (e) => { $('holdv').textContent = (e.target.value / 1000).toFixed(2) + ' s'; };
+  $('hold').onchange = () => send(cfg());
+  $('yourmove').onclick = () => sendLed('solid');
+  $('h1').onclick = () => { holdOk = true; $('h1').classList.add('on'); $('h0').classList.remove('on'); sendLed('solid'); };
+  $('h0').onclick = () => { holdOk = false; $('h0').classList.add('on'); $('h1').classList.remove('on'); sendLed('solid'); };
   for (const [m, label, def] of MODES) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = label; b.onclick = () => { document.querySelectorAll('#modes .btn').forEach((x) => x.classList.remove('on')); b.classList.add('on'); sendLed(m, speed || undefined); }; if (def) b.title = 'default ' + def + ' ms'; $('modes').appendChild(b); }
   for (const [k, label] of FX) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = label; b.onclick = () => sendFx(k); $('fx').appendChild(b); }
   for (const [k, label, hint] of TURN_FX) { const b = document.createElement('button'); b.className = 'btn' + (DRAWN.has(k) ? '' : ' wish'); b.textContent = label; b.title = `${hint} · fx: ${k}${DRAWN.has(k) ? '' : ' · not in the firmware yet'}`; b.onclick = () => sendFx(k); $('turnfx').appendChild(b); }

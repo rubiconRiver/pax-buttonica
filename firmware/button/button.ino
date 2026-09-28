@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.8"
+#define FW_VERSION "0.3.9"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -93,7 +93,16 @@ static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's
 static bool radioSave = RADIO_SAVE; // radio sleeps between listening windows
 static bool radioHeld = false;      // radio forced awake while we wait for an answer
 static uint32_t radioHoldUntil = 0;
-static uint32_t pressedAt = 0;     // for the press blip
+static uint32_t pressedAt = 0;     // for the press punch
+// Feel (0.3.9). Everything here is drawn by the button on its own, the instant the switch says so, before the
+// radio has carried anything: that is what makes a press feel answered.
+#define PRESS_PUNCH_MS 110         // a front of light from the centre to the rim when the switch closes
+#define SETTLE_MS 160              // a small dip that eases back when a tap is let go
+#define DRAIN_MS 200               // a hold let go early: the fill runs back out from where it got to
+static uint32_t releasedAt = 0;
+static uint32_t abandonedAt = 0;
+static float abandonedProgress = 0;
+static bool holdAllowed = true;    // led "h": 0 means the host will refuse a hold now, and the button shows that while it is held
 
 static Overlay overlay = FX_NONE;
 static uint32_t overlaySince = 0;
@@ -699,9 +708,24 @@ static void render() {
       ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * MAX_BRIGHTNESS * brightScale))));
     } else {
       float lum = pixelLuminance(i, now);
-      // a short brightening the instant the button goes down, so the press feels answered before the radio has spoken
-      if (PRESS_BLIP_MS && pressedAt && now - pressedAt < PRESS_BLIP_MS) lum = min(1.0f, lum + 0.35f);
-      ring.setPixelColor(i, scaled(ledR, ledG, ledB, lum));
+      uint8_t r = ledR, g = ledG, b = ledB;
+      // the press: a whitened front runs from the centre to the rim the instant the switch closes
+      if (pressedAt && now - pressedAt < PRESS_PUNCH_MS) {
+        const float d = (now - pressedAt) / (float)PRESS_PUNCH_MS * (RINGS + 1.2f) - ringOf[i];
+        if (d >= 0 && d < 1.6f) {
+          const float w = 1 - d / 1.6f;
+          lum = max(lum, 0.35f + 0.65f * w);
+          r += (uint8_t)((255 - r) * w * 0.6f);
+          g += (uint8_t)((255 - g) * w * 0.6f);
+          b += (uint8_t)((255 - b) * w * 0.6f);
+        }
+      }
+      // letting go of a tap: a small dip that eases back, so the gesture has an end
+      if (releasedAt && now - releasedAt < SETTLE_MS) {
+        const float t = (now - releasedAt) / (float)SETTLE_MS;
+        lum *= 0.72f + 0.28f * t * t * (3 - 2 * t);
+      }
+      ring.setPixelColor(i, scaled(r, g, b, lum));
     }
   }
 
@@ -716,14 +740,33 @@ static void render() {
     }
   }
 
-  // Hold-to-confirm: the rings light up white from the outside in as the hold time runs down.
+  // Hold-to-confirm: the rings fill from the outside in as the hold time runs down. The fill starts slowly and
+  // gathers speed, and goes from the button's own colour to white, so the end is felt coming; the burst that
+  // follows is the snap. Let go early and it runs back out. If the host has said a hold will be refused ("h":0),
+  // there is no fill: the rim shakes red for as long as it is held.
   const Button &big = buttons[0];
+  float progress = -1;
+  bool held = false;
   if (big.down && !big.holdSent && now - big.downSince > TAP_MAX_MS) {
-    const float progress = constrain((float)(now - big.downSince - TAP_MAX_MS) / (holdMs - TAP_MAX_MS), 0.0f, 1.0f);
-    const float head = progress * RINGS;                     // how many rings are lit, counting from the outside
+    progress = constrain((float)(now - big.downSince - TAP_MAX_MS) / (holdMs - TAP_MAX_MS), 0.0f, 1.0f);
+    held = true;
+  } else if (abandonedAt && now - abandonedAt < DRAIN_MS) {
+    progress = abandonedProgress * (1 - (now - abandonedAt) / (float)DRAIN_MS);
+  }
+  if (progress >= 0 && held && !holdAllowed) {
+    const bool left = (now / 70) % 2 == 0;
+    for (int i = 0; i < LED_COUNT; i++) {
+      if (ringOf[i] == RINGS - 1) ring.setPixelColor(i, scaled(255, 20, 40, leftHalf(i) == left ? 0.9f : 0.25f));
+      else ring.setPixelColor(i, scaled(255, 20, 40, 0.12f));
+    }
+  } else if (progress >= 0) {
+    const float eased = progress * progress;                 // slow, then quick
+    const float head = eased * RINGS;                        // how many rings are lit, counting from the outside
+    const float white = progress;                            // own colour at the start, white at the end
+    const uint8_t r = ledR + (uint8_t)((255 - ledR) * white), g = ledG + (uint8_t)((255 - ledG) * white), b = ledB + (uint8_t)((255 - ledB) * white);
     for (int i = 0; i < LED_COUNT; i++) {
       const float fill = constrain(head - (RINGS - 1 - ringOf[i]), 0.0f, 1.0f);
-      if (fill > 0) ring.setPixelColor(i, scaled(255, 255, 255, fill));
+      if (fill > 0) ring.setPixelColor(i, scaled(r, g, b, 0.25f + 0.75f * fill));
     }
   }
 
@@ -901,6 +944,7 @@ static void handle(const Packet &p) {
     }
     mode = next;
     ledSet = true;
+    holdAllowed = (doc["h"] | 1) != 0;
     periodMs = doc["d"].is<uint32_t>() ? constrain(doc["d"].as<uint32_t>(), 200UL, 30000UL) : 0;
   } else if (!strcmp(type, "snd")) {
     static uint16_t list[MAX_NOTES][2];
@@ -1006,14 +1050,18 @@ static void serviceButtons() {
           b.lastTap = now;
           sendButton(i, "tap");
         }
+        if (i == 0) releasedAt = now;
+      } else if (i == 0 && !b.holdSent) {
+        // Released after 350 ms but before the hold time: an abandoned hold. Say nothing; the fill runs back out.
+        abandonedAt = now;
+        abandonedProgress = constrain((float)(now - b.downSince - TAP_MAX_MS) / (holdMs - TAP_MAX_MS), 0.0f, 1.0f);
       }
-      // Released after 350 ms but before the hold time: an abandoned hold. Say nothing.
     }
     if (i == 0 && b.down && !b.holdSent && now - b.downSince >= holdMs) {
       b.holdSent = true;
-      sendButton(0, "hold");
-      setOverlay(FX_BURST);
-      playNotes(SND_CONFIRM, 3, WAVE_TRIANGLE);
+      sendButton(0, "hold");                          // always reported: the host decides what it means
+      if (holdAllowed) { setOverlay(FX_BURST); playNotes(SND_CONFIRM, 3, WAVE_TRIANGLE); }
+      else { setOverlay(FX_DENIED); playNotes(SND_DENIED, 3, WAVE_SAW); }
     }
   }
 }
