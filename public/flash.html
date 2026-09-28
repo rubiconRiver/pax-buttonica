@@ -45,7 +45,11 @@
   esp-web-install-button::part(button) { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg); background: linear-gradient(#ffd47c, #e9a02b); border: 0; border-radius: 0; padding: 10px 16px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
   esp-web-install-button { --esp-tools-button-color: var(--gold); --esp-tools-button-text-color: var(--bg); }
   .list { display: grid; gap: 6px; }
-  .list .b { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px 14px; align-items: center; padding: 8px 10px; background: var(--bg-2); }
+  .list .b { display: grid; grid-template-columns: auto 1fr auto auto auto; gap: 10px 14px; align-items: center; padding: 8px 10px; background: var(--bg-2); }
+  .list .b .st { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .list .b.stale { opacity: 0.45; }
+  .list .b .st.bad { color: var(--danger); }
+  @media (max-width: 640px) { .list .b { grid-template-columns: auto 1fr auto; } .list .b .st { grid-column: 1 / -1; } }
   .list .b .id { color: var(--cyan); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
   .list .b .fw { color: var(--muted); font-size: 12.5px; }
   .list .b .fw.old { color: var(--gold-2); }
@@ -95,7 +99,7 @@
 
   <section class="panel chamfer"><div class="in chamfer">
     <h2>3 · Over the air</h2>
-    <p class="hint">Buttons on firmware 0.3.0 or later never need the cable again: with the hub on this laptop, this sends them the published image through the hub, one at a time, and each reboots into it. A button's light fills blue as the image lands. Close the game tab first; it holds the hub.</p>
+    <p class="hint">Buttons on firmware 0.3.0 or later never need the cable again: with the hub on this laptop, this lists every button the hub hears, with its version, signal and when it was last heard, and sends the published image through the hub to any that are behind, one at a time; each reboots into it, its light filling blue as the image lands. Presses show in the log. Close the game tab first; it holds the hub.</p>
     <div class="row">
       <button class="btn primary" id="ota-connect">Connect to the hub</button>
       <button class="btn" id="ota-all" disabled>Update every button that needs it</button>
@@ -205,6 +209,7 @@
   const buttons = new Map();            // dev -> { fw, row }
   const listeners = new Set();
   let published = null;                 // the button manifest
+  let hubFw = '';
   fetch('/firmware/button/manifest.json').then((r) => r.json()).then((m) => { published = m; }).catch(() => {});
 
   const send = (obj) => hub.writer.write(enc(JSON.stringify(obj) + '\n'));
@@ -220,12 +225,12 @@
     if (b) return b;
     const el = document.createElement('div');
     el.className = 'b';
-    el.innerHTML = `<span class="id">${dev}</span><span class="fw"></span><button class="btn">Blink</button><button class="btn primary">Update</button><div class="bar"><i></i></div>`;
+    el.innerHTML = `<span class="id">${dev}</span><span class="fw"></span><span class="st"></span><button class="btn">Blink</button><button class="btn primary">Update</button><div class="bar"><i></i></div>`;
     const [blink, update] = el.querySelectorAll('button');
     blink.onclick = () => send({ t: 'id', dev });
     update.onclick = () => runUpdates([dev]);
     $('ota-list').appendChild(el);
-    b = { fw: '?', el, update, bar: el.querySelector('.bar i'), fwEl: el.querySelector('.fw') };
+    b = { fw: '?', el, update, bar: el.querySelector('.bar i'), fwEl: el.querySelector('.fw'), stEl: el.querySelector('.st'), seen: Date.now(), rssi: null, mv: null, lost: false };
     buttons.set(dev, b);
     return b;
   }
@@ -235,10 +240,32 @@
     b.fwEl.className = 'fw ' + (cur && b.fw === cur ? 'ok' : 'old');
     $('ota-all').disabled = ![...buttons.values()].some((x) => published && x.fw !== published.version);
   }
+  // Signal, battery and when each button was last heard, so the table can be checked from the laptop.
+  function showStatus() {
+    const now = Date.now();
+    for (const b of buttons.values()) {
+      const ago = Math.round((now - b.seen) / 1000);
+      const bits = [];
+      if (b.rssi != null) bits.push(`${b.rssi} dBm`);
+      if (b.mv != null) bits.push(`${(b.mv / 1000).toFixed(2)} V`);
+      bits.push(b.lost ? 'lost' : ago < 3 ? 'heard just now' : `heard ${ago} s ago`);
+      b.stEl.textContent = bits.join(' · ');
+      b.stEl.className = 'st' + (b.lost ? ' bad' : '');
+      b.el.classList.toggle('stale', ago > 25 && !b.lost);
+    }
+    if (hub) state(`hub connected${hubFw ? ', firmware ' + hubFw : ''} · ${buttons.size} button${buttons.size === 1 ? '' : 's'} heard · they check in every 10 s`);
+  }
+  setInterval(showStatus, 1000);
   function onLine(line) {
     let m;
     try { m = JSON.parse(line); } catch { return; }
+    if (m.t === 'hub') hubFw = m.fw;
+    if (m.dev && ['hello', 'btn', 'bat', 'rssi', 'ota'].includes(m.t)) { const b = row(m.dev); b.seen = Date.now(); b.lost = false; }
     if (m.t === 'hello') { const b = row(m.dev); b.fw = m.fw; showFw(b); }
+    if (m.t === 'rssi') row(m.dev).rssi = m.dbm;
+    if (m.t === 'bat') row(m.dev).mv = m.mv;
+    if (m.t === 'lost') row(m.dev).lost = true;
+    if (m.t === 'btn') say(`${m.dev} ${m.e}`);
     for (const l of [...listeners]) l(m);
   }
 
@@ -249,12 +276,13 @@
     let port = null;
     for (const p of await navigator.serial.getPorts()) {
       const a = await whatIs(p);
-      if (a && a.t === 'hub') { port = p; break; }
+      if (a && a.t === 'hub') { port = p; hubFw = a.fw; break; }
     }
     if (!port) {
       try { port = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] }); } catch { state('no hub'); $('ota-connect').disabled = false; return; }
       const a = await whatIs(port);
       if (!a || a.t !== 'hub') { state('that is not the hub'); $('ota-connect').disabled = false; return; }
+      hubFw = a.fw;
     }
     await port.open({ baudRate: 115200 });
     hub = { port, writer: port.writable.getWriter() };
