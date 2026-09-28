@@ -1,4 +1,5 @@
 import { FACTION_GROUPS, PLAYER_COLORS } from '../engine/data';
+import { deviceTag } from '../engine/engine';
 import { clampBrightness, isTurnEffect, isTurnLook, type TurnEffect, type TurnLook } from '../engine/outputs';
 import type { PlayerSetup, SoundRef } from '../engine/types';
 import { createStore } from './createStore';
@@ -19,7 +20,12 @@ export interface Profile extends Omit<PlayerSetup, 'profileId'> {
   brightness?: number;
   /** What their button does the moment their turn starts. Unset: the table's. */
   turnFx?: TurnEffect;
+  /** Real buttons that are theirs (device tags, see `deviceTag`): registered by scanning the tag on the button. */
+  buttonIds?: string[];
 }
+
+export const BUTTON_TAG = /^[0-9a-f]{6,24}$/;
+export const MAX_BUTTONS = 8;
 
 export type ProfilePatch = Partial<Omit<Profile, 'id' | 'updatedAt'>>;
 
@@ -79,5 +85,26 @@ export function sanitizePatch(raw: unknown, jingleIds: string[]): ProfilePatch {
   if (isTurnLook(r.light)) out.light = r.light;
   if (isTurnEffect(r.turnFx)) out.turnFx = r.turnFx;
   if (typeof r.brightness === 'number') out.brightness = clampBrightness(r.brightness);
+  if (Array.isArray(r.buttonIds)) out.buttonIds = r.buttonIds.filter((x): x is string => typeof x === 'string').map(deviceTag).filter((x) => BUTTON_TAG.test(x)).slice(0, MAX_BUTTONS);
   return out;
 }
+
+/** A button belongs to one person: registering it here takes it off anyone else. */
+export function registerButton(profileId: string, dev: string) {
+  const tag = deviceTag(dev);
+  if (!BUTTON_TAG.test(tag)) return;
+  profilesStore.set((list) =>
+    sorted(list.map((p) => {
+      const has = p.buttonIds?.includes(tag) ?? false;
+      if (p.id === profileId) return has ? p : { ...p, buttonIds: [...(p.buttonIds ?? []), tag].slice(-MAX_BUTTONS), updatedAt: Date.now() };
+      return has ? { ...p, buttonIds: p.buttonIds!.filter((t) => t !== tag), updatedAt: Date.now() } : p;
+    })),
+  );
+}
+
+export function forgetButton(profileId: string, tag: string) {
+  patchProfile(profileId, { buttonIds: (findProfile(profileId)?.buttonIds ?? []).filter((t) => t !== tag) });
+}
+
+/** Whose a button is, if anyone has registered it. */
+export const ownerOfButton = (dev: string, list: Profile[] = profilesStore.get()) => list.find((p) => p.buttonIds?.includes(deviceTag(dev)));

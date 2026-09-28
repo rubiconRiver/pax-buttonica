@@ -7,6 +7,7 @@ import { Join } from './pages/Join';
 import { Me } from './pages/Me';
 import { Parts } from './pages/Parts';
 import { Landing } from './pages/Landing';
+import { ButtonLink } from './pages/ButtonLink';
 import { Play } from './pages/Play';
 import { Standard } from './pages/Standard';
 
@@ -26,6 +27,7 @@ export function App() {
       <Route path="/parts" element={<Parts />} />
       <Route path="/join" element={<Join />} />
       <Route path="/join/:code" element={<Join />} />
+      <Route path="/b/:id" element={<ButtonLink />} />
       <Route path="/standard" element={<Standard />} />
       <Route path="/hardware" element={<Standard doc="hardware" />} />
       <Route path="/button" element={<ButtonConcept />} />

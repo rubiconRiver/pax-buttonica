@@ -29,6 +29,27 @@ export class FakeApi {
     await context.route('**/api/clips**', (r) => this.handle(r, 'clips'));
     await context.route('**/api/game**', (r) => this.game(r));
     await context.route('**/api/actions**', (r) => this.inbox(r));
+    await context.route('**/api/button**', (r) => this.button(r));
+  }
+
+  /** api/button.ts: whose a real button is, and which game it is in. */
+  private async button(route: Route) {
+    if (!this.online) return route.abort('internetdisconnected');
+    const tag = (dev: string) => dev.replace(/[^0-9a-z]/gi, '').toLowerCase();
+    const id = tag(new URL(route.request().url()).searchParams.get('id') ?? '');
+    const row = [...this.rows.values()].find((r) => !r.deleted && Array.isArray(r.buttonIds) && (r.buttonIds as string[]).includes(id));
+    const owner = row ? { id: row.id, name: row.name } : null;
+    let game = null;
+    for (const [code, g] of [...this.games.entries()].sort((a, b) => b[1].updatedAt - a[1].updatedAt)) {
+      const state = g.record.state;
+      if (state.phase === 'finished') continue;
+      const bound = (state.bindings as (string | null)[]).findIndex((b) => b && tag(b) === id);
+      const seat = bound >= 0 ? bound : owner ? state.players.findIndex((p: { profileId?: string }) => p.profileId === owner.id) : -1;
+      if (seat < 0) continue;
+      game = { code, seat, name: state.players[seat].name, profileId: state.players[seat].profileId ?? null, round: state.round, phase: state.phase };
+      break;
+    }
+    return route.fulfill({ json: { id, owner, game } });
   }
 
   private async game(route: Route) {

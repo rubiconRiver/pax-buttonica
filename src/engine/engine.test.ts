@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import * as engineModule from './engine';
-import { createGame, currentScorer, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
+import { createGame, currentScorer, seatOfDevice, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
 import { deriveOutputs } from './outputs';
 import type { Action, GameState, PlayerSetup } from './types';
 
@@ -156,6 +156,49 @@ describe('action phase', () => {
     let g = createGame(players, { vpTarget: 10, speaker: 0 }, 0);
     for (let i = 0; i < 6; i++) g = reduce(g, pick(6 - i));
     expect(g.active).toBe(0);
+  });
+});
+
+describe('a phone alongside a real button', () => {
+  const REAL = 'A1B2C3D4E5F6';
+  const PHONE = 'web-abcd1234';
+  const withProfiles = () => setup(3).map((p, i) => ({ ...p, profileId: `profile-${i}-00000000` }));
+
+  it('takes a simulated seat, but joins alongside a real button instead of taking its seat', () => {
+    let g = createGame(withProfiles(), { vpTarget: 10, speaker: 0 }, 0);
+    g = reduce(g, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-1-00000000', at: 0 });
+    expect(g.bindings[1]).toBe(PHONE);
+    // Ben's real button arrives: it takes the seat back, and the phone stays his.
+    g = reduce(g, { type: 'BIND', seat: 1, dev: REAL, at: 0 });
+    expect(g.bindings[1]).toBe(REAL);
+    expect(seatOfDevice(g, PHONE)).toBe(1);
+    // Saying who you are again does not move the real button.
+    g = reduce(g, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-1-00000000', at: 0 });
+    expect(g.bindings[1]).toBe(REAL);
+    expect(g.bindings.includes(PHONE)).toBe(false);
+    expect(g.log.at(-1)?.text).toBe("P1's phone joins alongside their button.");
+  });
+
+  it('presses on the phone count for its owner\'s seat', () => {
+    let g = createGame(withProfiles(), { vpTarget: 10, speaker: 0 }, 0);
+    g = run(g, { type: 'BIND', seat: 0, dev: REAL, at: 0 }, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-0-00000000', at: 0 });
+    for (let c = 1; c <= 6; c++) g = reduce(g, pick(c));
+    expect(g.active).toBe(0);
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: PHONE, input: 'hold', at: 100 });
+    expect(g.active).toBe(1);
+    // A device nobody has identified does nothing.
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'web-stranger', input: 'hold', at: 200 });
+    expect(g.active).toBe(1);
+  });
+
+  it('during seat claiming, a phone whose owner has a real button never claims a seat for someone else', () => {
+    let g = createGame(withProfiles(), { vpTarget: 10, speaker: 0, seating: true }, 0);
+    g = run(g, { type: 'BIND', seat: 0, dev: REAL, at: 0 }, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-0-00000000', at: 0 });
+    expect(g.seating?.next).toBe(1);
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: PHONE, input: 'tap', at: 0 });
+    expect(g.bindings[1]).toBeNull();
+    g = reduce(g, { type: 'DEVICE_INPUT', dev: 'B2', input: 'tap', at: 0 });
+    expect(g.bindings[1]).toBe('B2');
   });
 });
 

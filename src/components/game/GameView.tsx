@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { unlockAudio } from '../../audio/synth';
-import { currentScorer, seatSpots, simDevice, turnElapsed, turnOrder } from '../../engine/engine';
+import { currentScorer, isVirtualDevice, seatSpots, simDevice, turnElapsed, turnOrder } from '../../engine/engine';
+import { ownerOfButton } from '../../state/profiles';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
@@ -101,6 +102,19 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     setInputHandler((dev, input) => dispatch({ type: 'DEVICE_INPUT', dev, input, at: Date.now() }));
     return () => setInputHandler(null);
   }, [dispatch]);
+  // A registered button (its tag saved on its owner's profile) sits down at its owner's seat by itself; only
+  // unknown buttons need the press-when-your-name-is-called ritual. A real button takes over from a phone.
+  useEffect(() => {
+    if (demo) return;
+    for (const d of hubDevices) {
+      if (d.lost || game.bindings.includes(d.dev)) continue;
+      const owner = ownerOfButton(d.dev, profiles);
+      const seat = owner ? game.players.findIndex((p) => p.profileId === owner.id) : -1;
+      if (seat < 0) continue;
+      const held = game.bindings[seat];
+      if (!held || isVirtualDevice(held)) dispatch({ type: 'BIND', seat, dev: d.dev, at: Date.now() });
+    }
+  }, [hubDevices, game.bindings, game.players, profiles, demo, dispatch]);
   // A hub this browser has been allowed before connects on its own, with no chooser.
   useEffect(() => {
     if (!demo) void connectHub({ silent: true });

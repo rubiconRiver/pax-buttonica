@@ -13,6 +13,11 @@ export const cardsPerPlayer = (playerCount: number) => (playerCount <= 4 ? 2 : 1
 
 /** Id of the simulated on-screen button at a given spot round the table. */
 export const simDevice = (spot: number) => `sim-${spot}`;
+/** Simulated and phone devices give way to a real button; a real button never gives way to them. */
+export const isVirtualDevice = (dev: string) => dev.startsWith('sim-') || dev.startsWith('web-');
+/** A device id as it goes on a label or in a URL: the hex of its address, lower-case, nothing else. */
+export const deviceTag = (dev: string) => dev.replace(/[^0-9a-z]/gi, '').toLowerCase();
+export const sameDevice = (a: string, b: string) => deviceTag(a) === deviceTag(b);
 
 // ── Construction ────────────────────────────────────────────────────────────
 
@@ -108,6 +113,17 @@ export function cardHolder(g: GameState, card: number): number | null {
 export function pendingAcks(g: GameState): number[] {
   if (!g.strategyPlay) return [];
   return g.strategyPlay.acks.flatMap((ok, i) => (ok ? [] : [i]));
+}
+
+/**
+ * The seat a device acts for: the one it holds, else its owner's, if the game knows whose it is. That's how a phone
+ * works alongside a real button rather than instead of it: both are that player's, presses on either count.
+ */
+export function seatOfDevice(g: GameState, dev: string): number {
+  const held = g.bindings.indexOf(dev);
+  if (held >= 0) return held;
+  const who = g.devices[dev];
+  return who ? g.players.findIndex((p) => p.profileId === who) : -1;
 }
 
 export function currentPicker(g: GameState): number | null {
@@ -548,8 +564,15 @@ function bind(g: GameState, seat: number, dev: string, at: number) {
 function identify(g: GameState, dev: string, profileId: string | null, at: number) {
   g.devices[dev] = profileId;
   const seat = profileId ? g.players.findIndex((p) => p.profileId === profileId) : -1;
-  if (seat >= 0 && g.bindings[seat] !== dev) bind(g, seat, dev, at);
-  else if (seat < 0 && profileId === null) {
+  if (seat >= 0 && g.bindings[seat] !== dev) {
+    const held = g.bindings[seat];
+    if (!held || isVirtualDevice(held)) bind(g, seat, dev, at);
+    else {
+      // A real button has the seat: the phone joins alongside it (see seatOfDevice) rather than taking it.
+      if (g.bindings.includes(dev)) g.bindings = g.bindings.map((b) => (b === dev ? null : b));
+      log(g, `${g.players[seat].name}'s phone joins alongside their button.`, { seat });
+    }
+  } else if (seat < 0 && profileId === null) {
     // "Nobody in particular": the device gives up any seat it held.
     if (g.bindings.includes(dev)) g.bindings = g.bindings.map((b) => (b === dev ? null : b));
   }
@@ -605,10 +628,11 @@ export function reduce(state: GameState, action: Action): GameState {
       break;
     case 'DEVICE_INPUT': {
       if (g.seating) {
-        if (action.input === 'tap' || action.input === 'hold') claim(g, action.dev, action.at);
+        // A device the game already knows the owner of (a phone alongside a real button) never claims a seat for someone else.
+        if ((action.input === 'tap' || action.input === 'hold') && seatOfDevice(g, action.dev) < 0) claim(g, action.dev, action.at);
         break;
       }
-      const seat = g.bindings.indexOf(action.dev);
+      const seat = seatOfDevice(g, action.dev);
       if (seat >= 0) handleInput(g, seat, action.input, action.at);
       break;
     }

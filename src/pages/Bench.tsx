@@ -1,3 +1,4 @@
+import { deviceTag } from '../engine/engine';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { JINGLES } from '../audio/jingles';
@@ -79,6 +80,7 @@ export function Bench() {
               <section key={d.dev} className="panel bench__dev" data-lost={d.lost || undefined}>
                 <div className="bench__devhead">
                   <code>{d.dev}</code>
+                  <a className="chip" href={`/b/${deviceTag(d.dev)}`} title="Write this address on the button's NFC tag or QR code: scanning it opens the game on a phone">/b/{deviceTag(d.dev)}</a>
                   <span className="chip">{d.lost ? 'not answering' : `fw ${d.fw ?? '?'}`}</span>
                   {d.caps && <span className="chip">{d.caps.btn} btn · {d.caps.led} · {d.caps.audio}</span>}
                   {d.mv != null && <span className="chip">{(d.mv / 1000).toFixed(2)} V</span>}

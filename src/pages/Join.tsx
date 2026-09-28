@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { saveClip } from '../audio/clips';
 import { JINGLES } from '../audio/jingles';
 import { playSound, unlockAudio, type Playing } from '../audio/synth';
@@ -8,7 +8,7 @@ import { Scoreboard } from '../components/game/Scoreboard';
 import { reactionFor, useReactions, type Reaction } from '../components/game/useReactions';
 import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
-import { CODE_LENGTH, cleanCode } from '../engine/engine';
+import { CODE_LENGTH, cleanCode, seatOfDevice } from '../engine/engine';
 import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
 import type { GameState, SoundRef } from '../engine/types';
 import type { GameRecord } from '../remote/sync';
@@ -164,12 +164,15 @@ const OFF: DeviceOutput = { color: '#ffffff', mode: 'off', reason: '' };
 function PhoneButton({ code }: { code: string }) {
   const { link, record, say } = useGame(code);
   const profiles = useStore(profilesStore);
+  // Arriving from the tag on a real button: the page already knows who this is.
+  const [params, setParams] = useSearchParams();
+  const arriveAs = params.get('as');
   const [view, setView] = useState<'button' | 'table'>('button');
   const [editing, setEditing] = useState(false);
   const [tuning, setTuning] = useState(false);
   const [oops, setOops] = useState<string | null>(null);
   /** null: not decided yet (follows the game); true: showing the question; false: answered or skipped. */
-  const [asking, setAsking] = useState<boolean | null>(null);
+  const [asking, setAsking] = useState<boolean | null>(arriveAs ? false : null);
   const [size, setSize] = useState(280);
   const lastMode = useRef<string | null>(null);
   const dev = deviceId();
@@ -177,7 +180,9 @@ function PhoneButton({ code }: { code: string }) {
   useWakeLock(connected);
 
   const game: GameState | null = record?.state ?? null;
-  const seat = game ? game.bindings.indexOf(dev) : -1;
+  // The seat this phone holds, or its owner's seat when a real button holds it: then the phone is a companion.
+  const seat = game ? seatOfDevice(game, dev) : -1;
+  const companion = !!game && seat >= 0 && game.bindings[seat] !== dev;
   const known = game ? dev in game.devices : false;
   const meId = game?.devices[dev] ?? null;
   const me = meId ? profiles.find((p) => p.id === meId) : undefined;
@@ -209,6 +214,11 @@ function PhoneButton({ code }: { code: string }) {
   useEffect(() => {
     if (game && asking === null) setAsking(!known);
   }, [game, known, asking]);
+  useEffect(() => {
+    if (!game || !arriveAs) return;
+    if (meId !== arriveAs) say({ type: 'identify', profileId: arriveAs });
+    setParams({}, { replace: true });
+  }, [game, arriveAs, meId, say, setParams]);
   // Remember who we are, so the profile page and the next game's list know.
   useEffect(() => {
     if (meId) localStorage.setItem(WHO, meId);
@@ -322,7 +332,10 @@ function PhoneButton({ code }: { code: string }) {
               ? "You're not seated in this game."
               : output.reason}
       </p>
-      <p className="join__help">Game {code} · Tap: done · Double-tap: strategy card · Hold: end turn</p>
+      <p className="join__help">
+        {companion ? 'Alongside your button: this phone shows the same light, and presses here count too · ' : ''}
+        Game {code} · Tap: done · Double-tap: strategy card · Hold: end turn
+      </p>
       {tabs}
 
       {tuning && me && (
@@ -453,9 +466,11 @@ export function LightSheet({ me, tableLook, tableFx, onEdit, onPreview, onClose 
 
 let preview: Playing | null = null;
 
-export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
+export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose, extra }: {
   me: Pick<Profile, 'id' | 'name' | 'color' | 'intro' | 'outro'>;
   oops: string | null;
+  /** More to show under the sounds (the profile page lists the player's buttons here). */
+  extra?: React.ReactNode;
   onEdit(patch: { name?: string; color?: string; intro?: SoundRef; outro?: SoundRef }): void;
   onClip(slot: 'intro' | 'outro', file: File): void;
   onSwitch(): void;
@@ -537,6 +552,7 @@ export function ProfileSheet({ me, oops, onEdit, onClip, onSwitch, onClose }: {
         {slot('outro', 'Exit: plays when you end your turn')}
         {(error || oops) && <p className="soundpick__error">{error ?? oops}</p>}
         <p className="muted" style={{ fontSize: 12.5 }}>Sounds play from the big screen, not from your phone or your button.</p>
+        {extra}
         <div className="sheet__foot">
           <button type="button" className="btn btn--sm btn--ghost" onClick={onSwitch}>Not {me.name}? Switch player</button>
           <button type="button" className="btn btn--gold" onClick={onClose}>Done</button>

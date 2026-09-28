@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { saveClip } from '../audio/clips';
 import { useStore } from '../state/createStore';
-import { createProfile, patchProfile, profilesStore } from '../state/profiles';
+import { createProfile, forgetButton, patchProfile, profilesStore } from '../state/profiles';
 import { syncStatus } from '../state/profileSync';
 import { ProfileSheet, WHO, WhoAreYou } from './Join';
 
@@ -56,6 +56,23 @@ export function Me() {
         }}
         onSwitch={() => become(null)}
         onClose={() => history.back()}
+        extra={
+          <div className="me__buttons">
+            <div className="eyebrow">Your buttons</div>
+            {me.buttonIds?.length ? (
+              <ul className="me__list">
+                {me.buttonIds.map((tag) => (
+                  <li key={tag}>
+                    <code>{tag}</code>
+                    <button type="button" className="btn btn--sm btn--ghost" onClick={() => forgetButton(me.id, tag)}>Forget</button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="muted">None yet. Tap your phone on a button's tag to make it yours: it sits down at your seat by itself from then on.</p>
+            )}
+          </div>
+        }
       />
     </div>
   );

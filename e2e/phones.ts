@@ -5,7 +5,7 @@ import { HOLD_MS, expect } from './helpers';
  * A player's phone: another tab in the same browser, reading the game off the (fake) site and posting presses.
  * Tabs share localStorage, so each phone keeps its own identity (device id, "who am I") in sessionStorage instead.
  */
-export async function openPhone(context: BrowserContext, code: string, { mobile = true, identity = {} as Record<string, string> } = {}): Promise<Phone> {
+export async function openPhone(context: BrowserContext, code: string, { mobile = true, identity = {} as Record<string, string>, path = '' } = {}): Promise<Phone> {
   const page = await context.newPage();
   if (mobile) await page.setViewportSize({ width: 390, height: 844 });
   await page.addInitScript(() => {
@@ -16,7 +16,7 @@ export async function openPhone(context: BrowserContext, code: string, { mobile 
     Storage.prototype.removeItem = function (k) { return removeItem.call(own(this, k), k); };
   });
   await page.addInitScript((id) => Object.entries(id).forEach(([k, v]) => sessionStorage.setItem(k, v)), identity);
-  await page.goto(`/join/${code}`);
+  await page.goto(path || `/join/${code}`);
   return new Phone(page);
 }
 

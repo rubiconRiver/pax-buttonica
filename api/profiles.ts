@@ -47,6 +47,8 @@ function clean(raw: unknown) {
       ...(p.light === 'solid' || p.light === 'pulse' || p.light === 'heartbeat' ? { light: p.light } : {}),
       ...(typeof p.brightness === 'number' && Number.isFinite(p.brightness) ? { brightness: Math.min(1, Math.max(0.1, p.brightness)) } : {}),
       ...(typeof p.turnFx === 'string' && TURN_FX.includes(p.turnFx) ? { turnFx: p.turnFx } : {}),
+      // Real buttons registered as theirs: device tags (hex), at most a handful.
+      ...(Array.isArray(p.buttonIds) ? { buttonIds: p.buttonIds.filter((x): x is string => typeof x === 'string' && /^[0-9a-f]{6,24}$/.test(x)).slice(0, 8) } : {}),
     },
   };
 }
