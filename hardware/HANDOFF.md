@@ -70,7 +70,7 @@ Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for 
 
 ## Over the air (2026-09-28)
 
-Button firmware 0.3.0 receives a new image through the hub (`ota` messages, `docs/BUTTON_STANDARD.md`) and reboots into it; the hub is unchanged (0.2.0). `/flash.html` section 3 and `firmware/ota.py` drive it. One USB flash to 0.3.0 per button, then never again. Not yet run on a real button: written 2026-09-28, waiting for an Atom on the bench. For the app session: the game already knows which `dev` sits in which seat, so an "update this button" entry in the play screen's settings could send the same messages over the port it already holds; the page version is enough for now.
+Button firmware 0.3.0 receives a new image through the hub (`ota` messages, `docs/BUTTON_STANDARD.md`) and reboots into it; the hub is unchanged (0.2.0). `/flash.html` section 3 and `firmware/ota.py` drive it. One USB flash per button, then never again. **Seen working 2026-09-28:** Garett's button went 0.3.5 → 0.3.6 through the hub from the flash page and came back on the new version. Three bugs found on the way, all fixed: the hub's 256-byte serial buffer (now 4 KB, hub 0.2.1), chunk lines over 250 bytes past chunk 99 (150-byte chunks), and an unsigned wrap in the button's idle check that aborted every burst (0.3.5). Buttons must be on 0.3.5 or later by cable first. For the app session: the game already knows which `dev` sits in which seat, so an "update this button" entry in the play screen's settings could send the same messages over the port it already holds; the page version is enough for now.
 
 ## Turn effects in the firmware (2026-09-28, app session)
 
