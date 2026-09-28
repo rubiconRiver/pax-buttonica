@@ -15,6 +15,10 @@
  * Power (2026-09-26): the radio sleeps between short listening windows (the core is built with
  * power saving allowed while not connected to an access point); the hub resends until a message
  * lands in a window. CPU at 80 MHz. "solid" is a bright rim with a softer centre. See config.h.
+ *
+ * Over the air (2026-09-28): a new image can arrive through the hub in numbered chunks ("ota"
+ * messages) and is written to the spare app slot; the button checks its MD5 and reboots into it.
+ * So a button only ever needs the USB cable once. Needs the default partition table (two app slots).
  */
 #include <WiFi.h>
 #include <esp_now.h>
@@ -24,6 +28,8 @@
 #include <driver/rtc_io.h>
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
+#include <Update.h>
+#include <mbedtls/base64.h>
 #include "config.h"
 
 #if defined(AUDIO_I2S)
@@ -32,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.2.2"
+#define FW_VERSION "0.3.0"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -77,6 +83,11 @@ static uint32_t pressedAt = 0;     // for the press blip
 
 static Overlay overlay = FX_NONE;
 static uint32_t overlaySince = 0;
+
+// an image arriving over the air (see handleOta)
+#define OTA_IDLE_MS 15000
+static bool otaActive = false;
+static uint32_t otaNext = 0, otaSize = 0, otaGot = 0, otaLast = 0;
 
 struct Button {
   bool down;
@@ -424,6 +435,15 @@ static void render() {
     }
   }
 
+  // A new image arriving: the rings fill blue from the centre out as it lands.
+  if (otaActive && otaSize) {
+    const float head = (float)otaGot / otaSize * RINGS;
+    for (int i = 0; i < LED_COUNT; i++) {
+      const float fill = constrain(head - ringOf[i], 0.0f, 1.0f);
+      ring.setPixelColor(i, scaled(40, 200, 255, 0.12f + 0.88f * fill));
+    }
+  }
+
   // Hold-to-confirm: the rings light up white from the outside in as the hold time runs down.
   const Button &big = buttons[0];
   if (big.down && !big.holdSent && now - big.downSince > TAP_MAX_MS) {
@@ -493,6 +513,62 @@ static void render() {
   statusLed.setPixelColor(0, ring.getPixelColor(0));
   statusLed.show();
 #endif
+}
+
+// ── Over the air ────────────────────────────────────────────────────────────
+// The image comes through the hub as {"t":"ota","dev":..,"n":<chunk>,"d":"<base64>"} lines, one ESP-NOW
+// packet each, in order, after a {"size","md5"} that opens the spare app slot; {"end":true} closes it,
+// checks the MD5 and reboots. Every chunk is answered, so the host can keep a few in flight and know
+// exactly where to resume. See docs/BUTTON_STANDARD.md, "Updating over the air".
+static void otaReply(const char *st, uint32_t n, const char *why = nullptr) {
+  char line[200];
+  if (why) snprintf(line, sizeof(line), "{\"t\":\"ota\",\"dev\":\"%s\",\"st\":\"%s\",\"n\":%lu,\"why\":\"%s\"}", devId, st, (unsigned long)n, why);
+  else snprintf(line, sizeof(line), "{\"t\":\"ota\",\"dev\":\"%s\",\"st\":\"%s\",\"n\":%lu}", devId, st, (unsigned long)n);
+  sendLine(line);
+}
+
+static void otaStop() {
+  if (Update.isRunning()) Update.abort();
+  otaActive = false;
+}
+
+static void handleOta(JsonDocument &doc) {
+  otaLast = millis();
+  if (doc["size"].is<uint32_t>()) {
+    otaStop();
+    otaSize = doc["size"].as<uint32_t>();
+    if (!Update.begin(otaSize, U_FLASH)) { otaReply("err", 0, Update.errorString()); return; }
+    const char *md5 = doc["md5"] | "";
+    if (strlen(md5) == 32) Update.setMD5(md5);
+    otaActive = true;
+    otaNext = otaGot = 0;
+    radioSave = false;      // wide awake until the reboot; the new image starts sleepy again
+    applyRadioSave();
+    otaReply("ready", 0);
+  } else if (doc["n"].is<uint32_t>()) {
+    if (!otaActive) { otaReply("err", 0, "not started"); return; }
+    const uint32_t n = doc["n"].as<uint32_t>();
+    if (n + 1 == otaNext) { otaReply("ok", n); return; }        // the hub resent a chunk that had already landed
+    if (n != otaNext) { otaReply("seq", otaNext); return; }     // out of order: say where we are
+    const char *d = doc["d"] | "";
+    uint8_t buf[200];
+    size_t len = 0;
+    if (mbedtls_base64_decode(buf, sizeof(buf), &len, (const uint8_t *)d, strlen(d)) != 0) { otaReply("err", n, "bad base64"); return; }
+    if (Update.write(buf, len) != len) { otaReply("err", n, Update.errorString()); otaStop(); return; }
+    otaNext++;
+    otaGot += len;
+    otaReply("ok", n);
+  } else if (doc["end"].is<bool>()) {
+    if (!otaActive) { otaReply("err", 0, "not started"); return; }
+    if (!Update.end(true)) { otaReply("err", otaNext, Update.errorString()); otaStop(); return; }
+    otaActive = false;
+    otaReply("done", otaNext);
+    delay(300);             // let the answer leave before the radio goes down
+    ESP.restart();
+  } else if (doc["abort"].is<bool>()) {
+    otaStop();
+    otaReply("aborted", 0);
+  }
 }
 
 // ── Messages from the host ──────────────────────────────────────────────────
@@ -587,6 +663,8 @@ static void handle(const Packet &p) {
     setOverlay(FX_IDENTIFY);
   } else if (!strcmp(type, "hub")) {
     sendHello();
+  } else if (!strcmp(type, "ota")) {
+    handleOta(doc);
   }
 }
 
@@ -759,6 +837,8 @@ void loop() {
     lastHello = now;
     sendHello();
   }
+
+  if (otaActive && now - otaLast > OTA_IDLE_MS) { otaStop(); otaReply("err", otaNext, "timed out"); }
 
   if (SLEEP_AFTER_MINUTES > 0 && now - lastContact > (uint32_t)SLEEP_AFTER_MINUTES * 60000UL && !buttons[0].down) sleepUntilPressed();
 

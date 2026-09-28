@@ -14,10 +14,15 @@ for what in hub button; do
   cp "$b/boot_app0.bin" "$out/boot_app0.bin"
   cp "$b/$what.ino.bin" "$out/app.bin"
   fw=$(grep -o 'FW_VERSION "[^"]*"' "firmware/$what/$what.ino" | cut -d'"' -f2)
+  md5=$(md5 -q "$out/app.bin")
+  size=$(stat -f %z "$out/app.bin")
+  # "size" and "md5" are ours, for updating buttons over the air; the flashing tool ignores them.
   cat > "$out/manifest.json" <<JSON
 {
   "name": "Pax Buttonica $what",
   "version": "$fw",
+  "size": $size,
+  "md5": "$md5",
   "new_install_prompt_erase": false,
   "builds": [
     {

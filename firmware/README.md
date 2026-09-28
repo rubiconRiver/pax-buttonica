@@ -41,6 +41,10 @@ The Atom's tiny onboard pixel mirrors the button's colour, so a bare Atom on a c
 
 `/flash.html` on the site flashes either sketch from Chrome over Web Serial, and its "Ask the Atom" button tells you what an Atom is running (a button answers with its id and blinks white; a hub answers as a hub). The images it serves live in `public/firmware/`; regenerate them with `firmware/export.sh` after changing firmware, then commit and deploy. `firmware/flash.sh hub|button` does the same from a terminal and finds the port itself.
 
+## Over the air
+
+Since firmware 0.3.0 a button only needs the USB cable once. After that, with the hub on the laptop, section 3 of `/flash.html` ("Connect to the hub") lists every button the hub hears with its version, and **Update** sends it the published image through the hub in 153-byte chunks (`ota` messages, in `docs/BUTTON_STANDARD.md`); the button writes them to its spare app slot, checks the MD5, reboots, and its next `hello` shows the new version. About a minute per button; **Update every button that needs it** does them one after another. The light fills blue from the centre as the image lands. From a terminal, `hardware/shell/.venv/bin/python firmware/ota.py` (no arguments) lists what the hub hears, `all` updates every button that is behind, or give it ids. The game tab holds the hub, so close it first. The hub itself still takes the cable (it is on the laptop anyway). Both need the default partition table, which is what `export.sh` builds and what the flasher installs.
+
 ## Power
 
 Since 2026-09-26 the button's radio sleeps between 30 ms listening windows every 200 ms and the hub resends until it is heard; the CPU runs at 80 MHz and `solid` is a bright rim with a softer centre. All of it is in `config.h` under Power. The hub must be flashed too, or lights will only reach a sleeping button by luck. `cfg` `ps: 0` keeps a button's radio on for comparison on a USB power meter.

@@ -137,6 +137,29 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 
 Unknown message types and unknown fields must be ignored, by everyone. That's what lets v1 devices survive a v2 host.
 
+### Updating over the air (optional)
+
+A button whose USB socket is inside its shell still needs new firmware now and then. The host can send it the image through the hub, which relays these lines like any other:
+
+```json
+{"t":"ota","dev":"A1B2C3D4E5F6","size":904784,"md5":"386e7c1a129dd2bc93233fe859c7524f"}
+{"t":"ota","dev":"A1B2C3D4E5F6","n":0,"d":"6QAGAn...(base64, 153 bytes of image)"}
+{"t":"ota","dev":"A1B2C3D4E5F6","end":true}
+{"t":"ota","dev":"A1B2C3D4E5F6","abort":true}
+```
+
+and the button answers each one:
+
+```json
+{"t":"ota","dev":"A1B2C3D4E5F6","st":"ready","n":0}
+{"t":"ota","dev":"A1B2C3D4E5F6","st":"ok","n":0}
+{"t":"ota","dev":"A1B2C3D4E5F6","st":"seq","n":41}
+{"t":"ota","dev":"A1B2C3D4E5F6","st":"done","n":5914}
+{"t":"ota","dev":"A1B2C3D4E5F6","st":"err","n":12,"why":"..."}
+```
+
+`size` and `md5` open the update (the reference firmware writes to its spare app slot); chunks `n` = 0, 1, 2… carry 153 bytes each, base64, so a line stays under 250 bytes; `end` checks the MD5 and reboots into the new image, and the button's next `hello` carries the new `fw`. Every chunk is answered with `ok` and its number, so the host keeps a few in flight (the reference hub holds six per button) and resends from the last one answered if the answers stop; `seq` says which chunk the button wants next when one arrives out of order. A chunk that arrives twice is answered again and not written. The button gives up an update that goes quiet for 15 s. A 900 KB image takes about a minute per button; the reference button fills its light blue from the centre out as it lands. The hub needs no change. A button that does not support this simply ignores `ota`, and the host finds out when nothing answers.
+
 ## Claiming seats
 
 Buttons don't know where they sit, and nobody wants to label them. Instead, every game opens with a small ritual:

@@ -67,3 +67,7 @@ Garett ordered from DigiKey.ca: **7 × AtomS3 Lite** (6 buttons + hub), and for 
 - Shell: print `fit_test` and the cap now; body, bridge and plinth after measuring.
 - A hub enclosure, or at least strain relief for the USB cable.
 - Later: a sleep/poll scheme for battery life, clip caching on the button, a fully assembled v2 board (SMD LEDs, level shifter, LED power switch) after game night.
+
+## Over the air (2026-09-28)
+
+Button firmware 0.3.0 receives a new image through the hub (`ota` messages, `docs/BUTTON_STANDARD.md`) and reboots into it; the hub is unchanged (0.2.0). `/flash.html` section 3 and `firmware/ota.py` drive it. One USB flash to 0.3.0 per button, then never again. Not yet run on a real button: written 2026-09-28, waiting for an Atom on the bench. For the app session: the game already knows which `dev` sits in which seat, so an "update this button" entry in the play screen's settings could send the same messages over the port it already holds; the page version is enough for now.

@@ -44,6 +44,15 @@
   ol li { margin: 4px 0; }
   esp-web-install-button::part(button) { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--bg); background: linear-gradient(#ffd47c, #e9a02b); border: 0; border-radius: 0; padding: 10px 16px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
   esp-web-install-button { --esp-tools-button-color: var(--gold); --esp-tools-button-text-color: var(--bg); }
+  .list { display: grid; gap: 6px; }
+  .list .b { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px 14px; align-items: center; padding: 8px 10px; background: var(--bg-2); }
+  .list .b .id { color: var(--cyan); font-family: ui-monospace, Menlo, monospace; font-size: 13px; }
+  .list .b .fw { color: var(--muted); font-size: 12.5px; }
+  .list .b .fw.old { color: var(--gold-2); }
+  .list .b .fw.ok { color: var(--ok); }
+  .list .b .bar { grid-column: 1 / -1; height: 4px; background: var(--line); }
+  .list .b .bar i { display: block; height: 100%; width: 0; background: var(--cyan); transition: width 0.2s; }
+  .list .b[hidden] { display: none; }
   .log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); max-height: 160px; overflow: auto; background: var(--bg-2); padding: 10px 12px; white-space: pre-wrap; }
 </style>
 </head>
@@ -85,12 +94,24 @@
   </div>
 
   <section class="panel chamfer"><div class="in chamfer">
+    <h2>3 · Over the air</h2>
+    <p class="hint">Buttons on firmware 0.3.0 or later never need the cable again: with the hub on this laptop, this sends them the published image through the hub, one at a time, and each reboots into it. A button's light fills blue as the image lands. Close the game tab first; it holds the hub.</p>
+    <div class="row">
+      <button class="btn primary" id="ota-connect">Connect to the hub</button>
+      <button class="btn" id="ota-all" disabled>Update every button that needs it</button>
+      <span class="ver" id="ota-state"></span>
+    </div>
+    <div id="ota-list" class="list"></div>
+  </div></section>
+
+  <section class="panel chamfer"><div class="in chamfer">
     <h2>How it goes</h2>
     <ol>
       <li>Plug the Atom in. The first time, click <b>Allow another Atom</b> and pick it in the popup; after that it's recognised on its own. The list above says what's on it now.</li>
       <li>Click <b>Connect</b> under hub or button and pick it in the flasher's popup (that one is the flashing tool's own and can't be skipped; with two Atoms plugged in, the list above tells you which is which by unplugging one), choose <b>Install</b>, wait for "Installation complete" (about 20 seconds), close it.</li>
       <li>Click <b>Ask again</b>. It should now answer with the new version. Buttons blink white while they answer.</li>
       <li>Do the hub first after a firmware change, then each button. A button flashed before its hub only reaches it by luck.</li>
+      <li>Once a button is on 0.3.0 or later, leave it in its shell: later versions go to it over the air, from section 3.</li>
     </ol>
     <div class="hint">If the install fails to connect, unplug and replug the Atom and try again; if it says the port is busy, another tab has it. The terminal alternative is <code>firmware/flash.sh hub</code> or <code>firmware/flash.sh button</code>.</div>
   </section>
@@ -176,6 +197,146 @@
   $('who').onclick = ask;
   $('add').onclick = add;
   ask();
+
+  // ── Over the air: a live connection to the hub, the buttons it hears, and an image sent in chunks ──
+  const CHUNK = 153, WINDOW = 4;       // 153 raw bytes make a 249-byte line, one ESP-NOW packet; the hub keeps six per button
+  const enc = (t) => new TextEncoder().encode(t);
+  let hub = null;                       // { port, writer }
+  const buttons = new Map();            // dev -> { fw, row }
+  const listeners = new Set();
+  let published = null;                 // the button manifest
+  fetch('/firmware/button/manifest.json').then((r) => r.json()).then((m) => { published = m; }).catch(() => {});
+
+  const send = (obj) => hub.writer.write(enc(JSON.stringify(obj) + '\n'));
+  const waitFor = (pred, ms) => new Promise((res, rej) => {
+    const t = setTimeout(() => { listeners.delete(l); rej(new Error('no answer')); }, ms);
+    const l = (m) => { if (pred(m)) { clearTimeout(t); listeners.delete(l); res(m); } };
+    listeners.add(l);
+  });
+  const state = (t) => { $('ota-state').textContent = t; };
+
+  function row(dev) {
+    let b = buttons.get(dev);
+    if (b) return b;
+    const el = document.createElement('div');
+    el.className = 'b';
+    el.innerHTML = `<span class="id">${dev}</span><span class="fw"></span><button class="btn">Blink</button><button class="btn primary">Update</button><div class="bar"><i></i></div>`;
+    const [blink, update] = el.querySelectorAll('button');
+    blink.onclick = () => send({ t: 'id', dev });
+    update.onclick = () => runUpdates([dev]);
+    $('ota-list').appendChild(el);
+    b = { fw: '?', el, update, bar: el.querySelector('.bar i'), fwEl: el.querySelector('.fw') };
+    buttons.set(dev, b);
+    return b;
+  }
+  function showFw(b) {
+    const cur = published?.version;
+    b.fwEl.textContent = 'firmware ' + b.fw + (cur ? (b.fw === cur ? ' · up to date' : ' → ' + cur) : '');
+    b.fwEl.className = 'fw ' + (cur && b.fw === cur ? 'ok' : 'old');
+    $('ota-all').disabled = ![...buttons.values()].some((x) => published && x.fw !== published.version);
+  }
+  function onLine(line) {
+    let m;
+    try { m = JSON.parse(line); } catch { return; }
+    if (m.t === 'hello') { const b = row(m.dev); b.fw = m.fw; showFw(b); }
+    for (const l of [...listeners]) l(m);
+  }
+
+  async function connectHub() {
+    if (!navigator.serial) return;
+    $('ota-connect').disabled = true;
+    state('looking for the hub…');
+    let port = null;
+    for (const p of await navigator.serial.getPorts()) {
+      const a = await whatIs(p);
+      if (a && a.t === 'hub') { port = p; break; }
+    }
+    if (!port) {
+      try { port = await navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] }); } catch { state('no hub'); $('ota-connect').disabled = false; return; }
+      const a = await whatIs(port);
+      if (!a || a.t !== 'hub') { state('that is not the hub'); $('ota-connect').disabled = false; return; }
+    }
+    await port.open({ baudRate: 115200 });
+    hub = { port, writer: port.writable.getWriter() };
+    state('hub connected · buttons check in every 10 s');
+    $('ota-connect').textContent = 'Connected';
+    (async () => {
+      const reader = port.readable.getReader();
+      const dec = new TextDecoder();
+      let buf = '';
+      try {
+        for (;;) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value);
+          let nl;
+          while ((nl = buf.indexOf('\n')) >= 0) { const line = buf.slice(0, nl).trim(); buf = buf.slice(nl + 1); if (line) onLine(line); }
+        }
+      } catch (e) { say('(hub: ' + (e.message || e) + ')'); }
+      hub = null; state('hub disconnected'); $('ota-connect').textContent = 'Connect to the hub'; $('ota-connect').disabled = false;
+    })();
+  }
+
+  async function updateOne(dev, image) {
+    const b = row(dev);
+    const mine = (m) => m.t === 'ota' && m.dev === dev;
+    b.update.disabled = true;
+    b.fwEl.textContent = 'starting…';
+    await send({ t: 'ota', dev, size: image.length, md5: published.md5 });
+    const ready = await waitFor((m) => mine(m) && (m.st === 'ready' || m.st === 'err'), 5000);
+    if (ready.st === 'err') throw new Error(ready.why || 'refused');
+    const total = Math.ceil(image.length / CHUNK);
+    const t0 = Date.now();
+    await new Promise((res, rej) => {
+      let next = 0, acked = -1, silent = 0, timer = 0;
+      const chunk = (n) => { const part = image.subarray(n * CHUNK, (n + 1) * CHUNK); send({ t: 'ota', dev, n, d: btoa(String.fromCharCode(...part)) }); };
+      const finish = (err) => { clearTimeout(timer); listeners.delete(l); err ? rej(err) : res(); };
+      const pump = () => {
+        while (next < total && next - acked - 1 < WINDOW) chunk(next++);
+        clearTimeout(timer);
+        timer = setTimeout(() => { if (++silent > 20) return finish(new Error('stopped answering at chunk ' + (acked + 1) + ' of ' + total)); next = acked + 1; pump(); }, 2000);
+      };
+      const l = (m) => {
+        if (!mine(m)) return;
+        silent = 0;
+        if (m.st === 'ok') { if (m.n > acked) acked = m.n; }
+        else if (m.st === 'seq') { next = m.n; acked = m.n - 1; }
+        else return finish(new Error(m.why || m.st));
+        const done = acked + 1;
+        b.bar.style.width = (100 * done / total) + '%';
+        b.fwEl.textContent = `sending… ${Math.round(100 * done / total)}%`;
+        if (acked >= total - 1) return finish();
+        pump();
+      };
+      listeners.add(l);
+      pump();
+    });
+    b.fwEl.textContent = `sent in ${Math.round((Date.now() - t0) / 1000)} s, checking…`;
+    await send({ t: 'ota', dev, end: true });
+    const end = await waitFor((m) => mine(m) && (m.st === 'done' || m.st === 'err'), 15000);
+    if (end.st !== 'done') throw new Error(end.why || 'failed at the end');
+    b.fwEl.textContent = 'rebooting…';
+    const hello = await waitFor((m) => m.t === 'hello' && m.dev === dev, 25000);
+    b.fw = hello.fw;
+    b.bar.style.width = '0';
+    showFw(b);
+    say(`${dev} updated to ${hello.fw}`);
+  }
+
+  let busy = false;
+  async function runUpdates(devs) {
+    if (busy || !hub || !published) return;
+    busy = true;
+    const image = new Uint8Array(await (await fetch('/firmware/button/app.bin')).arrayBuffer());
+    for (const dev of devs) {
+      try { await updateOne(dev, image); }
+      catch (e) { const b = row(dev); b.fwEl.textContent = 'failed: ' + (e.message || e); b.fwEl.className = 'fw old'; b.bar.style.width = '0'; say(`${dev}: ${e.message || e}`); try { await send({ t: 'ota', dev, abort: true }); } catch {} }
+      row(dev).update.disabled = false;
+    }
+    busy = false;
+  }
+  $('ota-connect').onclick = connectHub;
+  $('ota-all').onclick = () => runUpdates([...buttons].filter(([, b]) => b.fw !== published.version).map(([dev]) => dev));
 </script>
 </body>
 </html>
