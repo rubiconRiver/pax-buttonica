@@ -127,6 +127,11 @@ def main():
     hub = Hub(*find_hub())
     want = sys.argv[1:]
     print(f'published button firmware {version}; listening for buttons (they check in every 10 s)...')
+    # Ask the named ones to say hello. It also rescues a button on firmware before 0.3.7 that paired with
+    # another button: being addressed by name by the hub is what makes it adopt the hub again.
+    for dev in want:
+        if dev != 'all':
+            hub.send({'t': 'hub', 'dev': dev})
     for _ in hub.messages(12):
         if want and want != ['all'] and all(d in hub.buttons for d in want):
             break

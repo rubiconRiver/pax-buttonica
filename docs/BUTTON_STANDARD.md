@@ -122,10 +122,10 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 ### Pairing: the hub says who the hub is
 
 ```json
-{"t":"hub","dev":"A1B2C3D4E5F6","v":0,"fw":"0.2.2","id":"0A1B2C3D4E5F"}
+{"t":"link","dev":"A1B2C3D4E5F6","v":0,"fw":"0.2.3","id":"0A1B2C3D4E5F"}
 ```
 
-The hub answers every `hello` it hears with this line, addressed to that button by name and carrying the hub's own `id`. That answer is the pairing and the heartbeat at once, and it is the only thing the hub does on its own account:
+The hub answers every `hello` it hears with this line, addressed to that button by name and carrying the hub's own `id`. That answer is the pairing and the heartbeat at once, and it is the only thing the hub does on its own account. A button does not reply to it (`hub`, by contrast, means "say hello"):
 
 - A button **believes in a hub only while that hub keeps speaking to it by name**: any line carrying the button's own `dev`. It adopts the sender of such a line as its hub, and treats the hub as gone after 35 s without one (three missed answers) or eight unacknowledged sends. Nothing is remembered across power cycles.
 - A button **ignores every line that does not carry its own `dev`**. This matters: a button with no hub looks for one by broadcasting its `hello`, every other button hears that, and a button that adopts "whoever spoke" as its hub will pair with another button. The reference firmware did exactly that until 0.3.7, and six buttons on one desk paired with each other.

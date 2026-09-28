@@ -21,7 +21,8 @@
  * straight back, so it can pair again without waiting for the web app to say something to it.
  *
  * 0.2.2 (2026-09-28): the hub is the authority on who the hub is. It answers EVERY hello, broadcast or
- * not, with a "hub" line addressed to that button by name, carrying the hub's own id. Buttons from 0.3.7
+ * not, with a "link" line addressed to that button by name, carrying the hub's own id (0.2.3: it was a
+ * "hub" line in 0.2.2, which buttons answer with a hello, which the hub answered, without end). Buttons from 0.3.7
  * believe in a hub only while it keeps doing that (before, six buttons on a desk paired with each other).
  * This is the one message the hub reads the type of.
  */
@@ -29,7 +30,7 @@
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.2.2"
+#define FW_VERSION "0.2.3"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -247,7 +248,8 @@ void loop() {
     searching[i] = false;
     char hex[13], line[96];
     macToHex(known[i].mac, hex);
-    snprintf(line, sizeof(line), "{\"t\":\"hub\",\"dev\":\"%s\",\"v\":%d,\"fw\":\"%s\",\"id\":\"%s\"}", hex, PROTOCOL_VERSION, FW_VERSION, hubId);
+    // "link", not "hub": a button answers "hub" with a hello, and 0.2.2 answered that hello, and so on for ever.
+    snprintf(line, sizeof(line), "{\"t\":\"link\",\"dev\":\"%s\",\"v\":%d,\"fw\":\"%s\",\"id\":\"%s\"}", hex, PROTOCOL_VERSION, FW_VERSION, hubId);
     forward(line, strlen(line));
   }
 

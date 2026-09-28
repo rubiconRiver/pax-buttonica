@@ -55,7 +55,7 @@ Since 2026-09-26 the button's radio sleeps between 30 ms listening windows every
 
 ## How buttons find the hub
 
-The hub is the authority. It answers every `hello` with a `hub` line addressed to that button by name, carrying its own id (hub 0.2.2). A button (0.3.7) believes in a hub only while that keeps happening: it adopts whoever addresses it by name, ignores every line that does not carry its own id, remembers nothing across power cycles, and calls the hub gone after 35 s of silence or eight unacknowledged sends. Not linked it says hello to everyone every 3 s; linked, to the hub every 10 s. Both ends sit on Wi-Fi channel 1 and never join a network.
+The hub is the authority. It answers every `hello` with a `link` line addressed to that button by name, carrying its own id (hub 0.2.3). The line has its own type because a button answers `hub` with a hello, and an answer to every hello would go round for ever (0.2.2 did). A button (0.3.7) believes in a hub only while that keeps happening: it adopts whoever addresses it by name, ignores every line that does not carry its own id, remembers nothing across power cycles, and calls the hub gone after 35 s of silence or eight unacknowledged sends. Not linked it says hello to everyone every 3 s; linked, to the hub every 10 s. Both ends sit on Wi-Fi channel 1 and never join a network.
 
 Before 0.3.7 the rule was "whoever talks to me is the hub", saved to flash. A button without a hub broadcasts, the other buttons hear it, and with six on a desk they paired with each other and the hub heard half of them (found 2026-09-28, the first time more than one was powered). 0.3.7 erases the saved hub on start-up.
 
