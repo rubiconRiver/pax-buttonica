@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.1"
+#define FW_VERSION "0.3.2"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -542,8 +542,9 @@ static void handleOta(JsonDocument &doc) {
     if (strlen(md5) == 32) Update.setMD5(md5);
     otaActive = true;
     otaNext = otaGot = 0;
-    radioSave = false;      // wide awake until the reboot; the new image starts sleepy again
-    applyRadioSave();
+    // The radio is left as it is: every answer holds it awake for RADIO_HOLD_MS, which is longer than the gap
+    // between chunks, and the hub resends anything that lands in a sleep gap. (0.3.1 switched power saving
+    // off here, and the button went deaf; not yet explained, so nothing touches the radio mode during an update.)
     otaReply("ready", 0);
   } else if (doc["n"].is<uint32_t>()) {
     if (!otaActive) { otaReply("err", 0, "not started"); return; }

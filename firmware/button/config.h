@@ -81,7 +81,14 @@ static const int BIG_BUTTON_PINS[] = {3};
 // ── Falling asleep ──────────────────────────────────────────────────────────
 // If the hub hasn't been heard from for this long, go dark and sleep. Pressing the big button
 // wakes it. 0 = never. The wake pins must be RTC-capable: GPIO 0-5 on the C3, 0-21 on the S3.
+// On the AtomS3 the face button is G41, which cannot wake the chip, so a sleeping Atom could only be
+// brought back by pulling its power (this is what happened on 2026-09-28). Never sleep on that build:
+// the Rider's switch is the off switch, and the sleepy radio already keeps the idle draw low.
+#if defined(BOARD_ATOMS3_LITE)
+#define SLEEP_AFTER_MINUTES 0
+#else
 #define SLEEP_AFTER_MINUTES 10
+#endif
 
 // ── Radio ───────────────────────────────────────────────────────────────────
 #define ESPNOW_CHANNEL 1

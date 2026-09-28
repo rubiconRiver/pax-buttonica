@@ -10,8 +10,8 @@ The image and its version come from public/firmware/button/ (run firmware/export
 (it is in hardware/shell/.venv). Close any browser tab that has the hub connected first.
 
 Protocol (docs/BUTTON_STANDARD.md, "Updating over the air"): {"size","md5"} opens the button's spare app
-slot, then numbered base64 chunks of 153 bytes, each answered, a few in flight at a time, then {"end":true}
-checks the MD5 and reboots. The hub is a relay and needs no change.
+slot, then numbered base64 chunks of 150 bytes, each answered, a few in flight at a time, then {"end":true}
+checks the MD5 and reboots. The hub relays; from 0.2.1 it has the serial buffer for four in flight.
 """
 import base64
 import glob
@@ -22,8 +22,8 @@ import time
 
 import serial
 
-CHUNK = 153      # 153 raw bytes -> 204 base64 characters -> a 249-byte line, one ESP-NOW packet
-WINDOW = 4       # chunks in flight; the hub keeps six per button
+CHUNK = 150      # 150 raw bytes -> 200 base64 characters -> a line of at most 249 bytes, one ESP-NOW packet
+WINDOW = 4       # chunks in flight with a hub on 0.2.1 or later (4 KB serial buffer); 1 before that
 HERE = os.path.dirname(os.path.abspath(__file__))
 IMAGE_DIR = os.path.join(HERE, '..', 'public', 'firmware', 'button')
 
@@ -37,16 +37,20 @@ def find_hub():
         s.write(b'{"t":"hub?"}\n')
         end = time.time() + 2
         while time.time() < end:
-            if s.readline().strip().startswith(b'{"t":"hub"'):
-                print(f'hub on {port}')
-                return s
+            line = s.readline().strip()
+            if line.startswith(b'{"t":"hub"'):
+                fw = json.loads(line).get('fw', '0')
+                print(f'hub on {port}, firmware {fw}')
+                return s, fw
         s.close()
     sys.exit('no hub on USB (plug it in with a data cable, close the tab that has it)')
 
 
 class Hub:
-    def __init__(self, s):
+    def __init__(self, s, fw):
         self.s = s
+        self.fw = fw
+        self.window = WINDOW if fw >= '0.2.1' else 1
         self.buttons = {}     # dev -> fw, from hellos
 
     def send(self, obj):
@@ -86,7 +90,7 @@ def update(hub, dev, image, md5):
         hub.send({'t': 'ota', 'dev': dev, 'n': n, 'd': base64.b64encode(image[n * CHUNK:(n + 1) * CHUNK]).decode()})
 
     while acked < total - 1:
-        while nxt < total and nxt - acked - 1 < WINDOW:
+        while nxt < total and nxt - acked - 1 < hub.window:
             chunk(nxt)
             nxt += 1
         m = hub.wait(is_mine, 2)
@@ -120,7 +124,7 @@ def main():
         image = f.read()
     version, md5 = manifest['version'], manifest['md5']
     assert len(image) == manifest['size'], 'app.bin does not match its manifest: run firmware/export.sh'
-    hub = Hub(find_hub())
+    hub = Hub(*find_hub())
     want = sys.argv[1:]
     print(f'published button firmware {version}; listening for buttons (they check in every 10 s)...')
     for _ in hub.messages(12):

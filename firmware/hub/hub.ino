@@ -14,12 +14,17 @@
  * Ran on real parts 2026-09-24. Since 2026-09-26 the buttons sleep their radio between short listening
  * windows, so the hub keeps each message and resends it every few ms until the button's radio
  * acknowledges it (up to RETRY_FOR_MS); only after that does a message count as a failure.
+ *
+ * 0.2.1 (2026-09-28): a 4 KB serial receive buffer, because a firmware image arriving over the air
+ * comes as bursts of 250-byte lines faster than the loop reads them (the default 256-byte buffer lost
+ * most of them); and a button that has lost its hub and is broadcasting "hello" gets a "hub" line
+ * straight back, so it can pair again without waiting for the web app to say something to it.
  */
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.2.0"
+#define FW_VERSION "0.2.1"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -92,12 +97,15 @@ static bool hexToMac(const char *hex, uint8_t *mac) {
   return true;
 }
 
+static volatile bool searching[20];   // a button broadcast to us: it has no hub; answer it from the loop
+
 static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
   if (len <= 0 || len > MAX_LINE) return;
   Known *k = lookup(info->src_addr, true);
   if (k) {
     k->fails = 0;
     k->reportedLost = false;
+    if (info->des_addr[0] == 0xFF) searching[k - known] = true;
   }
   Packet p;
   memcpy(p.mac, info->src_addr, 6);
@@ -180,6 +188,7 @@ static void forward(char *line, size_t len) {
 }
 
 void setup() {
+  Serial.setRxBufferSize(4096);   // an image over the air arrives in bursts; the default 256 dropped most of it
   Serial.begin(115200);
   inbox = xQueueCreate(QUEUE_SLOTS, sizeof(Packet));
 
@@ -221,6 +230,16 @@ void loop() {
     } else {
       n = 0;  // oversized line: drop it
     }
+  }
+
+  // A button that broadcast (no hub known) gets told who we are, so it pairs at once.
+  for (int i = 0; i < knownCount; i++) {
+    if (!searching[i]) continue;
+    searching[i] = false;
+    char hex[13], line[96];
+    macToHex(known[i].mac, hex);
+    snprintf(line, sizeof(line), "{\"t\":\"hub\",\"dev\":\"%s\",\"v\":%d,\"fw\":\"%s\"}", hex, PROTOCOL_VERSION, FW_VERSION);
+    forward(line, strlen(line));
   }
 
   pump();

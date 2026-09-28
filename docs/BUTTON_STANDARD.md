@@ -117,7 +117,7 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 {"t":"rssi","dev":"A1B2C3D4E5F6","dbm":-58}
 ```
 
-`rssi` is how strongly the hub heard that button, in dBm, at most once a second. Around −50 is excellent, −70 is fine, below about −80 is getting marginal. The test bench shows it, so range can be checked at the real table.
+`rssi` is how strongly the hub heard that button, in dBm, at most once a second. The reference hub also answers a button that broadcasts (one that has no hub yet, or lost it) with a `hub` line addressed to it, so the button can pair without waiting for the host to say something. Around −50 is excellent, −70 is fine, below about −80 is getting marginal. The test bench shows it, so range can be checked at the real table.
 
 ### Host → button
 
@@ -143,7 +143,7 @@ A button whose USB socket is inside its shell still needs new firmware now and t
 
 ```json
 {"t":"ota","dev":"A1B2C3D4E5F6","size":904784,"md5":"386e7c1a129dd2bc93233fe859c7524f"}
-{"t":"ota","dev":"A1B2C3D4E5F6","n":0,"d":"6QAGAn...(base64, 153 bytes of image)"}
+{"t":"ota","dev":"A1B2C3D4E5F6","n":0,"d":"6QAGAn...(base64, 150 bytes of image)"}
 {"t":"ota","dev":"A1B2C3D4E5F6","end":true}
 {"t":"ota","dev":"A1B2C3D4E5F6","abort":true}
 ```
@@ -158,7 +158,7 @@ and the button answers each one:
 {"t":"ota","dev":"A1B2C3D4E5F6","st":"err","n":12,"why":"..."}
 ```
 
-`size` and `md5` open the update (the reference firmware writes to its spare app slot); chunks `n` = 0, 1, 2… carry 153 bytes each, base64, so a line stays under 250 bytes; `end` checks the MD5 and reboots into the new image, and the button's next `hello` carries the new `fw`. Every chunk is answered with `ok` and its number, so the host keeps a few in flight (the reference hub holds six per button) and resends from the last one answered if the answers stop; `seq` says which chunk the button wants next when one arrives out of order. A chunk that arrives twice is answered again and not written. The button gives up an update that goes quiet for 15 s. A 900 KB image takes about a minute per button; the reference button fills its light blue from the centre out as it lands. The hub needs no change. A button that does not support this simply ignores `ota`, and the host finds out when nothing answers.
+`size` and `md5` open the update (the reference firmware writes to its spare app slot); chunks `n` = 0, 1, 2… carry 150 bytes each, base64, so a line stays under 250 bytes whatever the chunk number; `end` checks the MD5 and reboots into the new image, and the button's next `hello` carries the new `fw`. Every chunk is answered with `ok` and its number, so the host keeps a few in flight (the reference hub holds six per button) and resends from the last one answered if the answers stop; `seq` says which chunk the button wants next when one arrives out of order. A chunk that arrives twice is answered again and not written. The button gives up an update that goes quiet for 15 s. A 900 KB image takes about a minute per button; the reference button fills its light blue from the centre out as it lands. The hub relays the lines like any other, but it has to keep up with them: the reference hub from 0.2.1 has a 4 KB serial buffer for four chunks in flight, and a host talking to an older hub should send one at a time. A button that does not support this simply ignores `ota`, and the host finds out when nothing answers.
 
 ## Claiming seats
 
