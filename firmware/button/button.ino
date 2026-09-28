@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.6"
+#define FW_VERSION "0.3.7"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -64,15 +64,20 @@ static const struct { const char *kind; Overlay fx; } TURN_FX[] = {
 enum Wave { WAVE_SQUARE, WAVE_TRIANGLE, WAVE_SAW, WAVE_SINE };
 
 static Adafruit_NeoPixel ring(LED_COUNT, LED_PIN, NEO_GRB + NEO_KHZ800);
-#if STATUS_LED_PIN >= 0
-static Adafruit_NeoPixel statusLed(1, STATUS_LED_PIN, NEO_GRB + NEO_KHZ800);
-#endif
 static Preferences prefs;
 static const int BIG_BUTTON_PIN_COUNT = sizeof(BIG_BUTTON_PINS) / sizeof(BIG_BUTTON_PINS[0]);
 
 static char devId[13];
+// The hub is the authority on who the hub is. A button believes in a hub only while that hub keeps speaking to
+// it BY NAME (a line carrying this button's own "dev"); nothing is remembered across power cycles. Until
+// 0.3.7 the rule was "whoever talks to me is the hub", and an unpaired button looks for a hub by
+// broadcasting, so six buttons on one desk adopted each other and the real hub heard none of them.
+#define LINK_LOST_MS 35000          // the hub answers every hello (one per 10 s); three missed and it is gone
 static uint8_t hubMac[6];
-static bool hubKnown = false;
+static bool hubKnown = false;       // there is an address to send presses to
+static bool linked = false;         // the hub has spoken to us by name lately
+static uint32_t lastHubWord = 0;
+static bool ledSet = false;         // the host has said what to show, since power-up
 static volatile uint8_t sendFails = 0;
 static volatile uint32_t lastContact = 0;  // last time the hub demonstrably existed
 static const uint8_t EVERYONE[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
@@ -154,10 +159,12 @@ static void applyRadioSave() {
   }
 }
 
-static void sendLine(const char *line) {
-  esp_now_send(hubKnown ? hubMac : EVERYONE, (const uint8_t *)line, strlen(line));
+static void sendTo(const uint8_t *mac, const char *line) {
+  esp_now_send(mac, (const uint8_t *)line, strlen(line));
   holdRadio(RADIO_HOLD_MS);
 }
+
+static void sendLine(const char *line) { sendTo(hubKnown ? hubMac : EVERYONE, line); }
 
 static void sendHello() {
   char line[MAX_LINE];
@@ -170,7 +177,8 @@ static void sendHello() {
            "tones"
 #endif
   );
-  sendLine(line);
+  // Linked: straight to the hub. Not linked: to everyone, and the hub answers by name.
+  sendTo(linked ? hubMac : EVERYONE, line);
 }
 
 static void sendButton(int index, const char *gesture) {
@@ -620,6 +628,49 @@ static void renderTurnFx(uint32_t t) {
   }
 }
 
+// ── Connection light ────────────────────────────────────────────────────────
+// Until the host says what to show, the middle of the hex says how the button is doing:
+//   amber, blinking        looking for the hub
+//   green, steady          linked to the hub, waiting for the game
+// In a game the light belongs to the host; if the hub goes away an amber dot blinks in the middle of it.
+// The Atom's own tiny pixel always shows the same state (blue while a new image is arriving), so a bare
+// Atom on a desk, with no hex plugged in, can be read too.
+static bool pilotPixel(int i, bool wide) {
+#if LED_COUNT == 37
+  return ringOf[i] == 0 || (wide && ringOf[i] == 1);
+#else
+  return i == 0 || (wide && i == 1);
+#endif
+}
+
+static void drawLink(uint32_t now) {
+  if (otaActive) return;
+  const bool on = (now / 500) % 2 == 0;
+  if (!linked) {
+    for (int i = 0; i < LED_COUNT; i++)
+      if (pilotPixel(i, !ledSet)) ring.setPixelColor(i, scaled(255, 140, 0, on ? 0.9f : 0.08f));
+  } else if (!ledSet) {
+    for (int i = 0; i < LED_COUNT; i++)
+      if (pilotPixel(i, true)) ring.setPixelColor(i, scaled(40, 255, 110, 0.35f));
+  }
+}
+
+static void showLink(uint32_t now) {
+#if STATUS_LED_PIN >= 0
+  static uint32_t shown = 0xFFFFFFFF;
+  uint8_t r = 0, g = 0, b = 0;
+  if (otaActive) b = 40;
+  else if (linked) g = 24;
+  else if ((now / 500) % 2 == 0) { r = 48; g = 24; }
+  const uint32_t want = ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
+  if (want == shown) return;      // only on a change: the pixel latches, and the hex shares the timing hardware
+  shown = want;
+  rgbLedWrite(STATUS_LED_PIN, r, g, b);
+#else
+  (void)now;
+#endif
+}
+
 static void render() {
   const uint32_t now = millis();
 
@@ -634,6 +685,8 @@ static void render() {
       ring.setPixelColor(i, scaled(ledR, ledG, ledB, lum));
     }
   }
+
+  drawLink(now);
 
   // A new image arriving: the rings fill blue from the centre out as it lands.
   if (otaActive && otaSize) {
@@ -709,10 +762,7 @@ static void render() {
     }
   }
   ring.show();
-#if STATUS_LED_PIN >= 0
-  statusLed.setPixelColor(0, ring.getPixelColor(0));
-  statusLed.show();
-#endif
+  showLink(now);
 }
 
 // ── Over the air ────────────────────────────────────────────────────────────
@@ -800,21 +850,23 @@ static Wave parseWave(const char *w) {
 }
 
 static void handle(const Packet &p) {
-  // Whoever is talking to us is the hub. Remember it across power cycles.
-  if (!hubKnown || memcmp(hubMac, p.mac, 6) != 0) {
-    memcpy(hubMac, p.mac, 6);
-    hubKnown = true;
-    addPeer(hubMac);
-    prefs.putBytes("hub", hubMac, 6);
-  }
-  sendFails = 0;
-  lastContact = millis();
-
   JsonDocument doc;
   if (deserializeJson(doc, p.text, p.len)) return;
   const char *type = doc["t"];
   const char *dev = doc["dev"];
-  if (!type || (dev && strcmp(dev, devId) != 0)) return;  // unknown or not for us: ignore
+  // Only lines addressed to this button by name. Another button's broadcast hello carries ITS name and ends here.
+  if (!type || !dev || strcmp(dev, devId) != 0) return;
+
+  // Whoever addresses us by name is the hub: only the hub does that.
+  if (!hubKnown || memcmp(hubMac, p.mac, 6) != 0) {
+    memcpy(hubMac, p.mac, 6);
+    hubKnown = true;
+    addPeer(hubMac);
+  }
+  linked = true;
+  lastHubWord = millis();
+  sendFails = 0;
+  lastContact = millis();
 
   if (!strcmp(type, "led")) {
     const uint32_t rgb = strtoul(doc["c"] | "ffffff", nullptr, 16);
@@ -829,6 +881,7 @@ static void handle(const Packet &p) {
       modeSince = millis();
     }
     mode = next;
+    ledSet = true;
     periodMs = doc["d"].is<uint32_t>() ? constrain(doc["d"].as<uint32_t>(), 200UL, 30000UL) : 0;
   } else if (!strcmp(type, "snd")) {
     static uint16_t list[MAX_NOTES][2];
@@ -870,6 +923,14 @@ static void handle(const Packet &p) {
   }
 }
 
+// What this button is and whether it has a hub, for the flashing page. "hub" is true only while linked;
+// "hubid" is who it is sending to, so a page that knows the hub's id can tell a wrong pairing from a right one.
+static void printIdentity() {
+  char hub[13] = "";
+  if (hubKnown) snprintf(hub, sizeof(hub), "%02X%02X%02X%02X%02X%02X", hubMac[0], hubMac[1], hubMac[2], hubMac[3], hubMac[4], hubMac[5]);
+  Serial.printf("{\"t\":\"button\",\"dev\":\"%s\",\"fw\":\"%s\",\"hub\":%s,\"hubid\":\"%s\"}\n", devId, FW_VERSION, linked ? "true" : "false", hub);
+}
+
 // ── USB serial ──────────────────────────────────────────────────────────────
 
 // Plugged into a laptop, the button says what it is when asked (the flashing page does this) and blinks
@@ -881,7 +942,7 @@ static void serviceSerial() {
     const char ch = (char)Serial.read();
     if (ch == '\n' || ch == '\r') {
       if (n > 0 && line[0] == '{' && !strstr(line, "\"dev\"")) {
-        Serial.printf("{\"t\":\"button\",\"dev\":\"%s\",\"fw\":\"%s\",\"hub\":%s}\n", devId, FW_VERSION, hubKnown ? "true" : "false");
+        printIdentity();
         setOverlay(FX_IDENTIFY);
       }
       n = 0;
@@ -959,8 +1020,7 @@ static void sleepUntilPressed() {
   ring.clear();
   ring.show();
 #if STATUS_LED_PIN >= 0
-  statusLed.clear();
-  statusLed.show();
+  rgbLedWrite(STATUS_LED_PIN, 0, 0, 0);
 #endif
 #if CONFIG_IDF_TARGET_ESP32C3
   esp_deep_sleep_enable_gpio_wakeup(mask, ESP_GPIO_WAKEUP_GPIO_LOW);
@@ -983,9 +1043,7 @@ void setup() {
   ring.clear();
   ring.show();
 #if STATUS_LED_PIN >= 0
-  statusLed.begin();
-  statusLed.clear();
-  statusLed.show();
+  rgbLedWrite(STATUS_LED_PIN, 0, 0, 0);
 #endif
 
 #if defined(AUDIO_I2S)
@@ -1012,12 +1070,9 @@ void setup() {
   applyRadioSave();
 
   prefs.begin("pax", false);
-  if (prefs.getBytes("hub", hubMac, 6) == 6) {
-    hubKnown = true;
-    addPeer(hubMac);
-  }
+  prefs.remove("hub");      // older firmware kept a hub here, and with several buttons about it was often another button
 
-  Serial.printf("{\"t\":\"button\",\"dev\":\"%s\",\"fw\":\"%s\",\"hub\":%s}\n", devId, FW_VERSION, hubKnown ? "true" : "false");
+  printIdentity();
   setOverlay(FX_IDENTIFY);  // a blink on power-up: "I'm alive"
   sendHello();
 }
@@ -1030,12 +1085,13 @@ void loop() {
   while (xQueueReceive(inbox, &p, 0) == pdTRUE) handle(p);
   if (radioHeld && (int32_t)(now - radioHoldUntil) >= 0) releaseRadio();
 
-  // Eight failed sends in a row: the hub we knew is gone. Go back to looking for one.
-  if (hubKnown && sendFails >= 8) {
-    hubKnown = false;
+  // The hub has not spoken to us by name for three hellos, or eight sends in a row went unacknowledged: it is
+  // gone. Keep its address for presses, but go back to calling for it.
+  if (linked && ((int32_t)(millis() - lastHubWord) > LINK_LOST_MS || sendFails >= 8)) {
+    linked = false;
     sendFails = 0;
   }
-  if (now - lastHello >= (hubKnown ? HELLO_BEAT_MS : HELLO_SEARCH_MS)) {
+  if (now - lastHello >= (linked ? HELLO_BEAT_MS : HELLO_SEARCH_MS)) {
     lastHello = now;
     sendHello();
   }

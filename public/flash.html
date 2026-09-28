@@ -75,7 +75,7 @@
       <button class="btn" id="who">Ask again</button>
       <button class="btn primary" id="add">Allow another Atom</button>
     </div>
-    <div class="hint">Every Atom you've allowed this page to use before is asked who it is, with no popup: a button answers with its id and blinks white, a hub answers as a hub, a brand-new Atom says nothing (factory firmware). The popup only appears for an Atom you haven't allowed yet, once.</div>
+    <div class="hint">Every Atom you've allowed this page to use before is asked who it is, with no popup: a button answers with its id and blinks white, a hub answers as a hub, a brand-new Atom says nothing (factory firmware). The popup only appears for an Atom you haven't allowed yet, once. On the button itself, from firmware 0.3.7: <b style="color:#ff9d2e">amber blinking</b> is looking for the hub, <b style="color:#3ce08a">green</b> is linked and waiting for the game, blue is an update arriving. The Atom's own small light shows the same.</div>
   </section>
 
   <div class="grid2">
@@ -173,10 +173,17 @@
     return answered;
   }
 
+  // is version v older than version `than`? ("0.3.10" is newer than "0.3.9")
+  const older = (v, than) => { const a = String(v).split('.').map(Number), b = than.split('.').map(Number); for (let i = 0; i < 3; i++) if ((a[i] || 0) !== (b[i] || 0)) return (a[i] || 0) < (b[i] || 0); return false; };
+  let thisHub = '';     // the id of the hub on this laptop, once it has answered
+  const link = (a) => older(a.fw, '0.3.7')
+    ? (a.hub ? ', <span class="bad">says it has a hub, but firmware before 0.3.7 can pair with another button by mistake: update it</span>' : ', no hub yet')
+    : a.hub ? (thisHub && a.hubid && a.hubid !== thisHub ? ', <span class="bad">linked to a different hub</span>' : ', linked to the hub')
+    : ', looking for the hub (amber)';
   const describe = (a) => !a ? '<span class="bad">no answer</span>, factory firmware or not ours: flash it'
     : a.t === 'busy' ? '<span class="bad">busy</span>, another tab has it'
     : a.t === 'hub' ? `the <b>hub</b>, firmware <b>${a.fw}</b>`
-    : `a <b>button</b>, id <span class="id">${a.dev}</span>, firmware <b>${a.fw}</b>${a.hub ? ', paired with a hub' : ', no hub yet'}`;
+    : `a <b>button</b>, id <span class="id">${a.dev}</span>, firmware <b>${a.fw}</b>${link(a)}`;
 
   // Every Atom this page has been allowed before, asked in turn. No popup.
   async function ask() {
@@ -188,8 +195,10 @@
     if (!ports.length) { out.innerHTML = 'No Atom allowed yet. Plug one in and click <b>Allow another Atom</b>.'; $('who').disabled = false; return; }
     out.textContent = 'Asking…';
     const lines = [];
-    for (const port of ports) {
-      const a = await whatIs(port);
+    const answers = [];
+    for (const port of ports) answers.push(await whatIs(port));
+    for (const a of answers) if (a && a.t === 'hub' && a.id) thisHub = a.id;
+    for (const a of answers) {
       lines.push(`Atom ${lines.length + 1}: ${describe(a)}${a && a.t === 'button' ? ' · blinking' : ''}`);
       out.innerHTML = lines.join('<br>');
     }
@@ -207,7 +216,7 @@
 
   // ── Over the air: a live connection to the hub, the buttons it hears, and an image sent in chunks ──
   const CHUNK = 150;                    // 150 raw bytes make a line of at most 249 characters, one ESP-NOW packet
-  const inFlight = () => (hubFw >= '0.2.1' ? 4 : 1);   // chunks in flight: a hub before 0.2.1 has a 256-byte serial buffer and drops bursts
+  const inFlight = () => (older(hubFw || '0', '0.2.1') ? 1 : 4);   // chunks in flight: a hub before 0.2.1 has a 256-byte serial buffer and drops bursts
   const enc = (t) => new TextEncoder().encode(t);
   let hub = null;                       // { port, writer }
   const buttons = new Map();            // dev -> { fw, row }

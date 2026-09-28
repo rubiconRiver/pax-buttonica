@@ -19,12 +19,17 @@
  * comes as bursts of 250-byte lines faster than the loop reads them (the default 256-byte buffer lost
  * most of them); and a button that has lost its hub and is broadcasting "hello" gets a "hub" line
  * straight back, so it can pair again without waiting for the web app to say something to it.
+ *
+ * 0.2.2 (2026-09-28): the hub is the authority on who the hub is. It answers EVERY hello, broadcast or
+ * not, with a "hub" line addressed to that button by name, carrying the hub's own id. Buttons from 0.3.7
+ * believe in a hub only while it keeps doing that (before, six buttons on a desk paired with each other).
+ * This is the one message the hub reads the type of.
  */
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
 
-#define FW_VERSION "0.2.1"
+#define FW_VERSION "0.2.2"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -97,7 +102,8 @@ static bool hexToMac(const char *hex, uint8_t *mac) {
   return true;
 }
 
-static volatile bool searching[20];   // a button broadcast to us: it has no hub; answer it from the loop
+static volatile bool searching[20];   // a button said hello: answer it by name, from the loop
+static char hubId[13];
 
 static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
   if (len <= 0 || len > MAX_LINE) return;
@@ -105,7 +111,7 @@ static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int 
   if (k) {
     k->fails = 0;
     k->reportedLost = false;
-    if (info->des_addr[0] == 0xFF) searching[k - known] = true;
+    if (info->des_addr[0] == 0xFF || (len > 12 && memmem(data, len, "\"t\":\"hello\"", 11))) searching[k - known] = true;
   }
   Packet p;
   memcpy(p.mac, info->src_addr, 6);
@@ -163,7 +169,7 @@ static void pump() {
 }
 
 static void announce() {
-  Serial.printf("{\"t\":\"hub\",\"v\":%d,\"fw\":\"%s\"}\n", PROTOCOL_VERSION, FW_VERSION);
+  Serial.printf("{\"t\":\"hub\",\"v\":%d,\"fw\":\"%s\",\"id\":\"%s\"}\n", PROTOCOL_VERSION, FW_VERSION, hubId);
 }
 
 // Forward one line from the web app to the button it names.
@@ -195,6 +201,9 @@ void setup() {
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
   esp_wifi_set_channel(ESPNOW_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  uint8_t mine[6];
+  esp_wifi_get_mac(WIFI_IF_STA, mine);
+  macToHex(mine, hubId);
   if (esp_now_init() != ESP_OK) {
     Serial.println("esp-now init failed");
     return;
@@ -232,13 +241,13 @@ void loop() {
     }
   }
 
-  // A button that broadcast (no hub known) gets told who we are, so it pairs at once.
+  // Every button that said hello is told, by name, who the hub is. That answer is the pairing and the heartbeat.
   for (int i = 0; i < knownCount; i++) {
     if (!searching[i]) continue;
     searching[i] = false;
     char hex[13], line[96];
     macToHex(known[i].mac, hex);
-    snprintf(line, sizeof(line), "{\"t\":\"hub\",\"dev\":\"%s\",\"v\":%d,\"fw\":\"%s\"}", hex, PROTOCOL_VERSION, FW_VERSION);
+    snprintf(line, sizeof(line), "{\"t\":\"hub\",\"dev\":\"%s\",\"v\":%d,\"fw\":\"%s\",\"id\":\"%s\"}", hex, PROTOCOL_VERSION, FW_VERSION, hubId);
     forward(line, strlen(line));
   }
 
