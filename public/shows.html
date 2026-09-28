@@ -16,6 +16,7 @@
     --c: 12px; color-scheme: dark;
   }
   html { background: var(--bg); }
+  [hidden] { display: none !important; }
   body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
   .wrap { max-width: 1080px; margin-inline: auto; display: grid; gap: 18px; }
   h1, h2 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
@@ -32,6 +33,9 @@
   .btn:hover { border-color: var(--gold); color: var(--gold-2); }
   .btn[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: transparent; }
   .btn.act { color: var(--bg); background: var(--cyan); border-color: transparent; }
+  #cards .btn[aria-pressed="true"] { background: currentColor; }
+  #cards .btn[aria-pressed="true"]::first-line { color: var(--bg); }
+  #cardrow .f { margin-right: 4px; }
   label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
   input[type=range] { width: 150px; accent-color: var(--gold); }
   .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
@@ -59,6 +63,8 @@
 
   <section class="panel chamfer"><div class="in chamfer">
     <div class="row" id="shows"></div>
+    <div class="row" id="cardrow"><span class="f" style="color:var(--muted);font-size:13px">A strategy card comes out:</span><span id="cardshows" class="row"></span></div>
+    <div class="row" id="cards" hidden></div>
     <div class="row">
       <label class="f">Seats <input type="range" id="seats" min="3" max="8" value="6"> <span id="seatsv">6</span></label>
       <label class="f">Speed <input type="range" id="speed" min="0.4" max="2.5" step="0.05" value="1"> <span id="speedv">1.0×</span></label>
@@ -90,6 +96,8 @@
   const $ = (id) => document.getElementById(id);
   const COLOURS = ['#ff3b3b', '#ff8a1f', '#ffd21f', '#2fe06b', '#2f8cff', '#a24bff', '#ff5fc4', '#e9f0ff'];
   const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink', 'Black'];
+  // the strategy cards, colours as in src/engine/data.ts and docs/BUTTON_STANDARD.md
+  const CARDS = [['Leadership', '#e5484d'], ['Diplomacy', '#f08c3a'], ['Politics', '#f2cc45'], ['Construction', '#46b86c'], ['Trade', '#2ec4b0'], ['Warfare', '#3b9bf5'], ['Technology', '#5468f0'], ['Imperial', '#a562f0']];
 
   // ── the NeoHEX: 37 pixels in rows of 4,5,6,7,6,5,4; each has a ring (0 centre .. 3 rim) and an angle 0..1 ──
   const PIX = [];
@@ -178,6 +186,79 @@
         if (p < 0.78) return mix(own, WHITE, 1 - (p - 0.7) / 0.08 * 0.3);
         return scale(own, 0.35 + 0.65 * smooth(frac((p - 0.78) / 0.22)));
       } },
+    // ── a strategy card comes out. After the announcement the active player breathes in the card's colour and the
+    // rest sit dim in their own, which is what the button standard says a primary looks like.
+    ...(() => {
+      const settle = (i, px, t, own, ctx) => i === ctx.origin
+        ? scale(ctx.card, 0.34 + 0.66 * smooth(frac(t / 1700)))
+        : scale(own, 0.08);
+      const blink = (t0, t, T, len, base) => { const q = (t - t0) / len; return q >= 0 && q < 1 ? mix(base, WHITE, q < 0.4 ? 1 : 1 - (q - 0.4) / 0.6) : base; };
+      return [
+        { k: 'card_round', card: true, name: 'Round the table', when: 'Garett\'s version',
+          about: 'Starting with the player who flipped it, each button in turn lights up in the card\'s colour and stays lit. When the last one is in, the whole table blinks once, then the active player breathes in the card colour and everyone else dims.',
+          draw: (i, n, px, t, T, own, ctx) => {
+            const p = t / T;
+            if (p >= 1) return settle(i, px, t - T, own, ctx);
+            const d = ((i - ctx.origin) % n + n) % n, per = 0.62 / n, start = d * per;
+            const fill = clamp((p - start) / per, 0, 1) * (RINGS + 0.5);
+            let c = scale(ctx.card, 0.06 + 0.94 * clamp(fill - px.ring, 0, 1));
+            if (p >= 0.68) c = blink(0.68, p, T, 0.16, ctx.card);
+            if (p >= 0.84) c = mix(blink(0.68, 0.84, T, 0.16, ctx.card), settle(i, px, 0, own, ctx), (p - 0.84) / 0.16);
+            return c;
+          } },
+        { k: 'card_deal', card: true, name: 'Deal it', when: 'Alternative',
+          about: 'The card\'s colour is dealt round the table from the player who flipped it: a comet leaves their button and each seat it passes flashes the card colour and keeps a low glow of it. Then the settle.',
+          draw: (i, n, px, t, T, own, ctx) => {
+            const p = t / T;
+            if (p >= 1) return settle(i, px, t - T, own, ctx);
+            const pos = ctx.origin + clamp(p / 0.7, 0, 1) * n;
+            const behind = frac((pos - i) / n) * n, passed = (pos - ctx.origin) >= (((i - ctx.origin) % n + n) % n) + 0.2;
+            let c = scale(own, 0.08);
+            if (passed) c = scale(ctx.card, 0.25);
+            if (behind < 1) c = mix(c, ctx.card, Math.max(0, 1 - Math.abs((behind * 2 - 0.5) - (px.x / 3 + 0.5)) * 1.6));
+            else if (behind < 1.8) c = mix(c, ctx.card, 1 - (behind - 1) / 0.8);
+            if (p >= 0.84) c = mix(c, settle(i, px, 0, own, ctx), (p - 0.84) / 0.16);
+            return c;
+          } },
+        { k: 'card_announce', card: true, name: 'Announce', when: 'Alternative, the simplest',
+          about: 'Every button flashes the card colour twice, together, like a tannoy, then the settle. Impossible to miss and over in a second.',
+          draw: (i, n, px, t, T, own, ctx) => {
+            const p = t / T;
+            if (p >= 1) return settle(i, px, t - T, own, ctx);
+            const on = (p % 0.3) < 0.16 && p < 0.6;
+            let c = on ? ctx.card : scale(ctx.card, 0.08);
+            if (p >= 0.7) c = mix(scale(ctx.card, 0.08), settle(i, px, 0, own, ctx), (p - 0.7) / 0.3);
+            return c;
+          } },
+        { k: 'card_ripple', card: true, name: 'Ripple out', when: 'Alternative',
+          about: 'A ring of the card colour leaves the flipping player\'s button and spreads round the table to the far seat; as it arrives everywhere the table blinks once, then the settle.',
+          draw: (i, n, px, t, T, own, ctx) => {
+            const p = t / T;
+            if (p >= 1) return settle(i, px, t - T, own, ctx);
+            const d = seatDist(i, ctx.origin, n), f = (p / 0.6) * (n / 2 + 1.5) - d;
+            let c = scale(own, 0.08);
+            if (f >= 0 && f < 1.4) c = mix(c, ctx.card, Math.max(0, 1 - Math.abs(f * RINGS - px.ring * 1.1) / 1.6));
+            if (f >= 1.4) c = scale(ctx.card, 0.2);
+            if (p >= 0.66) c = blink(0.66, p, T, 0.14, scale(ctx.card, 0.2));
+            if (p >= 0.82) c = mix(scale(ctx.card, 0.2), settle(i, px, 0, own, ctx), (p - 0.82) / 0.18);
+            return c;
+          } },
+        { k: 'card_fill', card: true, name: 'Fill together', when: 'Alternative, the calmest',
+          about: 'Every button fills from the centre out in the card colour at the same time, holds a beat, and drains away everywhere except the active player, who is left breathing in it.',
+          draw: (i, n, px, t, T, own, ctx) => {
+            const p = t / T;
+            if (p >= 1) return settle(i, px, t - T, own, ctx);
+            let lit;
+            if (p < 0.4) lit = clamp(p / 0.4 * (RINGS + 0.5) - px.ring, 0, 1);
+            else if (p < 0.6) lit = 1;
+            else lit = i === ctx.origin ? 1 : 1 - clamp((p - 0.6) / 0.3 * (RINGS + 0.5) - (RINGS - px.ring), 0, 1);
+            let c = scale(ctx.card, 0.06 + 0.94 * lit);
+            if (i !== ctx.origin && lit === 0) c = scale(own, 0.08);
+            if (p >= 0.9) c = mix(c, settle(i, px, 0, own, ctx), (p - 0.9) / 0.1);
+            return c;
+          } },
+      ];
+    })(),
     { k: 'handoff', name: 'Turn hand-off', when: 'A turn ends: from the player who held to the next',
       once: true,
       about: 'A comet in the finishing player\'s colour leaves their button, runs round the table to the next player, and lands there as a burst that fades into "your move". Click Pass the turn.',
@@ -195,7 +276,7 @@
   ];
 
   // ── state and drawing ──
-  const state = { show: 1, n: 6, speed: 1, origin: 0, to: 1, started: performance.now() };
+  const state = { show: 1, n: 6, speed: 1, origin: 0, to: 1, card: 4, started: performance.now() };
   const canvas = $('c'), ctx2d = canvas.getContext('2d');
   const geo = [];   // seat centres, recomputed on resize
   function layout() {
@@ -214,9 +295,9 @@
     const show = SHOWS[state.show];
     const T = 3000 / state.speed;
     let t = now - state.started;
-    if (show.once && t > T) t = T;               // one-shots hold their last frame
+    if (show.once && t > T) t = T;               // one-shots hold their last frame (card shows settle instead)
     const colours = COLOURS.map(hex);
-    const ctx = { origin: state.origin, to: state.to, colours };
+    const ctx = { origin: state.origin, to: state.to, colours, card: hex(CARDS[state.card][1]) };
     const g = ctx2d, dpr = devicePixelRatio;
     g.setTransform(dpr, 0, 0, dpr, 0, 0);
     g.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -253,11 +334,19 @@
   // ── controls ──
   function pick(idx) {
     state.show = idx; state.started = performance.now();
-    document.querySelectorAll('#shows .btn').forEach((b, k) => b.setAttribute('aria-pressed', String(k === idx)));
+    document.querySelectorAll('#shows .btn, #cardshows .btn').forEach((b) => b.setAttribute('aria-pressed', 'false'));
     const s = SHOWS[idx];
-    $('about').innerHTML = `<div class="when">${s.when}</div><div><b>${s.name}.</b> ${s.about}</div><div>${s.once ? 'One-shot: plays once and holds.' : 'Loops until the next light message.'} Sent as <code>k: "${s.k}"</code>.</div>`;
+    (s.card ? $('cardshows') : $('shows')).children[SHOWS.filter((x, j) => j < idx && !!x.card === !!s.card).length].setAttribute('aria-pressed', 'true');
+    $('cards').hidden = !s.card;
+    $('about').innerHTML = `<div class="when">${s.when}</div><div><b>${s.name}.</b> ${s.about}</div><div>${s.card ? 'One-shot, then the primary look: the active player breathes in the card colour, the rest dim. The flipping player is the origin: click a button to change it, and pick a card below.' : s.once ? 'One-shot: plays once and holds.' : 'Loops until the next light message.'} Sent as <code>k: "${s.k}"</code>.</div>`;
   }
-  SHOWS.forEach((s, k) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = s.name; b.onclick = () => pick(k); $('shows').appendChild(b); });
+  SHOWS.forEach((s, k) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = s.name; b.onclick = () => pick(k); (s.card ? $('cardshows') : $('shows')).appendChild(b); });
+  CARDS.forEach(([name, col], k) => {
+    const b = document.createElement('button'); b.className = 'btn'; b.textContent = `${k + 1} ${name}`; b.style.borderColor = col; b.style.color = col;
+    b.onclick = () => { state.card = k; state.started = performance.now(); document.querySelectorAll('#cards .btn').forEach((x, j) => x.setAttribute('aria-pressed', String(j === k))); };
+    $('cards').appendChild(b);
+  });
+  $('cards').children[state.card].setAttribute('aria-pressed', 'true');
   $('seats').oninput = (e) => { state.n = +e.target.value; $('seatsv').textContent = state.n; state.origin %= state.n; state.to = (state.origin + 1) % state.n; layout(); };
   $('speed').oninput = (e) => { state.speed = +e.target.value; $('speedv').textContent = state.speed.toFixed(1) + '×'; };
   canvas.onclick = (e) => {

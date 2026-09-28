@@ -161,6 +161,23 @@ and the button answers each one:
 
 `size` and `md5` open the update (the reference firmware writes to its spare app slot); chunks `n` = 0, 1, 2… carry 150 bytes each, base64, so a line stays under 250 bytes whatever the chunk number; `end` checks the MD5 and reboots into the new image, and the button's next `hello` carries the new `fw`. Every chunk is answered with `ok` and its number, so the host keeps a few in flight (the reference hub holds six per button) and resends from the last one answered if the answers stop; `seq` says which chunk the button wants next when one arrives out of order. A chunk that arrives twice is answered again and not written. The button gives up an update that goes quiet for 15 s. A 900 KB image takes about a minute per button; the reference button fills its light blue from the centre out as it lands. The hub relays the lines like any other, but it has to keep up with them: the reference hub from 0.2.1 has a 4 KB serial buffer for four chunks in flight, and a host talking to an older hub should send one at a time. A button that does not support this simply ignores `ota`, and the host finds out when nothing answers.
 
+## Colours
+
+Buttons never need to know what a colour means: every `led`, `fx` and show message carries the colour it wants. But everything that draws a light should agree on the values, so these are the canonical ones. The web app's copy in `src/engine/data.ts` is the source; phones, demo pages and any firmware effect that names a colour copy from here.
+
+| Player | LED | | Strategy card | Colour |
+|---|---|---|---|---|
+| Red | `#ff3b3b` | | 1 Leadership | `#e5484d` |
+| Orange | `#ff8a1f` | | 2 Diplomacy | `#f08c3a` |
+| Yellow | `#ffd21f` | | 3 Politics | `#f2cc45` |
+| Green | `#2fe06b` | | 4 Construction | `#46b86c` |
+| Blue | `#2f8cff` | | 5 Trade | `#2ec4b0` |
+| Purple | `#a24bff` | | 6 Warfare | `#3b9bf5` |
+| Pink | `#ff5fc4` | | 7 Technology | `#5468f0` |
+| Black | `#e9f0ff` | | 8 Imperial | `#a562f0` |
+
+Player colours are what the LEDs are driven with (already chosen to look right on a NeoPixel, so "black" is a cool white). Card colours are used as sent, on the screen and on the buttons.
+
 ## Claiming seats
 
 Buttons don't know where they sit, and nobody wants to label them. Instead, every game opens with a small ritual:
