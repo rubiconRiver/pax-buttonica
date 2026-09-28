@@ -19,6 +19,3 @@
 .bench__lines { height: 240px; padding: 10px 14px; font: 500 12px/1.6 ui-monospace, 'SF Mono', Menlo, monospace; color: #9fb0d8; }
 .bench__lines div[data-dir='out'] { color: #d6c08a; }
 .bench__lines span { display: inline-block; width: 1.6em; color: var(--faint); }
-
-.bench__row--fx { gap: 4px; }
-.bench__row--fx .btn { padding-inline: 8px; }

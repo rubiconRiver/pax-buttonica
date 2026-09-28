@@ -246,10 +246,7 @@ test.describe('the test bench', () => {
     await card.getByRole('button', { name: 'solid', exact: true }).click();
     await card.getByRole('button', { name: 'Identify' }).click();
     await card.getByRole('button', { name: 'fx: denied' }).click();
-    // Every turn effect is on the bench too, by the name a button is sent (the ring as burst).
-    await expect(card.locator('.bench__row--fx button')).toHaveCount(19);
-    await card.getByRole('button', { name: 'fx: cop', exact: true }).click();
-    await expect.poll(async () => (await sent(page)).filter((m) => m.t === 'fx' && m.k === 'cop')).toHaveLength(1);
+
     await card.getByRole('button', { name: 'Play jingle' }).click();
     const out = await sent(page);
     expect(out).toContainEqual({ t: 'led', dev: A, c: '2fe06b', m: 'flash' });

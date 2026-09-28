@@ -50,7 +50,11 @@
   td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
   th { color: var(--muted); font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; }
   .dev { font: 600 13px var(--font-d); color: var(--gold-2); }
-</style>
+    .btn.wish { opacity: 0.45; }
+    .btn.wish:hover { opacity: 0.8; }
+    p.muted { color: var(--muted); font-size: 13px; margin: 0 0 10px; }
+    code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+  </style>
 </head>
 <body>
 <div class="wrap">
@@ -88,6 +92,12 @@
       <h2>One-shot effects</h2>
       <div class="row" id="fx"></div>
       <div class="hint">Effects play on top of whatever mode is running. Hold the button for two seconds to see the built-in hold progress and the burst at the end.</div>
+    </div></section>
+
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>Turn effects (the game's catalogue)</h2>
+      <p class="muted">What a player can pick for the start of their turn, sent as <code>fx</code> by name. Dimmed ones the firmware doesn't draw yet: the button ignores them.</p>
+      <div class="row" id="turnfx"></div>
     </div></section>
 
     <section class="panel chamfer"><div class="in chamfer">
@@ -132,6 +142,21 @@
     ['sparkle', 'Sparkle', 900], ['wave', 'Wave', 1700], ['heartbeat', 'Heartbeat', 1300],
   ];
   const FX = [['ack', 'Ack'], ['confirm', 'Confirm'], ['denied', 'Denied'], ['ripple', 'Ripple'], ['burst', 'Burst'], ['sparkle', 'Sparkle'], ['id', 'Identify']];
+  // The game's turn effects (TURN_EFFECTS in src/engine/outputs.ts: keep in step), by the name a button is sent at the
+  // start of a turn. The ring goes out as `burst`. Ones the firmware doesn't draw yet are ignored by the button.
+  const TURN_FX = [
+    ['burst', 'Ring', 'A ring bursts out from the button'], ['ripple', 'Ripple', 'Two waves roll out from the centre'],
+    ['sparkle', 'Sparkles', 'A moment of twinkles'], ['rainbow', 'Rainbow', 'A second of every colour, then yours'],
+    ['cop', 'Cop lights', 'Red, blue, red, blue'], ['explosion', 'Explosion', 'A white flash and a shower of debris'],
+    ['fireworks', 'Fireworks', 'Three bursts of coloured sparks'], ['lightning', 'Lightning', 'Flickers of white'],
+    ['fire', 'Fire', 'Flickering flames and rising embers'], ['siren', 'Siren', 'A beacon sweeping round in your colour'],
+    ['laser', 'Laser', 'A thin beam sweeps round, fast'], ['comet', 'Comet', 'A bright dot races round the rim with a tail'],
+    ['warp', 'Warp', 'Rings fall inward, then a flash'], ['confetti', 'Confetti', 'A shower of colour'],
+    ['disco', 'Disco', 'Every colour, fast'], ['glitch', 'Glitch', 'Green, jittery, briefly broken'],
+    ['neon', 'Neon', 'Flickers on like a neon sign'], ['alarm', 'Alarm', 'Three red strobes'], ['thump', 'Thump', 'Two big beats'],
+  ];
+  /** What the firmware draws today; everything else on the list is a wish for it. */
+  const DRAWN = new Set(['burst', 'ripple', 'sparkle']);
 
   // ── sounds ────────────────────────────────────────────────────────────────
   let ac = null;
@@ -266,11 +291,13 @@
   $('bright').onchange = () => send(cfg());
   for (const [m, label, def] of MODES) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = label; b.onclick = () => { document.querySelectorAll('#modes .btn').forEach((x) => x.classList.remove('on')); b.classList.add('on'); sendLed(m, speed || undefined); }; if (def) b.title = 'default ' + def + ' ms'; $('modes').appendChild(b); }
   for (const [k, label] of FX) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = label; b.onclick = () => sendFx(k); $('fx').appendChild(b); }
+  for (const [k, label, hint] of TURN_FX) { const b = document.createElement('button'); b.className = 'btn' + (DRAWN.has(k) ? '' : ' wish'); b.textContent = label; b.title = `${hint} · fx: ${k}${DRAWN.has(k) ? '' : ' · not in the firmware yet'}`; b.onclick = () => sendFx(k); $('turnfx').appendChild(b); }
   for (const [id, label] of SOUNDS) { const b = document.createElement('button'); b.className = 'btn'; b.textContent = label; b.onclick = () => playSound(id); $('sounds').appendChild(b); }
   for (const g of ['tap', 'double', 'hold']) {
     const wrap = document.createElement('label'); wrap.className = 'f';
     const ss = document.createElement('select'); ss.innerHTML = '<option value="">no sound</option>' + SOUNDS.map(([id, l]) => `<option value="${id}"${pairs[g].sound === id ? ' selected' : ''}>${l}</option>`).join('');
-    const fs = document.createElement('select'); fs.innerHTML = '<option value="">no effect</option>' + FX.filter(([k]) => k !== 'id').map(([k, l]) => `<option value="${k}"${pairs[g].fx === k ? ' selected' : ''}>${l}</option>`).join('');
+    const options = [...FX.filter(([k]) => k !== 'id'), ...TURN_FX.filter(([k]) => !FX.some(([f]) => f === k))];
+    const fs = document.createElement('select'); fs.innerHTML = '<option value="">no effect</option>' + options.map(([k, l]) => `<option value="${k}"${pairs[g].fx === k ? ' selected' : ''}>${l}</option>`).join('');
     ss.onchange = () => { pairs[g].sound = ss.value; }; fs.onchange = () => { pairs[g].fx = fs.value; };
     wrap.append(g + ':', ss, '+', fs); $('pairs').appendChild(wrap);
   }
