@@ -10,7 +10,7 @@ import { profilesStore } from '../state/profiles';
 import { createStore } from '../state/createStore';
 import { liveGame } from '../state/game';
 import { settingsStore } from '../state/settings';
-import type { TurnLook } from '../engine/outputs';
+import { isTurnEffect, type TurnEffect, type TurnLook } from '../engine/outputs';
 import type { GameState } from '../engine/types';
 import type { GameEvent } from '../engine/engine';
 import { apiJson, hostKey } from './key';
@@ -18,7 +18,7 @@ import { apiJson, hostKey } from './key';
 /** What goes to the site: the whole state, plus the settings a phone needs to behave like a button. */
 export interface GameRecord {
   state: GameState;
-  settings: { holdMs: number; flashMs: number; turnLight?: TurnLook };
+  settings: { holdMs: number; flashMs: number; turnLight?: TurnLook; turnFx?: TurnEffect };
   /** How the game began; with the events, enough to rebuild it anywhere. */
   base?: GameState;
 }
@@ -60,8 +60,8 @@ let started = false;
 let unsubscribe: (() => void)[] = [];
 
 const recordOf = (game: GameState): GameRecord => {
-  const { holdMs, flashMs, turnLight } = settingsStore.get();
-  return { state: game, settings: { holdMs, flashMs, turnLight } };
+  const { holdMs, flashMs, turnLight, turnFx } = settingsStore.get();
+  return { state: game, settings: { holdMs, flashMs, turnLight, turnFx } };
 };
 
 function listPhones() {
@@ -118,10 +118,20 @@ async function write() {
 
 interface Inbound {
   dev: string;
-  type: 'input' | 'identify' | 'hello';
+  type: 'input' | 'identify' | 'hello' | 'preview';
   input?: 'tap' | 'double' | 'hold';
   profileId?: string | null;
+  fx?: string;
 }
+
+/** A phone trying out a turn effect: the host shows it on that player's seat and real button. Not part of the game. */
+export interface Preview {
+  id: number;
+  dev: string;
+  fx: TurnEffect;
+}
+export const previews = createStore<Preview | null>(null);
+let previewSeq = 0;
 
 async function read() {
   const game = liveGame.get().game;
@@ -140,7 +150,7 @@ async function read() {
         const profileId = typeof data.profileId === 'string' ? data.profileId : null;
         if (profileId && !profilesStore.get().some((p) => p.id === profileId)) unknownProfile = true;
         liveGame.dispatch({ type: 'IDENTIFY', dev, profileId, at: Date.now() });
-      }
+      } else if (data.type === 'preview' && isTurnEffect(data.fx)) previews.set({ id: ++previewSeq, dev, fx: data.fx });
     }
     listPhones();
     // Someone new, or someone who changed their sounds on their phone: fetch the profiles now rather than later.

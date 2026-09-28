@@ -46,9 +46,13 @@ function clean(raw: unknown) {
       // How they like their light: optional, and only the values the app knows.
       ...(p.light === 'solid' || p.light === 'pulse' || p.light === 'heartbeat' ? { light: p.light } : {}),
       ...(typeof p.brightness === 'number' && Number.isFinite(p.brightness) ? { brightness: Math.min(1, Math.max(0.1, p.brightness)) } : {}),
+      ...(typeof p.turnFx === 'string' && TURN_FX.includes(p.turnFx) ? { turnFx: p.turnFx } : {}),
     },
   };
 }
+
+/** Turn effects the app knows (src/engine/outputs.ts); anything else is dropped rather than stored. */
+const TURN_FX = ['ring', 'ripple', 'sparkle', 'rainbow', 'none'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');

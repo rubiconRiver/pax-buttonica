@@ -23,6 +23,23 @@ export const TURN_LOOKS: { id: TurnLook; name: string; hint: string }[] = [
 
 export const isTurnLook = (x: unknown): x is TurnLook => x === 'solid' || x === 'pulse' || x === 'heartbeat';
 
+/**
+ * What a button does the moment it becomes your turn (and, if the table likes, your turn to score): a one-shot on top
+ * of the steady light. Each player picks their own from their phone; the host picks the table's default. Every
+ * renderer (screen, phone, real button) draws these however it can, and a button that doesn't know one ignores it.
+ */
+export type TurnEffect = 'ring' | 'ripple' | 'sparkle' | 'rainbow' | 'none';
+
+export const TURN_EFFECTS: { id: TurnEffect; name: string; hint: string }[] = [
+  { id: 'ring', name: 'Ring', hint: 'A ring bursts out from the button' },
+  { id: 'ripple', name: 'Ripple', hint: 'Two waves roll out from the centre' },
+  { id: 'sparkle', name: 'Sparkles', hint: 'A moment of twinkles' },
+  { id: 'rainbow', name: 'Rainbow', hint: 'A second of every colour, then yours' },
+  { id: 'none', name: 'None', hint: 'The light just comes on' },
+];
+
+export const isTurnEffect = (x: unknown): x is TurnEffect => TURN_EFFECTS.some((e) => e.id === x);
+
 /** Brightness is a share of the button's full output, kept off the floor so a light can't be "set" to invisible. */
 export const MIN_BRIGHTNESS = 0.1;
 export const clampBrightness = (b: unknown): number => (typeof b === 'number' && Number.isFinite(b) ? Math.min(1, Math.max(MIN_BRIGHTNESS, b)) : 1);

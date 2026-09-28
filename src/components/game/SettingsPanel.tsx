@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
 import { LAYOUTS, SCORING_CUES, settingsStore } from '../../state/settings';
 import { DEFAULT_FANFARE_MS } from '../../engine/engine';
-import { TURN_LOOKS } from '../../engine/outputs';
+import { TURN_EFFECTS, TURN_LOOKS } from '../../engine/outputs';
 import { syncStatus } from '../../remote/sync';
 import { exportGame } from '../../state/archive';
 import { liveGame } from '../../state/game';
@@ -52,6 +52,15 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
           ))}
         </div>
         <small className="muted">Players can pick their own from their phone.</small>
+      </div>
+      <div className="field" role="radiogroup" aria-label="Start of turn">
+        <span>Start of turn</span>
+        <div className="looks looks--wrap">
+          {TURN_EFFECTS.map((e) => (
+            <button key={e.id} type="button" role="radio" aria-checked={s.turnFx === e.id} title={e.hint} onClick={() => set({ turnFx: e.id })}>{e.name}</button>
+          ))}
+        </div>
+        <small className="muted">What a button does the moment its turn starts. Players can pick their own from their phone.</small>
       </div>
       <label className="field" title="Real buttons only. The screen's buttons don't change.">
         <span>Button brightness <b className="mono-num">{Math.round(s.brightness * 100)}%</b></span>

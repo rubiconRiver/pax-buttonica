@@ -34,7 +34,8 @@ export type FromDevice =
 export type ToDevice =
   | { t: 'led'; dev: string; c: string; m: LedMode; p?: number }
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
-  | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' }
+  /** `ack`, `denied` and `confirm` every button renders; the rest are turn effects a multi-pixel button may draw and any button may ignore. */
+  | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | 'ripple' | 'sparkle' | 'rainbow' }
   /** `bright`: 0–100, a share of the button's full output. `pulse`: how to draw "your move" (default: breathe). */
   | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; pulse?: TurnLook }
   | { t: 'id'; dev: string };

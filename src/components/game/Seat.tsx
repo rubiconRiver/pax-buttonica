@@ -3,6 +3,7 @@ import { cardByNumber, colorById } from '../../engine/data';
 import type { DeviceOutput, TurnLook } from '../../engine/outputs';
 import type { DeviceInput, Player } from '../../engine/types';
 import { Device, type DeviceHandle } from '../Device';
+import type { Reaction } from './useReactions';
 import { IconGavel } from '../Icons';
 import { formatClock, type SeatPos } from './geometry';
 
@@ -23,7 +24,7 @@ interface Props {
   isActive: boolean;
   liveMs: number;
   explain: boolean;
-  react: { id: number; kind: 'denied' | 'ack' | 'hint' | 'burst' } | null;
+  react: Reaction;
   onInput?(input: DeviceInput): void;
 }
 

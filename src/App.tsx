@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Bench } from './pages/Bench';
 import { ButtonConcept } from './pages/ButtonConcept';
@@ -12,7 +12,9 @@ import { Standard } from './pages/Standard';
 
 export function App() {
   const { pathname } = useLocation();
-  useEffect(() => {
+  // A new page starts at the top: before it paints, and without the browser putting the old scroll position back.
+  useLayoutEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
     window.scrollTo(0, 0);
   }, [pathname]);
   return (

@@ -1,5 +1,5 @@
 import { DEFAULT_FANFARE_MS } from '../engine/engine';
-import type { TurnLook } from '../engine/outputs';
+import type { TurnEffect, TurnLook } from '../engine/outputs';
 import { createStore } from './createStore';
 
 /** What the player whose turn it is to score gets, besides their light: the turn-start ring and their entrance music, a chime, or nothing. */
@@ -34,6 +34,8 @@ export interface Settings {
   autoScoreboard: boolean;
   /** How "your move" is drawn on every button that hasn't chosen for itself. */
   turnLight: TurnLook;
+  /** What a button does the moment its turn starts, unless its player chose for themselves. */
+  turnFx: TurnEffect;
   /** Real buttons only: a share of their full brightness, 0.1–1. */
   brightness: number;
   /** Players laid out in the order they act, or where they sit. */
@@ -56,6 +58,7 @@ export const DEFAULT_SETTINGS: Settings = {
   primaryStage: true,
   autoScoreboard: true,
   turnLight: 'solid',
+  turnFx: 'ring',
   brightness: 1,
   layout: 'order',
   fanfareMs: DEFAULT_FANFARE_MS,

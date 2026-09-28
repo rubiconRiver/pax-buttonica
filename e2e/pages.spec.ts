@@ -43,7 +43,8 @@ test('the landing page gets a visitor to the demo, the documents and the parts l
   }
   await page.getByRole('link', { name: 'Parts list' }).click();
   await expect(page).toHaveURL(/\/parts$/);
-  await expect(page.evaluate(() => window.scrollY), 'a new page starts at the top').resolves.toBe(0);
+  // The URL changes a beat before the new page paints and scrolls itself to the top.
+  await expect.poll(() => page.evaluate(() => window.scrollY), 'a new page starts at the top').toBe(0);
 });
 
 test('the documents are rendered from the repo’s markdown, tables and code included', async ({ page }) => {

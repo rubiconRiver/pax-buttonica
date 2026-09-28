@@ -1,5 +1,5 @@
 import { FACTION_GROUPS, PLAYER_COLORS } from '../engine/data';
-import { clampBrightness, isTurnLook, type TurnLook } from '../engine/outputs';
+import { clampBrightness, isTurnEffect, isTurnLook, type TurnEffect, type TurnLook } from '../engine/outputs';
 import type { PlayerSetup, SoundRef } from '../engine/types';
 import { createStore } from './createStore';
 
@@ -17,6 +17,8 @@ export interface Profile extends Omit<PlayerSetup, 'profileId'> {
   light?: TurnLook;
   /** Their own button's brightness, as a share of the table's (0.1–1). Unset: the table's. */
   brightness?: number;
+  /** What their button does the moment their turn starts. Unset: the table's. */
+  turnFx?: TurnEffect;
 }
 
 export type ProfilePatch = Partial<Omit<Profile, 'id' | 'updatedAt'>>;
@@ -75,6 +77,7 @@ export function sanitizePatch(raw: unknown, jingleIds: string[]): ProfilePatch {
     else if (s?.kind === 'jingle' && jingleIds.includes(s.id)) out[slot] = { kind: 'jingle', id: s.id };
   }
   if (isTurnLook(r.light)) out.light = r.light;
+  if (isTurnEffect(r.turnFx)) out.turnFx = r.turnFx;
   if (typeof r.brightness === 'number') out.brightness = clampBrightness(r.brightness);
   return out;
 }

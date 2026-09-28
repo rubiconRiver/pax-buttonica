@@ -54,6 +54,12 @@
 /* Profile sheet */
 .sheet { position: fixed; inset: 0; z-index: 50; display: grid; align-items: end; background: rgba(2, 3, 6, 0.72); backdrop-filter: blur(6px); animation: arrive 0.16s var(--out); user-select: auto; -webkit-user-select: auto; }
 .sheet__card { width: min(100%, 460px); margin: 0 auto; padding: 18px 18px max(18px, env(safe-area-inset-bottom)); display: grid; gap: 14px; text-align: left; background: var(--panel-solid); max-height: 92dvh; overflow-y: auto; }
+.sheet__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sheet__row small { flex: 1; }
+/* Trying an effect: the sheet steps aside for a moment so the light shows through. */
+.sheet[data-peek] { background: transparent; backdrop-filter: none; transition: background 0.2s; }
+.sheet[data-peek] .sheet__card { opacity: 0.12; pointer-events: none; transition: opacity 0.2s; }
+.sheet__card { transition: opacity 0.3s; }
 .sheet__head, .sheet__foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 
 /* Button / Table switch, and the read-only table view */

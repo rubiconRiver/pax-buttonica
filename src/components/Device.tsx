@@ -1,5 +1,6 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import type { LedMode, TurnLook } from '../engine/outputs';
+import type { ReactionKind } from './game/useReactions';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
 import { HEARTBEAT_MS, PULSE_MS } from '../hardware/protocol';
@@ -9,6 +10,9 @@ import '../styles/device.css';
 export const TAP_MAX_MS = 350;
 /** A second tap landing this soon after the first is reported as `double`. */
 export const DOUBLE_MS = 400;
+
+/** How long each one-shot is on screen; the CSS animations run this long. */
+const REACTION_MS: Record<ReactionKind, number> = { denied: 520, ack: 520, hint: 520, burst: 520, ripple: 1100, sparkle: 1000, rainbow: 1200 };
 
 export interface DeviceHandle {
   down(): void;
@@ -28,7 +32,7 @@ interface Props {
   label?: string;
   hotkey?: string;
   /** A one-shot reaction, keyed so the same kind can fire twice in a row. */
-  react?: { id: number; kind: 'denied' | 'ack' | 'hint' | 'burst' } | null;
+  react?: { id: number; kind: ReactionKind } | null;
   silent?: boolean;
   onInput?(input: DeviceInput): void;
 }
@@ -116,7 +120,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
     if (!react) return;
     setReaction(react.kind);
     if (react.kind === 'burst') setShock((n) => n + 1);
-    const t = window.setTimeout(() => setReaction(null), 520);
+    const t = window.setTimeout(() => setReaction(null), REACTION_MS[react.kind]);
     return () => window.clearTimeout(t);
   }, [react?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -174,6 +178,12 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
         {hotkey && <kbd className="dev__key">{hotkey}</kbd>}
       </div>
       {shock > 0 && <span key={shock} className="dev__shock" />}
+      {reaction === 'ripple' && (
+        <span key={react?.id} className="dev__ripples" aria-hidden><i /><i /></span>
+      )}
+      {reaction === 'sparkle' && (
+        <span key={react?.id} className="dev__sparks" aria-hidden>{Array.from({ length: 10 }, (_, i) => <i key={i} style={{ '--i': i } as CSSProperties} />)}</span>
+      )}
       {buttons >= 3 && interactive && (
         <div className="dev__aux">
           <button

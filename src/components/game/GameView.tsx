@@ -6,6 +6,8 @@ import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs'
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { connectHub, hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
 import { snapshotOf } from '../../remote/messages';
+import { previews } from '../../remote/sync';
+import { isOnHub, sendToDevice } from '../../hardware/serial';
 import { IconClose } from '../Icons';
 import { Scoreboard } from './Scoreboard';
 import { profilesStore } from '../../state/profiles';
@@ -22,7 +24,8 @@ import { OpenSpot, Seat } from './Seat';
 import { SidePanel } from './SidePanel';
 import { TopBar } from './TopBar';
 import { Tour } from './Tour';
-import { useGameAudio } from './useGameAudio';
+import { hubEffect, useGameAudio } from './useGameAudio';
+import { reactionFor, type Reaction } from './useReactions';
 import { useReactions } from './useReactions';
 import '../../styles/game.css';
 
@@ -65,10 +68,11 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const seatPrefs = useMemo(
     () => game.players.map((p) => {
       const mine = p.profileId ? profiles.find((x) => x.id === p.profileId) : undefined;
-      return { look: mine?.light ?? settings.turnLight, bright: clampBrightness(mine?.brightness) };
+      return { look: mine?.light ?? settings.turnLight, bright: clampBrightness(mine?.brightness), fx: mine?.turnFx ?? settings.turnFx };
     }),
-    [game.players, profiles, settings.turnLight],
+    [game.players, profiles, settings.turnLight, settings.turnFx],
   );
+  const effects = useMemo(() => seatPrefs.map((p) => p.fx), [seatPrefs]);
   const spots = useMemo(() => seatSpots(game), [game]);
   // The order of play, and where each table spot is drawn: in a row by that order, or round the table by seat.
   const order = useMemo(() => turnOrder(game), [game]);
@@ -85,7 +89,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   // Whose moment it is: the active player, or whoever is scoring while the status phase goes round.
   const spotlight = game.seating ? null : game.active ?? currentScorer(game);
 
-  useGameAudio(game);
+  useGameAudio(game, true, effects);
 
   // Real buttons, when a hub is plugged in, mirror the simulated ones exactly. A button that has only just
   // spoken up (switched on late, fresh batteries) is told its light straight away, not at the next change.
@@ -186,7 +190,29 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     return () => window.clearTimeout(t);
   }, [game.fxSeq]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const reactions = useReactions(game);
+  const engineReactions = useReactions(game, effects);
+  // A phone trying out a turn effect: drawn on that player's seat here, and sent to their real button if they have one.
+  const preview = useStore(previews);
+  const [tried, setTried] = useState<{ seat: number; reaction: Reaction }[]>([]);
+  useEffect(() => {
+    if (!preview || demo) return;
+    let seat = game.bindings.indexOf(preview.dev);
+    if (seat < 0) {
+      const who = game.devices[preview.dev];
+      seat = who ? game.players.findIndex((p) => p.profileId === who) : -1;
+    }
+    if (seat < 0) return;
+    const kind = reactionFor(preview.fx);
+    setTried((t) => [...t.filter((x) => x.seat !== seat), { seat, reaction: kind ? { id: -preview.id, kind } : null }]);
+    const dev = game.bindings[seat];
+    const k = hubEffect(preview.fx);
+    if (dev && k && isOnHub(dev)) sendToDevice({ t: 'fx', dev, k });
+  }, [preview]); // eslint-disable-line react-hooks/exhaustive-deps
+  const reactions = useMemo(() => {
+    const out = [...engineReactions];
+    for (const t of tried) if (t.reaction && (!out[t.seat] || t.reaction.id !== out[t.seat]!.id)) out[t.seat] = t.reaction;
+    return out;
+  }, [engineReactions, tried]);
 
   // Six players: each corner of the galaxy is somebody's home system.
   const homes = useMemo<HomeSystem[] | undefined>(() => {

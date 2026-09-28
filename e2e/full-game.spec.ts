@@ -11,7 +11,7 @@ const NAMES = ['Garett', 'Priya', 'Marc', 'Chantal', 'Owen', 'Lise'];
 const [GARETT, PRIYA, MARC, CHANTAL, OWEN, LISE] = NAMES;
 
 test('a complete six-player game, from setup to the throne', async ({ page }) => {
-  test.setTimeout(240_000);
+  test.setTimeout(process.env.CI ? 600_000 : 240_000); // a whole game, and CI's runner is a few times slower than a laptop
   const table = new Table(page);
   const board = new Board(page);
 

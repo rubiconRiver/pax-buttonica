@@ -164,8 +164,33 @@ test('the cog on the phone: how your own light shows "your move", saved with you
   await expect(table.light('Ana'), 'her own choice wins on the big screen too').toHaveAttribute('data-look', 'heartbeat');
   expect(api.named('Ana')).toMatchObject({ light: 'heartbeat', brightness: 0.5 });
   // Back to the table's choice.
-  await sheet.getByRole('radio', { name: "Table's" }).click();
+  await sheet.getByRole('radio', { name: "Table's" }).first().click();
   await expect(phone.light).toHaveAttribute('data-look', 'solid');
+
+  // The start of her turn is hers to choose too. Picking one plays it on her phone at once…
+  const starts = sheet.getByRole('radiogroup', { name: 'When your turn starts' });
+  await expect(starts.getByRole('radio', { name: "Table's" })).toHaveAttribute('aria-checked', 'true');
+  await starts.getByRole('radio', { name: 'Sparkles' }).click();
+  await expect(phone.light).toHaveAttribute('data-react', 'sparkle');
+  await expect(sheet, 'the sheet steps aside so she can see it').toHaveAttribute('data-peek');
+  // …and on her seat on the big screen, a moment later, once the host has read the inbox.
+  await tick([page, phone.page], 1);
+  await expect(table.light('Ana')).toHaveAttribute('data-react', 'sparkle');
+  await tick([page, phone.page], 3);
+  expect(api.named('Ana')).toMatchObject({ turnFx: 'sparkle' });
+  await expect(phone.light).not.toHaveAttribute('data-react');
+  await expect(sheet).not.toHaveAttribute('data-peek');
+  // Preview plays the current choice again.
+  await sheet.getByRole('button', { name: 'Preview' }).click();
+  await expect(phone.light).toHaveAttribute('data-react', 'sparkle');
+  await tick([page, phone.page], 3);
+  await starts.getByRole('radio', { name: 'Rainbow' }).click();
+  await expect(phone.light).toHaveAttribute('data-react', 'rainbow');
+  await tick([page, phone.page], 3);
+  expect(api.named('Ana')).toMatchObject({ turnFx: 'rainbow' });
+  await starts.getByRole('radio', { name: "Table's" }).click();
+  await tick([page, phone.page], 3);
+  expect(api.named('Ana')?.turnFx).toBeUndefined();
 });
 
 test('someone new adds themselves from their phone; they are saved, but not seated', async ({ page, context }) => {

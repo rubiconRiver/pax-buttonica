@@ -2,7 +2,7 @@
  * What phones send to the host: presses, and who they are. The host reads them in order and applies them
  * through its rules engine; the result comes back to the phone in the next copy of the game.
  *
- *   POST /api/actions?code=ABCD            { dev, type: 'input', input } | { dev, type: 'identify', profileId } | { dev, type: 'hello' }
+ *   POST /api/actions?code=ABCD            { dev, type: 'input', input } | { dev, type: 'identify', profileId } | { dev, type: 'hello' } | { dev, type: 'preview', fx }
  *   GET  /api/actions?code=ABCD&key=…&after=N   → { actions: [{ seq, data }] }      host only
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -12,6 +12,9 @@ const DEV = /^[A-Za-z0-9:_-]{4,40}$/;
 const INPUTS = new Set(['tap', 'double', 'hold']);
 const MAX_BYTES = 1_000;
 const TTL_MS = 10 * 60 * 1000;
+
+/** Turn effects a phone may ask its seat to preview (src/engine/outputs.ts). */
+const TURN_FX = new Set(['ring', 'ripple', 'sparkle', 'rainbow', 'none']);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
@@ -29,6 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (m.type === 'input' && typeof m.input === 'string' && INPUTS.has(m.input)) data = { dev: m.dev, type: 'input', input: m.input };
       else if (m.type === 'identify' && (m.profileId === null || (typeof m.profileId === 'string' && /^[A-Za-z0-9-]{8,40}$/.test(m.profileId)))) data = { dev: m.dev, type: 'identify', profileId: m.profileId };
       else if (m.type === 'hello') data = { dev: m.dev, type: 'hello' };
+      else if (m.type === 'preview' && typeof m.fx === 'string' && TURN_FX.has(m.fx)) data = { dev: m.dev, type: 'preview', fx: m.fx };
       else return res.status(400).json({ error: 'Bad action.' });
       const [game] = await sql`select updated_at from game_states where code = ${code}`;
       if (!game) return res.status(404).json({ error: 'No game with that code.' });

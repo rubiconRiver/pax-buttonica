@@ -5,11 +5,11 @@ import { JINGLES } from '../audio/jingles';
 import { playSound, unlockAudio, type Playing } from '../audio/synth';
 import { Device } from '../components/Device';
 import { Scoreboard } from '../components/game/Scoreboard';
-import { useReactions } from '../components/game/useReactions';
+import { reactionFor, useReactions, type Reaction } from '../components/game/useReactions';
 import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode } from '../engine/engine';
-import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook } from '../engine/outputs';
+import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
 import type { GameState, SoundRef } from '../engine/types';
 import type { GameRecord } from '../remote/sync';
 import { snapshotOf } from '../remote/messages';
@@ -42,7 +42,7 @@ const HELLO_MS = 15_000;
 const MISSES_BEFORE_LOST = 5;
 
 type Link = 'connecting' | 'connected' | 'lost' | 'nogame';
-type Outbound = { type: 'input'; input: 'tap' | 'double' | 'hold' } | { type: 'identify'; profileId: string | null } | { type: 'hello' };
+type Outbound = { type: 'input'; input: 'tap' | 'double' | 'hold' } | { type: 'identify'; profileId: string | null } | { type: 'hello' } | { type: 'preview'; fx: TurnEffect };
 
 function useGame(code: string) {
   const [link, setLink] = useState<Link>('connecting');
@@ -182,11 +182,27 @@ function PhoneButton({ code }: { code: string }) {
   const meId = game?.devices[dev] ?? null;
   const me = meId ? profiles.find((p) => p.id === meId) : undefined;
   const outputs = useMemo(() => (game ? deriveOutputs(game) : []), [game]);
-  const reactions = useReactions(game ?? EMPTY);
   const output = seat >= 0 ? outputs[seat] : game?.seating ? UNCLAIMED : OFF;
-  // How "your move" is drawn: my own taste if I've set one, else the table's.
+  // How "your move" is drawn, and what happens when it starts: my own taste if I've set one, else the table's.
   const tableLook: TurnLook = record?.settings.turnLight ?? 'pulse';
   const look: TurnLook = me?.light ?? tableLook;
+  const tableFx: TurnEffect = record?.settings.turnFx ?? 'ring';
+  const myFx: TurnEffect = me?.turnFx ?? tableFx;
+  const effects = useMemo(() => (game ? game.players.map((_, i) => (i === seat ? myFx : undefined)) : []), [game, seat, myFx]);
+  const reactions = useReactions(game ?? EMPTY, effects);
+  // Trying an effect out: drawn here at once, and the table shows it on my seat (and my real button, if I have one).
+  const [tried, setTried] = useState<Reaction>(null);
+  const triedSeq = useRef(0);
+  const tryEffect = (fx: TurnEffect) => {
+    const kind = reactionFor(fx);
+    setTried(kind ? { id: -(++triedSeq.current), kind } : null);
+    if (record) say({ type: 'preview', fx });
+  };
+  useEffect(() => {
+    if (!tried) return;
+    const t = window.setTimeout(() => setTried(null), 1300);
+    return () => window.clearTimeout(t);
+  }, [tried]);
   const table = useMemo(() => (game ? snapshotOf(game) : null), [game]);
 
   // The question is asked once per game: the first time this phone shows up in a game that doesn't know it.
@@ -293,7 +309,7 @@ function PhoneButton({ code }: { code: string }) {
         size={size}
         holdMs={record?.settings.holdMs ?? 2000}
         label="Your button"
-        react={live && seat >= 0 ? reactions[seat] : null}
+        react={tried ?? (live && seat >= 0 ? reactions[seat] : null)}
         onInput={(input) => (input === 'tap' || input === 'double' || input === 'hold') && say({ type: 'input', input })}
       />
 
@@ -310,7 +326,7 @@ function PhoneButton({ code }: { code: string }) {
       {tabs}
 
       {tuning && me && (
-        <LightSheet me={me} tableLook={tableLook} onEdit={(patch) => patchProfile(me.id, patch)} onClose={() => setTuning(false)} />
+        <LightSheet me={me} tableLook={tableLook} tableFx={tableFx} onEdit={(patch) => patchProfile(me.id, patch)} onPreview={tryEffect} onClose={() => setTuning(false)} />
       )}
       {editing && me && (
         <ProfileSheet
@@ -369,15 +385,30 @@ export function WhoAreYou({ profiles, first = [], onPick, onCreate, onSkip, eyeb
 }
 
 /** The cog: how this player's own light behaves. Saved with their profile, so it follows them to the next game. */
-export function LightSheet({ me, tableLook, onEdit, onClose }: {
-  me: Pick<Profile, 'light' | 'brightness'>;
+export function LightSheet({ me, tableLook, tableFx, onEdit, onPreview, onClose }: {
+  me: Pick<Profile, 'light' | 'brightness' | 'turnFx'>;
   tableLook: TurnLook;
-  onEdit(patch: { light?: TurnLook; brightness?: number }): void;
+  tableFx: TurnEffect;
+  onEdit(patch: { light?: TurnLook; brightness?: number; turnFx?: TurnEffect }): void;
+  /** Show an effect on my light now. */
+  onPreview(fx: TurnEffect): void;
   onClose(): void;
 }) {
   const bright = clampBrightness(me.brightness);
+  const fx = me.turnFx ?? tableFx;
+  // While an effect plays, the sheet gets out of the way so the light behind it can be seen.
+  const [peek, setPeek] = useState(0);
+  useEffect(() => {
+    if (!peek) return;
+    const t = window.setTimeout(() => setPeek(0), 1300);
+    return () => window.clearTimeout(t);
+  }, [peek]);
+  const preview = (which: TurnEffect) => {
+    onPreview(which);
+    setPeek((n) => n + 1);
+  };
   return (
-    <div className="sheet" role="dialog" aria-label="Your light">
+    <div className="sheet" role="dialog" aria-label="Your light" data-peek={peek || undefined}>
       <div className="sheet__card panel">
         <div className="sheet__head">
           <span className="eyebrow">Your light</span>
@@ -392,6 +423,19 @@ export function LightSheet({ me, tableLook, onEdit, onClose }: {
             ))}
           </div>
           <small className="muted">{me.light ? TURN_LOOKS.find((l) => l.id === me.light)!.hint : `The table's choice right now: ${TURN_LOOKS.find((l) => l.id === tableLook)!.name.toLowerCase()}`}</small>
+        </div>
+        <div className="field" role="radiogroup" aria-label="When your turn starts">
+          <span>When your turn starts</span>
+          <div className="looks looks--wrap">
+            <button type="button" role="radio" aria-checked={!me.turnFx} title="Whatever the host picked for the table" onClick={() => { onEdit({ turnFx: undefined }); preview(tableFx); }}>Table's</button>
+            {TURN_EFFECTS.map((e) => (
+              <button key={e.id} type="button" role="radio" aria-checked={me.turnFx === e.id} title={e.hint} onClick={() => { onEdit({ turnFx: e.id }); preview(e.id); }}>{e.name}</button>
+            ))}
+          </div>
+          <div className="sheet__row">
+            <small className="muted">{me.turnFx ? TURN_EFFECTS.find((e) => e.id === me.turnFx)!.hint : `The table's choice right now: ${TURN_EFFECTS.find((e) => e.id === tableFx)!.name.toLowerCase()}`}</small>
+            <button type="button" className="btn btn--sm" title="Play it on your light now, and on the table" onClick={() => preview(fx)}><IconPlay /> Preview</button>
+          </div>
         </div>
         <label className="field">
           <span>Brightness <b className="mono-num">{Math.round(bright * 100)}%</b></span>

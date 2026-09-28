@@ -117,6 +117,31 @@ test('a turn played entirely on real buttons', async ({ page }) => {
   await expect(table.center.locator('.center__title')).toHaveText('Cleo is playing…');
 });
 
+test('the start of a turn reaches a real button as its player\'s effect', async ({ page }) => {
+  const table = await startWithHub(page);
+  for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectActive('Ana');
+  // Only the turn effects, not the acks every button got for claiming its seat.
+  const effects = async (dev: string) => (await sent(page)).filter((m) => m.t === 'fx' && m.dev === dev && m.k !== 'ack' && m.k !== 'denied');
+  // The table's default is the ring, which every button draws as its burst.
+  expect(await effects(A)).toEqual([{ t: 'fx', dev: A, k: 'burst' }]);
+  expect(await effects(B)).toEqual([]);
+
+  const panel = await openSettings(page);
+  await panel.getByRole('radio', { name: 'Sparkles' }).click();
+  await page.keyboard.press('Escape');
+  await feed(page, press(A, 'hold'));
+  await table.expectActive('Ben');
+  expect(await effects(B)).toEqual([{ t: 'fx', dev: B, k: 'sparkle' }]);
+
+  await (await openSettings(page)).getByRole('radio', { name: 'None' }).click();
+  await page.keyboard.press('Escape');
+  await feed(page, press(B, 'hold'));
+  await table.expectActive('Cleo');
+  expect(await effects(C)).toEqual([]);
+});
+
 test('only changes go down the wire', async ({ page }) => {
   const table = await startWithHub(page);
   for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));

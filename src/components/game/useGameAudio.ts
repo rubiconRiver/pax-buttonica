@@ -2,13 +2,21 @@ import { useEffect, useRef } from 'react';
 import { jingleById } from '../../audio/jingles';
 import { sfx, turnLane } from '../../audio/synth';
 import { seatSpots } from '../../engine/engine';
+import type { TurnEffect } from '../../engine/outputs';
 import type { GameState, SoundRef } from '../../engine/types';
 import { isOnHub, playsOwnSounds, sendToDevice } from '../../hardware/serial';
 import { settingsStore } from '../../state/settings';
 import { seatPosition } from './geometry';
 
 /** Turns the engine's one-shot effects into sound. Each effect plays exactly once. */
-export function useGameAudio(game: GameState | null, enabled = true) {
+/** What a real button is told to draw for each turn effect; the ring is the burst every button knows. */
+export const hubEffect = (fx: TurnEffect): 'burst' | 'ripple' | 'sparkle' | 'rainbow' | null => (fx === 'ring' ? 'burst' : fx === 'none' ? null : fx);
+
+/**
+ * Turns the engine's one-shot effects into sound, and into the odd frame for a real button. `effects`, per seat,
+ * is how that player likes the start of their turn drawn.
+ */
+export function useGameAudio(game: GameState | null, enabled = true, effects: (TurnEffect | undefined)[] = []) {
   const last = useRef<number | null>(null);
 
   useEffect(() => {
@@ -33,6 +41,10 @@ export function useGameAudio(game: GameState | null, enabled = true) {
       if (dev && isOnHub(dev)) {
         if (f.kind === 'denied') sendToDevice({ t: 'fx', dev, k: 'denied' });
         if (f.kind === 'ack' || f.kind === 'ready' || f.kind === 'claim') sendToDevice({ t: 'fx', dev, k: 'ack' });
+        if (f.kind === 'turnStart' || f.kind === 'score') {
+          const k = f.seat != null ? hubEffect(effects[f.seat] ?? 'ring') : null;
+          if (k) sendToDevice({ t: 'fx', dev, k });
+        }
       }
       switch (f.kind) {
         case 'claim': sfx.ack(pan); if (p) turnSound(p.intro); break;
