@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<title>Pax Buttonica Light Shows</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #04060b; --bg-2: #0a0e18; --panel: #0d121e; --line: rgba(150, 172, 225, 0.16); --line-2: rgba(150, 172, 225, 0.32);
+    --text: #e6ebf7; --muted: #8d97af; --faint: #5b6480; --gold: #f2b84b; --gold-2: #ffdf9a; --cyan: #5ad1ff;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1080px; margin-inline: auto; display: grid; gap: 18px; }
+  h1, h2 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
+  h1 { font-size: 28px; font-weight: 700; }
+  h2 { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 72ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 14px 16px 16px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .row .sep { width: 1px; height: 22px; background: var(--line-2); margin-inline: 4px; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1d2437, #121727); border: 1px solid var(--line-2); padding: 8px 13px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: transparent; }
+  .btn.act { color: var(--bg); background: var(--cyan); border-color: transparent; }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  input[type=range] { width: 150px; accent-color: var(--gold); }
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 16px; }
+  @media (max-width: 800px) { .layout { grid-template-columns: 1fr; } }
+  .stage { position: relative; width: 100%; aspect-ratio: 1.25 / 1; background: #070a12; border: 1px solid var(--line); }
+  .stage canvas { display: block; width: 100%; height: 100%; cursor: pointer; }
+  .stage .hint { position: absolute; bottom: 8px; right: 12px; color: var(--faint); font-size: 11.5px; pointer-events: none; }
+  .about { display: grid; gap: 8px; align-content: start; color: var(--muted); }
+  .about b { color: var(--text); font-weight: 600; }
+  .about .when { color: var(--gold-2); font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; }
+  .about code { font: 12px ui-monospace, Menlo, monospace; color: var(--cyan); background: var(--bg-2); padding: 1px 5px; }
+  pre { margin: 0; font: 12px/1.6 ui-monospace, Menlo, monospace; color: var(--muted); background: var(--bg-2); padding: 10px 12px; overflow-x: auto; }
+  pre b { color: var(--cyan); font-weight: 500; }
+  ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  li { margin: 4px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · light</div>
+    <h1>Light shows across the table</h1>
+    <p class="lede">The buttons know where they sit, so instead of six lights doing the same thing they can do one thing together. These are proposals, drawn with the real NeoHEX layout (37 pixels in rings) and the real player colours. Click a button to make it the origin; drag the speed.</p>
+  </header>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <div class="row" id="shows"></div>
+    <div class="row">
+      <label class="f">Seats <input type="range" id="seats" min="3" max="8" value="6"> <span id="seatsv">6</span></label>
+      <label class="f">Speed <input type="range" id="speed" min="0.4" max="2.5" step="0.05" value="1"> <span id="speedv">1.0×</span></label>
+      <span class="sep"></span>
+      <button class="btn" id="pass">Pass the turn</button>
+      <button class="btn" id="score">Someone scored</button>
+    </div>
+    <div class="layout">
+      <div class="stage"><canvas id="c"></canvas><span class="hint">click a button to choose the origin</span></div>
+      <div class="about" id="about"></div>
+    </div>
+  </div></section>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>How it would work</h2>
+    <p style="margin:0;color:var(--muted)">One message per button, once, when the show starts. Each button then draws its own slice on its own clock, the way <code>pulse</code> already breathes in step using <code>p</code>. No message per step, so the sleepy radios and the hub's retries don't matter, and six buttons stay in time to a few milliseconds.</p>
+    <pre>{"t":"show","dev":"A1B2C3D4E5F6",<b>"k":"chase"</b>,<b>"i":2,"n":6</b>,"c":"ff8a1f","d":3000,"p":0}</pre>
+    <ul>
+      <li><code>k</code> which show. <code>i</code> this button's seat, counting clockwise from the speaker, of <code>n</code> seats. <code>c</code> its own colour. <code>d</code> one lap of the show in ms. <code>p</code> how far in, so a button that hears it late still lands in step.</li>
+      <li>Shows that need an origin (a ripple from whoever scored, a hand-off from one player to the next) carry <code>o</code>, the origin seat, and for the hand-off <code>to</code>.</li>
+      <li>A one-shot show ends by itself and the button goes back to its last <code>led</code>. A looping one runs until the next <code>led</code>.</li>
+      <li>In the app this is still one interface: the engine says "fanfare, seat 2 of 6" and the on-screen buttons draw the same functions as the firmware, from this page.</li>
+    </ul>
+  </div></section>
+</div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const COLOURS = ['#ff3b3b', '#ff8a1f', '#ffd21f', '#2fe06b', '#2f8cff', '#a24bff', '#ff5fc4', '#e9f0ff'];
+  const NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink', 'Black'];
+
+  // ── the NeoHEX: 37 pixels in rows of 4,5,6,7,6,5,4; each has a ring (0 centre .. 3 rim) and an angle 0..1 ──
+  const PIX = [];
+  const ROWS = [4, 5, 6, 7, 6, 5, 4];
+  ROWS.forEach((cnt, r) => { for (let k = 0; k < cnt; k++) {
+    const x = k - (cnt - 1) / 2, y = (r - 3) * 0.8660254, d = Math.hypot(x, y);
+    PIX.push({ x, y, ring: Math.min(Math.round(d), 3), ang: Math.atan2(y, x) / (2 * Math.PI) + 0.5 });
+  } });
+  const RINGS = 4;
+  const frac = (v) => v - Math.floor(v);
+  const smooth = (p) => 0.5 - 0.5 * Math.cos(p * 2 * Math.PI);
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const hex = (h) => [parseInt(h.slice(1, 3), 16), parseInt(h.slice(3, 5), 16), parseInt(h.slice(5, 7), 16)];
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const scale = (c, l) => [c[0] * l, c[1] * l, c[2] * l];
+  const WHITE = [255, 255, 255];
+  function hsv(h, s, v) {
+    const i = Math.floor(h * 6), f = h * 6 - i, p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+    const [r, g, b] = [[v, t, p], [q, v, p], [p, v, t], [p, q, v], [t, p, v], [v, p, q]][i % 6];
+    return [r * 255, g * 255, b * 255];
+  }
+  const seatDist = (a, b, n) => { const d = Math.abs(a - b) % n; return Math.min(d, n - d); };
+  const hash = (i, k) => frac(Math.sin(i * 12.9898 + k * 78.233) * 43758.5453);
+
+  // ── the shows. Each: (i seat, n seats, px pixel, t ms, T lap ms, own colour, ctx{origin,to,colours}) -> [r,g,b] 0..255.
+  // These are what the firmware would draw; the same functions, the same numbers.
+  const SHOWS = [
+    { k: 'today', name: 'Today: everyone rainbow', when: 'What the fanfare does now',
+      about: 'Every button runs the same rainbow at the same time. Fine, but six of them doing it is six separate things.',
+      draw: (i, n, px, t) => hsv(frac(t / 2200 + px.ang), 1, 1) },
+    { k: 'carousel', name: 'Carousel', when: 'Fanfare: the round is over',
+      about: 'One rainbow the size of the table, turning. Each button shows the slice of the wheel that is passing it, so colours flow from seat to seat round the ring.',
+      draw: (i, n, px, t, T) => hsv(frac(t / T + i / n + px.ring * 0.04), 1, 1) },
+    { k: 'chase', name: 'Chase', when: 'Fanfare, or when scoring ends',
+      about: 'A white comet runs round the table seat by seat, a tail fading behind it, over each player\'s own colour glowing low. Inside a button the comet sweeps from rim to rim as it passes, so it reads as one thing moving.',
+      draw: (i, n, px, t, T, own) => {
+        const pos = frac(t / T) * n;                    // the head, in seats
+        const behind = frac((pos - i) / n) * n;         // how far past this seat the head is, 0..n
+        const inside = behind < 1 ? behind : -1;        // the head is on this button
+        let b = 0;
+        if (inside >= 0) b = Math.max(0, 1 - Math.abs((inside * 2 - 0.5) - (px.x / 3 + 0.5)) * 1.6);   // a front crossing the board
+        const tail = Math.max(0, 1 - behind / 2.2) ** 2 * 0.55;
+        return mix(scale(own, 0.1 + tail * 0.5), WHITE, clamp(b, 0, 1));
+      } },
+    { k: 'wave', name: 'Stadium wave', when: 'Fanfare',
+      about: 'A pulse of brightness travels round the table in each player\'s colour, one seat after the next with some overlap, rims first. A Mexican wave.',
+      draw: (i, n, px, t, T, own) => {
+        const ph = frac(t / T - i / n - (3 - px.ring) * 0.03);
+        const b = Math.max(0, Math.cos(ph * 2 * Math.PI)) ** 3;
+        return scale(own, 0.08 + 0.92 * b);
+      } },
+    { k: 'ripple', name: 'Ripple from a seat', when: 'Someone scored, or the speaker token moves',
+      about: 'A ring of light leaves one player\'s button and spreads round the table in their colour, reaching the far seat last, then fades. Click a button to choose where it starts.',
+      once: true,
+      draw: (i, n, px, t, T, own, ctx) => {
+        const d = seatDist(i, ctx.origin, n);
+        const f = (t / T) * (n / 2 + 1.5) - d;          // the front, in seats past this one
+        const col = ctx.colours[ctx.origin];
+        let b = 0;
+        if (f >= 0 && f < 1.4) b = Math.max(0, 1 - Math.abs(f * RINGS - px.ring * 1.1) / 1.6) * (1 - f / 1.4);
+        if (d === 0 && t / T < 0.12) b = Math.max(b, 1 - t / T / 0.12);
+        return mix(scale(own, 0.1), col, clamp(b, 0, 1));
+      } },
+    { k: 'sparkle', name: 'Fireworks', when: 'Winner, or the last round',
+      about: 'Every button twinkles in its own colour and, one seat after another, a white burst pops and collapses outward. Loud on purpose.',
+      draw: (i, n, px, t, T, own) => {
+        const tw = Math.sin((t / 900 + hash(i, PIX.indexOf(px))) * 2 * Math.PI);
+        let c = scale(own, 0.2 + 0.8 * (tw > 0 ? tw ** 4 : 0));
+        const slot = T / n, k = Math.floor(t / slot), pop = (t - k * slot) / 520;
+        if (k % n === i && pop < 1) {
+          const head = pop * (RINGS + 1), dd = head - px.ring;
+          if (pop < 0.13) c = WHITE; else if (dd >= 0 && dd < 2) c = mix(c, WHITE, 1 - dd / 2);
+        }
+        return c;
+      } },
+    { k: 'sweep', name: 'Round-end sweep', when: 'Fanfare, once, before scoring',
+      about: 'In turn order each button fills from the centre out in its colour and stays lit; when the last one is full the whole table flashes white together and settles to a slow breathe. A drum roll and a cymbal.',
+      once: true,
+      draw: (i, n, px, t, T, own) => {
+        const p = t / T;
+        if (p < 0.7) {
+          const per = 0.7 / n, start = i * per, f = clamp((p - start) / per, 0, 1) * (RINGS + 0.5);
+          const lit = clamp(f - px.ring, 0, 1);
+          return scale(own, 0.06 + 0.94 * lit);
+        }
+        if (p < 0.78) return mix(own, WHITE, 1 - (p - 0.7) / 0.08 * 0.3);
+        return scale(own, 0.35 + 0.65 * smooth(frac((p - 0.78) / 0.22)));
+      } },
+    { k: 'handoff', name: 'Turn hand-off', when: 'A turn ends: from the player who held to the next',
+      once: true,
+      about: 'A comet in the finishing player\'s colour leaves their button, runs round the table to the next player, and lands there as a burst that fades into "your move". Click Pass the turn.',
+      draw: (i, n, px, t, T, own, ctx) => {
+        const from = ctx.origin, to = ctx.to, len = ((to - from) % n + n) % n || n;
+        const p = t / T, pos = from + p * len * 1.15;   // runs a little past the end into the burst
+        const behind = frac((pos - i) / n) * n;
+        let c = scale(own, 0.1);
+        if (i === from && p < 0.15) c = mix(c, ctx.colours[from], 1 - p / 0.15);
+        if (behind < 1) c = mix(c, ctx.colours[from], Math.max(0, 1 - Math.abs((behind * 2 - 0.5) - (px.x / 3 + 0.5)) * 1.6));
+        else if (behind < 2.5) c = mix(c, ctx.colours[from], (1 - (behind - 1) / 1.5) * 0.4);
+        if (i === to && p > 1 / 1.15 - 0.05) { const q = (p - (1 / 1.15 - 0.05)) / (1 - (1 / 1.15 - 0.05)); c = mix(c, mix(WHITE, own, q), 1 - q * 0.4); }
+        return c;
+      } },
+  ];
+
+  // ── state and drawing ──
+  const state = { show: 1, n: 6, speed: 1, origin: 0, to: 1, started: performance.now() };
+  const canvas = $('c'), ctx2d = canvas.getContext('2d');
+  const geo = [];   // seat centres, recomputed on resize
+  function layout() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    canvas.width = w * devicePixelRatio; canvas.height = h * devicePixelRatio;
+    geo.length = 0;
+    const R = Math.min(w, h) * 0.36, cx = w / 2, cy = h / 2;
+    for (let i = 0; i < state.n; i++) {
+      const a = -Math.PI / 2 + (i / state.n) * 2 * Math.PI;
+      geo.push({ x: cx + R * Math.cos(a), y: cy + R * Math.sin(a), s: Math.min(w, h) * 0.028 });
+    }
+  }
+  const fps = { t: 0, n: 0 };
+  function frame(now) {
+    if (canvas.width !== Math.round(canvas.clientWidth * devicePixelRatio)) layout();
+    const show = SHOWS[state.show];
+    const T = 3000 / state.speed;
+    let t = now - state.started;
+    if (show.once && t > T) t = T;               // one-shots hold their last frame
+    const colours = COLOURS.map(hex);
+    const ctx = { origin: state.origin, to: state.to, colours };
+    const g = ctx2d, dpr = devicePixelRatio;
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+    // the table
+    const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2;
+    g.strokeStyle = 'rgba(150,172,225,0.12)'; g.lineWidth = 1;
+    g.beginPath(); g.arc(cx, cy, Math.min(canvas.clientWidth, canvas.clientHeight) * 0.36, 0, 7); g.stroke();
+    for (let i = 0; i < state.n; i++) {
+      const { x, y, s } = geo[i];
+      const own = colours[i % colours.length];
+      const cols = PIX.map((px) => show.draw(i, state.n, px, t, T, own, ctx));
+      const avg = cols.reduce((a, c) => [a[0] + c[0], a[1] + c[1], a[2] + c[2]], [0, 0, 0]).map((v) => v / cols.length);
+      const lum = (avg[0] * 0.3 + avg[1] * 0.6 + avg[2] * 0.1) / 255;
+      // glow, then the cap, then the pixels
+      const glow = g.createRadialGradient(x, y, s * 2, x, y, s * 8);
+      glow.addColorStop(0, `rgba(${avg[0] | 0},${avg[1] | 0},${avg[2] | 0},${0.55 * lum})`);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = glow; g.beginPath(); g.arc(x, y, s * 8, 0, 7); g.fill();
+      g.beginPath();
+      for (let k = 0; k < 6; k++) { const a = Math.PI / 6 + k * Math.PI / 3; g.lineTo(x + s * 4.2 * Math.cos(a), y + s * 4.2 * Math.sin(a)); }
+      g.closePath(); g.fillStyle = '#141826'; g.fill();
+      g.strokeStyle = i === state.origin ? 'rgba(242,184,75,0.9)' : 'rgba(150,172,225,0.25)'; g.lineWidth = i === state.origin ? 2 : 1; g.stroke();
+      PIX.forEach((px, k) => {
+        const c = cols[k];
+        g.fillStyle = `rgb(${c[0] | 0},${c[1] | 0},${c[2] | 0})`;
+        g.beginPath(); g.arc(x + px.x * s * 0.95, y + px.y * s * 0.95, s * 0.36, 0, 7); g.fill();
+      });
+      g.fillStyle = 'rgba(141,151,175,0.9)'; g.font = `600 ${Math.max(10, s * 0.9)}px Oxanium, sans-serif`; g.textAlign = 'center';
+      g.fillText(`${NAMES[i % NAMES.length]}${i === 0 ? ' · speaker' : ''}`, x, y + s * 5.6);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  // ── controls ──
+  function pick(idx) {
+    state.show = idx; state.started = performance.now();
+    document.querySelectorAll('#shows .btn').forEach((b, k) => b.setAttribute('aria-pressed', String(k === idx)));
+    const s = SHOWS[idx];
+    $('about').innerHTML = `<div class="when">${s.when}</div><div><b>${s.name}.</b> ${s.about}</div><div>${s.once ? 'One-shot: plays once and holds.' : 'Loops until the next light message.'} Sent as <code>k: "${s.k}"</code>.</div>`;
+  }
+  SHOWS.forEach((s, k) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = s.name; b.onclick = () => pick(k); $('shows').appendChild(b); });
+  $('seats').oninput = (e) => { state.n = +e.target.value; $('seatsv').textContent = state.n; state.origin %= state.n; state.to = (state.origin + 1) % state.n; layout(); };
+  $('speed').oninput = (e) => { state.speed = +e.target.value; $('speedv').textContent = state.speed.toFixed(1) + '×'; };
+  canvas.onclick = (e) => {
+    const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+    let best = 0, bd = 1e9;
+    geo.forEach((p, i) => { const d = Math.hypot(p.x - mx, p.y - my); if (d < bd) { bd = d; best = i; } });
+    state.origin = best; state.to = (best + 1) % state.n; state.started = performance.now();
+  };
+  $('pass').onclick = () => { state.to = (state.origin + 1) % state.n; pick(SHOWS.findIndex((s) => s.k === 'handoff')); };
+  $('score').onclick = () => pick(SHOWS.findIndex((s) => s.k === 'ripple'));
+  layout(); pick(1); requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
