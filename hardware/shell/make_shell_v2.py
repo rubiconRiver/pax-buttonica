@@ -73,7 +73,18 @@ RIDER_X0 = CELL_X0 + m.CELL[0] + CLR + FENCE_T + CLR                   # 4.1: pa
 RIDER_Y0 = IN / 2 - CLR - RIDER_FOOT[1]                                # -8: its USB-C end 0.5 from the +y wall
 RIDER_CX = RIDER_X0 + RIDER_FOOT[0] / 2                                # 16.6, where the port is
 PLUG = (12.0, 15.0, 7.0)                                               # the USB-A plug body out of the Rider's -y end
-CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
+# The plug. A USB-C plug's body is about 20 mm long (Garett's photo, 2026-09-28: it reached the round wall with
+# nowhere for the cable to turn; the first drawing assumed 12). So the Atom is turned to point its socket into a
+# CORNER of the box, 47 mm from the middle instead of 33, the housing is opened into that corner at plug height,
+# the cable drops through the platform there, and a hole through the corner wall lets the plug or the cable
+# stick out if that is still not enough.                                                        MEASURE the real plugs
+CORNER_A = -45.0                     # which corner: +x, -y, the one nearest the Rider's USB-A plug
+ATOM_TURN = 135.0                    # the mini draws the Atom's USB-C toward -x (180); this points it at CORNER_A
+USBC_PLUG = (22.0, 12.0, 7.0)        # length out of the Atom, width, height                         MEASURE
+CORNER_W = 18.0                      # width of the opening into the corner
+CORNER_TOP = 10.0                    # its ceiling: below the cap's flange, which never comes lower than 13
+WALL_HOLE = (14.0, 9.0)              # through the corner wall: wide enough for the plug itself
+CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)      # (no longer cut: the cable goes down at the corner)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
 #   The cable has a plug on each end and neither passes a hole, so it has to slip in from the side.
 # No printed springs (2026-09-28): with no bezel pressing on it, the cap resting on the Atom's own switch through
 # the peg returns by itself, and Garett's test of exactly that felt better than the sprung one. The peg is taller
@@ -129,6 +140,11 @@ def housing():
     solid -= cavity
     solid -= pocket_outline(COMP_H + PLATFORM_T + 1, BOTTOM - 1 + LID_T)          # the pocket, open to the bottom
     solid -= pocket_outline(LID_T + 1, BOTTOM - 1, grow=0.5)                        # the lid's rebate
+    # the corner the Atom's plug points into: open at plug height, inside the square pocket's outline, with a hole
+    # through the corner wall
+    corner = box(BORE_R - 6, -CORNER_W / 2, PLATFORM_Z - 1, 40, CORNER_W, CORNER_TOP + 1).rotate([0, 0, CORNER_A])
+    solid -= corner ^ pocket_outline(CORNER_TOP + 2, PLATFORM_Z - 1.5)
+    solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
     tabs = union(cyl(TAB_D, TAB_H, sx * C, sy * C, LID_Z, seg=32) for sx, sy in TAB_CORNERS)
     tabs ^= pocket_outline(TAB_H + 2, LID_Z - 1)
     solid += tabs
@@ -141,19 +157,22 @@ def housing():
 def platform():
     s = IN - 2 * PLATFORM_CLEAR
     solid = rbox_prism(s, s, CORNER_R - WALL - PLATFORM_CLEAR, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T)
-    h0 = m.COLLAR_H
-    m.COLLAR_H = h0 + COLLAR_RAISE          # collar() reads it
-    solid += m.collar()
-    m.COLLAR_H = h0
+    h0, g0 = m.COLLAR_H, m.COLLAR_GAPS
+    m.COLLAR_H = h0 + COLLAR_RAISE          # collar() reads both
+    m.COLLAR_GAPS = ((0, 1),)               # no gaps of its own: they are cut below, where the turned Atom's plugs are
+    collar = m.collar()
+    m.COLLAR_H, m.COLLAR_GAPS = h0, g0
+    gaps = union(box(0, -(USBC_PLUG[1] / 2 + 2.5), -1, 60, USBC_PLUG[1] + 5, m.COLLAR_H + COLLAR_RAISE + 3).rotate([0, 0, a]) for a in (CORNER_A, CORNER_A + 180))
+    solid += collar - gaps
     fence = cbox(0, 0, 0, m.ATOM[0] + 2 * CLR + 3, m.ATOM[1] + 2 * CLR + 3, 2.5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 2 * CLR, m.ATOM[1] + 2 * CLR, 5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 20, 14, 5)
-    solid += fence
+    solid += fence.rotate([0, 0, ATOM_TURN])
     cuts = []
     for a in (SPRING_ANGLES if SPRINGS else ()):
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
-    x0, y0, sx, sy = CABLE_HOLE
-    cuts.append(box(x0, y0, -PLATFORM_T - 1, sx, sy, PLATFORM_T + 2))
+    # the cable goes down at the corner: a slot from just past the collar to the platform's corner
+    cuts.append(box(m.COLLAR_R + 2.5, -CORNER_W / 2 + 1, -PLATFORM_T - 1, 40, CORNER_W - 2, PLATFORM_T + 2).rotate([0, 0, CORNER_A]))
     cuts += [cyl(2 * NOTCH_R, PLATFORM_T + 2, sx * C, sy * C, -PLATFORM_T - 1, seg=32) for sx, sy in TAB_CORNERS]
     return solid - union(cuts)
 
@@ -182,7 +201,9 @@ def lid():
 
 def bought(pressed=False):
     parts = {k: v for k, v in m.bought_parts(pressed).items() if k in ('atom', 'hex')}
-    parts['atom'] = parts['atom'].rotate([0, 0, 180])      # turned round: USB-C toward +x, the hex's Grove toward -x
+    # turned to point its USB-C into the corner, and drawn with a plug of the real size in it
+    plug = box(-m.ATOM[0] / 2 - USBC_PLUG[0], -USBC_PLUG[1] / 2, 1.2, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])
+    parts['atom'] = (parts['atom'] + plug).rotate([0, 0, ATOM_TURN])
     parts['cell'] = box(CELL_X0, CELL_Y0, LID_Z, *m.CELL)
     rider = box(RIDER_X0, RIDER_Y0, LID_Z, RIDER_FOOT[0], RIDER_FOOT[1], m.RIDER[2])
     rider += cbox(RIDER_CX, RIDER_Y0 - PLUG[1] / 2, LID_Z + 1, PLUG[0], PLUG[1], PLUG[2])   # the USB-A plug out of its -y end
