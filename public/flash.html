@@ -207,7 +207,7 @@
 
   // ── Over the air: a live connection to the hub, the buttons it hears, and an image sent in chunks ──
   const CHUNK = 150;                    // 150 raw bytes make a line of at most 249 characters, one ESP-NOW packet
-  const window = () => (hubFw >= '0.2.1' ? 4 : 1);   // chunks in flight: a hub before 0.2.1 has a 256-byte serial buffer and drops bursts
+  const inFlight = () => (hubFw >= '0.2.1' ? 4 : 1);   // chunks in flight: a hub before 0.2.1 has a 256-byte serial buffer and drops bursts
   const enc = (t) => new TextEncoder().encode(t);
   let hub = null;                       // { port, writer }
   const buttons = new Map();            // dev -> { fw, row }
@@ -324,7 +324,7 @@
       const chunk = (n) => { const part = image.subarray(n * CHUNK, (n + 1) * CHUNK); send({ t: 'ota', dev, n, d: btoa(String.fromCharCode(...part)) }); };
       const finish = (err) => { clearTimeout(timer); listeners.delete(l); err ? rej(err) : res(); };
       const pump = () => {
-        while (next < total && next - acked - 1 < window()) chunk(next++);
+        while (next < total && next - acked - 1 < inFlight()) chunk(next++);
         clearTimeout(timer);
         timer = setTimeout(() => { if (++silent > 20) return finish(new Error('stopped answering at chunk ' + (acked + 1) + ' of ' + total)); next = acked + 1; pump(); }, 2000);
       };
