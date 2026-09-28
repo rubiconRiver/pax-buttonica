@@ -15,8 +15,9 @@ top of the other. The Atom still sits on a platform above them, under the cap.
   .venv/bin/python make_shell_v2.py    ->  stl-v2/
 
 Inside, on the lid: the cell along the -x wall (34 x 50, its lead out of the +y end); the Rider beside it
-along y, USB-C at the +y wall (the port), USB-A at its -y end with the plug pointing -y; the cable runs -x
-along the strip below the cell, then up through the platform's hole and into the Atom's USB-C.
+along y, USB-C at the +y wall (the port), USB-A at its -y end with the plug pointing -y; the cable turns up
+through the platform's hole just past the plug and into the Atom's USB-C, which faces +x (the Atom is turned
+round from the mini, and the springs are mirrored to suit, so no spring stands beside the plug).
 
 Assembly (housing upside down): cage with hex and peg into the cap; cap into the housing, flange up; three
 springs on the flange; Atom into the platform's fence, hex cable in; platform down onto the springs, notches
@@ -71,7 +72,9 @@ RIDER_X0 = CELL_X0 + m.CELL[0] + CLR + FENCE_T + CLR                   # 4.1: pa
 RIDER_Y0 = IN / 2 - CLR - RIDER_FOOT[1]                                # -8: its USB-C end 0.5 from the +y wall
 RIDER_CX = RIDER_X0 + RIDER_FOOT[0] / 2                                # 16.6, where the port is
 PLUG = (12.0, 15.0, 7.0)                                               # the USB-A plug body out of the Rider's -y end
-CABLE_HOLE = (-18.0, -31.0, 8.0, 6.0)                                  # x0, y0, sx, sy in the platform, over the strip below the cell
+CABLE_HOLE = (10.0, -31.0, 8.0, 6.0)                                   # x0, y0, sx, sy in the platform, just past the Rider's USB-A plug
+SPRING_ANGLES = (0, 120, 240)                                          # mirrored from the mini: the Atom is turned round, USB-C toward +x
+m.SPRING_ANGLES = SPRING_ANGLES                                        # springs_in_place() reads it
 cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve
 
 
@@ -118,7 +121,7 @@ def platform():
     fence -= cbox(0, 0, -1, m.ATOM[0] + 20, 14, 5)
     solid += fence
     cuts = []
-    for a in m.SPRING_ANGLES:
+    for a in SPRING_ANGLES:
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     x0, y0, sx, sy = CABLE_HOLE
     cuts.append(box(x0, y0, -PLATFORM_T - 1, sx, sy, PLATFORM_T + 2))
@@ -133,8 +136,7 @@ def lid():
     ylo, yhi = CELL_Y0 - CLR, CELL_Y0 + m.CELL[1] + CLR     # -25.5, 25.5
     f = []
     f.append(box(-25, yhi, z, cx1 + 25, FENCE_T, h))                                       # +y side of the cell (stops short of the tab)
-    f.append(box(-25, ylo - FENCE_T, z, CABLE_HOLE[0] + 25, FENCE_T, h))                  # -y side, up to the cable's gap
-    f.append(box(CABLE_HOLE[0] + CABLE_HOLE[2], ylo - FENCE_T, z, cx1 - CABLE_HOLE[0] - CABLE_HOLE[2], FENCE_T, h))
+    f.append(box(-25, ylo - FENCE_T, z, cx1 + 25, FENCE_T, h))                            # -y side
     f.append(box(cx1, ylo - FENCE_T, z, FENCE_T, yhi - ylo + 2 * FENCE_T, h))              # between the cell and the Rider
     rx0, rx1 = RIDER_X0 - CLR, RIDER_X0 + RIDER_FOOT[0] + CLR                              # 3.6, 29.6
     ry0 = RIDER_Y0 - CLR                                                                    # -8.5
@@ -151,6 +153,7 @@ def lid():
 
 def bought(pressed=False):
     parts = {k: v for k, v in m.bought_parts(pressed).items() if k in ('atom', 'hex')}
+    parts['atom'] = parts['atom'].rotate([0, 0, 180])      # turned round: USB-C toward +x, the hex's Grove toward -x
     parts['cell'] = box(CELL_X0, CELL_Y0, LID_Z, *m.CELL)
     rider = box(RIDER_X0, RIDER_Y0, LID_Z, RIDER_FOOT[0], RIDER_FOOT[1], m.RIDER[2])
     rider += cbox(RIDER_CX, RIDER_Y0 - PLUG[1] / 2, LID_Z + 1, PLUG[0], PLUG[1], PLUG[2])   # the USB-A plug out of its -y end
