@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.4"
+#define FW_VERSION "0.3.5"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -839,7 +839,9 @@ void loop() {
     sendHello();
   }
 
-  if (otaActive && now - otaLast > OTA_IDLE_MS) { otaStop(); otaReply("err", otaNext, "timed out"); }
+  // Fresh millis() and a signed difference: `now` was read before the chunks above were handled, and the
+  // stamp they leave is later than it, so `now - otaLast` wrapped and every burst looked like a 15 s silence.
+  if (otaActive && (int32_t)(millis() - otaLast) > OTA_IDLE_MS) { otaStop(); otaReply("err", otaNext, "timed out"); }
 
   if (SLEEP_AFTER_MINUTES > 0 && now - lastContact > (uint32_t)SLEEP_AFTER_MINUTES * 60000UL && !buttons[0].down) sleepUntilPressed();
 
