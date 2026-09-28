@@ -118,8 +118,15 @@
       <div class="row">
         <button class="btn on" id="ps1">Radio sleepy</button>
         <button class="btn" id="ps0">Radio always on</button>
-        <label class="f">Brightness <input type="range" id="bright" min="5" max="100" step="5" value="100"> <span id="brightv">100%</span></label>
       </div>
+      <div class="row">
+        <label class="f">Your turn <input type="range" id="bright" min="5" max="100" step="5" value="50"> <span id="brightv">50%</span></label>
+        <label class="f">Waiting <input type="range" id="dim" min="0" max="50" step="1" value="10"> <span id="dimv">10%</span></label>
+        <label class="f">Effects <input type="range" id="fxb" min="5" max="100" step="5" value="80"> <span id="fxbv">80%</span></label>
+        <button class="btn" id="seedim">Show waiting</button>
+        <button class="btn" id="seebright">Show your turn</button>
+      </div>
+      <div class="hint">The three levels the admin sets for the whole table, each a share of the most the button will put out: the light on your turn, the light while you wait, and effects (with the press and the hold). Firmware 0.3.10 starts at 50, 10 and 80.</div>
       <div class="hint">For the USB power meter. Sleepy: the radio listens 30 ms in every 200 and the hub resends until it's heard (the default). Always on: the old behaviour, for comparison. Watch the meter's mAh over ten minutes in each, with the same light showing.</div>
     </div></section>
 
@@ -302,11 +309,14 @@
 
   // ── build the controls ────────────────────────────────────────────────────
   for (const [name, hex] of COLOURS) { const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(hex === colour)); b.style.setProperty('--sw', '#' + hex); b.onclick = () => { colour = hex; document.querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-checked', String(s === b))); }; $('swatches').appendChild(b); }
-  const cfg = () => ({ t: 'cfg', hold: +$('hold').value, flash: 2000, bright: +$('bright').value, ps: $('ps1').classList.contains('on') ? 1 : 0 });
+  const cfg = () => ({ t: 'cfg', hold: +$('hold').value, flash: 2000, bright: +$('bright').value, dim: +$('dim').value, fx: +$('fxb').value, ps: $('ps1').classList.contains('on') ? 1 : 0 });
   $('ps1').onclick = () => { $('ps1').classList.add('on'); $('ps0').classList.remove('on'); send(cfg()); };
   $('ps0').onclick = () => { $('ps0').classList.add('on'); $('ps1').classList.remove('on'); send(cfg()); };
   $('bright').oninput = () => { $('brightv').textContent = $('bright').value + '%'; };
   $('bright').onchange = () => send(cfg());
+  for (const id of ['dim', 'fxb']) { $(id).oninput = (e) => { $(id + 'v').textContent = e.target.value + '%'; }; $(id).onchange = () => send(cfg()); }
+  $('seedim').onclick = () => sendLed('dim');
+  $('seebright').onclick = () => sendLed('solid');
   $('hold').oninput = (e) => { $('holdv').textContent = (e.target.value / 1000).toFixed(2) + ' s'; };
   $('hold').onchange = () => send(cfg());
   $('yourmove').onclick = () => sendLed('solid');

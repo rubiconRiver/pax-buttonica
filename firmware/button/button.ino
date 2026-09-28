@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.9"
+#define FW_VERSION "0.3.10"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -87,7 +87,20 @@ static Mode mode = MODE_OFF;
 static uint32_t modeSince = 0;
 static uint32_t holdMs = 2000;
 static uint32_t flashMs = 2000;
-static float brightScale = 1.0f;   // cfg "bright", 0..1: the host's share of MAX_BRIGHTNESS
+// Three levels, all shares of MAX_BRIGHTNESS, all set by the host for the whole table ("cfg"):
+//   bright  a light the game is showing at full: your move, a strategy card            default 50 %
+//   dim     the "dim" mode, and the floor under every animated one: waiting            default 10 %
+//   fx      one-shot effects, the press, the hold fill: allowed to be brighter         default 80 %
+// Full output is too bright for a table and costs the battery most; these are where it was comfortable.
+static float brightScale = 0.5f;
+static float dimScale = 0.10f;
+static float fxScale = 0.8f;
+static float levelScale = 0.5f;    // whichever of them applies to what is being drawn now
+// DIM_LEVEL, in every mode and effect, is the floor as a share of the light being drawn; it follows the host's "dim".
+// (A macro, not a function: a function this early in the file moves where the Arduino builder puts its
+// prototypes, ahead of the types they need.)
+#undef DIM_LEVEL
+#define DIM_LEVEL (min(1.0f, dimScale / max(levelScale, 0.01f)))
 static Mode pulseLook = MODE_PULSE; // cfg "pulse": how "your move" is drawn (pulse, solid or heartbeat)
 static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
 static bool radioSave = RADIO_SAVE; // radio sleeps between listening windows
@@ -442,13 +455,13 @@ static float pixelLuminance(int i, uint32_t now) {
 
 // Gamma-correct the colour, then scale it. Correcting after scaling crushed "dim" to nothing.
 static uint32_t scaled(uint8_t r, uint8_t g, uint8_t b, float level) {
-  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * brightScale;
+  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * levelScale;
   return ring.Color((uint8_t)(ring.gamma8(r) * level), (uint8_t)(ring.gamma8(g) * level), (uint8_t)(ring.gamma8(b) * level));
 }
 
 // A pixel in a hue (16-bit, round the wheel) at a level, gamma-corrected like everything else.
 static void hsvPixel(int i, uint16_t hue, float level) {
-  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * brightScale;
+  level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * levelScale;
   ring.setPixelColor(i, ring.gamma32(ring.ColorHSV(hue, 255, (uint8_t)(255 * level))));
 }
 static void fillAll(uint8_t r, uint8_t g, uint8_t b, float level) {
@@ -701,6 +714,7 @@ static void showLink(uint32_t now) {
 
 static void render() {
   const uint32_t now = millis();
+  levelScale = brightScale;        // the light the game is showing
 
   for (int i = 0; i < LED_COUNT; i++) {
     if (mode == MODE_RAINBOW) {
@@ -710,11 +724,13 @@ static void render() {
       float lum = pixelLuminance(i, now);
       uint8_t r = ledR, g = ledG, b = ledB;
       // the press: a whitened front runs from the centre to the rim the instant the switch closes
+      levelScale = brightScale;
       if (pressedAt && now - pressedAt < PRESS_PUNCH_MS) {
         const float d = (now - pressedAt) / (float)PRESS_PUNCH_MS * (RINGS + 1.2f) - ringOf[i];
         if (d >= 0 && d < 1.6f) {
           const float w = 1 - d / 1.6f;
-          lum = max(lum, 0.35f + 0.65f * w);
+          levelScale = max(brightScale, fxScale);      // the press is an effect
+          lum = max(lum * brightScale / levelScale, 0.35f + 0.65f * w);
           r += (uint8_t)((255 - r) * w * 0.6f);
           g += (uint8_t)((255 - g) * w * 0.6f);
           b += (uint8_t)((255 - b) * w * 0.6f);
@@ -729,6 +745,7 @@ static void render() {
     }
   }
 
+  levelScale = 1.0f;               // the connection light and an arriving update keep their own levels
   drawLink(now);
 
   // A new image arriving: the rings fill blue from the centre out as it lands.
@@ -744,6 +761,7 @@ static void render() {
   // gathers speed, and goes from the button's own colour to white, so the end is felt coming; the burst that
   // follows is the snap. Let go early and it runs back out. If the host has said a hold will be refused ("h":0),
   // there is no fill: the rim shakes red for as long as it is held.
+  levelScale = fxScale;            // the hold's fill, and every one-shot effect below
   const Button &big = buttons[0];
   float progress = -1;
   bool held = false;
@@ -969,6 +987,8 @@ static void handle(const Packet &p) {
     holdMs = constrain((uint32_t)(doc["hold"] | (int)holdMs), 300UL, 10000UL);
     flashMs = constrain((uint32_t)(doc["flash"] | (int)flashMs), 300UL, 10000UL);
     if (doc["bright"].is<int>()) brightScale = constrain((int)doc["bright"], 5, 100) / 100.0f;
+    if (doc["dim"].is<int>()) dimScale = constrain((int)doc["dim"], 0, 100) / 100.0f;
+    if (doc["fx"].is<int>()) fxScale = constrain((int)doc["fx"], 5, 100) / 100.0f;
     if (doc["pulse"].is<const char*>()) {
       const Mode look = parseMode(doc["pulse"]);
       pulseLook = (look == MODE_SOLID || look == MODE_HEARTBEAT) ? look : MODE_PULSE;
