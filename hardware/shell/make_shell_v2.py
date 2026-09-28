@@ -81,6 +81,24 @@ CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)                                  # x0, y0,
 SPRINGS = False
 REST_PLAY = 0.5                      # how far the cap sits below the lip at rest, resting on the switch
 PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.5 without springs, 2.0 with
+# The stop. Sprung, the cap travelled 2.8 mm and the cage's plate landed on the Atom's rim. Unsprung it rests on
+# the switch, so a press is the switch's 0.3 mm and then the peg's flexures, which give about a millimetre and
+# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 0.5 mm
+# after the click: a slap goes cap -> collar -> platform -> fences -> lid -> table, and the flexures never bend more.
+STOP_AFTER_CLICK = 0.5
+PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 0.5: how far the cap moves from rest to the stop
+
+
+def _cap_meets_collar():
+    """How far the cap drops from the lip before its ceiling lands on the mini's collar, measured on the solids
+    (the mini's formula leaves more room than it says: 4.5 mm, not 3.3)."""
+    cap, collar, d = m.cap(), m.collar(), 0.0
+    while d < 8 and (cap.translate([0, 0, -d]) ^ collar).volume() < 0.05:
+        d += 0.05
+    return d
+
+
+COLLAR_RAISE = 0.0 if SPRINGS else _cap_meets_collar() - (REST_PLAY + PRESS) - 0.1      # a hair short, so the stop is just past the drawn press
 SPRING_ANGLES = (0, 120, 240)                                          # mirrored from the mini: the Atom is turned round, USB-C toward +x
 m.SPRING_ANGLES = SPRING_ANGLES                                        # springs_in_place() reads it
 cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve
@@ -123,7 +141,10 @@ def housing():
 def platform():
     s = IN - 2 * PLATFORM_CLEAR
     solid = rbox_prism(s, s, CORNER_R - WALL - PLATFORM_CLEAR, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T)
+    h0 = m.COLLAR_H
+    m.COLLAR_H = h0 + COLLAR_RAISE          # collar() reads it
     solid += m.collar()
+    m.COLLAR_H = h0
     fence = cbox(0, 0, 0, m.ATOM[0] + 2 * CLR + 3, m.ATOM[1] + 2 * CLR + 3, 2.5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 2 * CLR, m.ATOM[1] + 2 * CLR, 5)
     fence -= cbox(0, 0, -1, m.ATOM[0] + 20, 14, 5)
@@ -193,7 +214,7 @@ def check_and_write(printed, flipped, out_dir, label):
             drop = m.TRAVEL if pressed else 0.0
         else:
             # resting on the switch, a little below the lip; pressed, the switch's own travel and what the flexures give
-            drop = REST_PLAY + (m.TRAVEL - m.DISC_GAP if pressed else 0.0)
+            drop = REST_PLAY + (PRESS if pressed else 0.0)
             state['hex'] = bought(False)['hex']          # the hex rides in the cap: it moves as the cap does, below
         if drop:
             for k in ('cap', 'cage', 'nub') + (() if sprung else ('hex',)):
