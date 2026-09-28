@@ -54,7 +54,7 @@ function clean(raw: unknown) {
 }
 
 /** Turn effects the app knows (src/engine/outputs.ts); anything else is dropped rather than stored. */
-const TURN_FX = ['ring', 'ripple', 'sparkle', 'rainbow', 'none'];
+const TURN_FX = ['ring', 'ripple', 'sparkle', 'rainbow', 'cop', 'explosion', 'fireworks', 'lightning', 'fire', 'siren', 'laser', 'comet', 'warp', 'confetti', 'disco', 'glitch', 'neon', 'alarm', 'thump', 'none'];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');

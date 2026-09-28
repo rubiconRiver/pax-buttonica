@@ -69,14 +69,15 @@ test('answering twice, or the owner tapping during the secondary, does nothing',
 test('the card colour is what blinks', async ({ page }) => {
   const table = await openDemo(page);
   await table.doubleTap('Dave');
-  // Leadership is red; Dave plays blue.
+  // Leadership is red; Dave plays blue. (--led is a registered colour property, so it reads back as rgb().)
   const led = (name: string) => table.light(name).evaluate((el) => getComputedStyle(el).getPropertyValue('--led').trim());
-  expect(await led('Dave')).toBe('#e5484d');
-  expect(await led('Mike')).toBe('#ffd21f');
+  const rgb = (hex: string) => `rgb(${[1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(', ')})`;
+  expect(await led('Dave')).toBe(rgb('#e5484d'));
+  expect(await led('Mike')).toBe(rgb('#ffd21f'));
   await table.primaryDone('Dave');
-  expect(await led('Mike')).toBe('#e5484d');
+  expect(await led('Mike')).toBe(rgb('#e5484d'));
   await table.tap('Mike');
-  expect(await led('Mike')).toBe('#ffd21f');
+  expect(await led('Mike')).toBe(rgb('#ffd21f'));
 });
 
 test('once the card is played it is marked as spent everywhere', async ({ page }) => {

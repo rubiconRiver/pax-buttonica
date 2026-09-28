@@ -10,7 +10,7 @@ import { seatPosition } from './geometry';
 
 /** Turns the engine's one-shot effects into sound. Each effect plays exactly once. */
 /** What a real button is told to draw for each turn effect; the ring is the burst every button knows. */
-export const hubEffect = (fx: TurnEffect): 'burst' | 'ripple' | 'sparkle' | 'rainbow' | null => (fx === 'ring' ? 'burst' : fx === 'none' ? null : fx);
+export const hubEffect = (fx: TurnEffect): 'burst' | Exclude<TurnEffect, 'ring' | 'none'> | null => (fx === 'ring' ? 'burst' : fx === 'none' ? null : fx);
 
 /**
  * Turns the engine's one-shot effects into sound, and into the odd frame for a real button. `effects`, per seat,

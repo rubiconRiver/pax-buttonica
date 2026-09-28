@@ -1,5 +1,5 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import type { LedMode, TurnLook } from '../engine/outputs';
+import { turnEffectSpec, type LedMode, type TurnLook } from '../engine/outputs';
 import type { ReactionKind } from './game/useReactions';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
@@ -11,8 +11,10 @@ export const TAP_MAX_MS = 350;
 /** A second tap landing this soon after the first is reported as `double`. */
 export const DOUBLE_MS = 400;
 
-/** How long each one-shot is on screen; the CSS animations run this long. */
-const REACTION_MS: Record<ReactionKind, number> = { denied: 520, ack: 520, hint: 520, burst: 520, ripple: 1100, sparkle: 1000, rainbow: 1200 };
+/** How long a one-shot is on screen; the CSS animations run this long. Turn effects say for themselves. */
+const reactionMs = (kind: ReactionKind) => (kind === 'denied' || kind === 'ack' || kind === 'hint' || kind === 'burst' ? 520 : turnEffectSpec(kind).ms);
+/** Effects that also get the ring every button has always done. */
+const WITH_SHOCK = new Set<ReactionKind>(['burst', 'explosion']);
 
 export interface DeviceHandle {
   down(): void;
@@ -44,7 +46,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   const [pressed, setPressed] = useState(false);
   const [held, setHeld] = useState(false);
   const [shock, setShock] = useState(0);
-  const [reaction, setReaction] = useState<string | null>(null);
+  const [reaction, setReaction] = useState<ReactionKind | null>(null);
   const t0 = useRef(0);
   const lastTap = useRef(-Infinity);
   const timers = useRef<number[]>([]);
@@ -119,12 +121,14 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   useEffect(() => {
     if (!react) return;
     setReaction(react.kind);
-    if (react.kind === 'burst') setShock((n) => n + 1);
-    const t = window.setTimeout(() => setReaction(null), REACTION_MS[react.kind]);
+    if (WITH_SHOCK.has(react.kind)) setShock((n) => n + 1);
+    const t = window.setTimeout(() => setReaction(null), reactionMs(react.kind));
     return () => window.clearTimeout(t);
   }, [react?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const style = { '--size': `${size}px`, '--led': color, '--hold-ms': `${holdMs}ms` } as CSSProperties;
+  // Particles for the effect playing, if it has any: stars, rings, debris…
+  const layer = reaction && reaction !== 'denied' && reaction !== 'ack' && reaction !== 'hint' && reaction !== 'burst' ? turnEffectSpec(reaction) : null;
 
   return (
     <div
@@ -178,11 +182,10 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
         {hotkey && <kbd className="dev__key">{hotkey}</kbd>}
       </div>
       {shock > 0 && <span key={shock} className="dev__shock" />}
-      {reaction === 'ripple' && (
-        <span key={react?.id} className="dev__ripples" aria-hidden><i /><i /></span>
-      )}
-      {reaction === 'sparkle' && (
-        <span key={react?.id} className="dev__sparks" aria-hidden>{Array.from({ length: 10 }, (_, i) => <i key={i} style={{ '--i': i } as CSSProperties} />)}</span>
+      {layer && (
+        <span key={react?.id} className={`dev__fx dev__fx--${layer.layer}`} aria-hidden>
+          {Array.from({ length: layer.count ?? 1 }, (_, i) => <i key={i} style={{ '--i': i } as CSSProperties} />)}
+        </span>
       )}
       {buttons >= 3 && interactive && (
         <div className="dev__aux">

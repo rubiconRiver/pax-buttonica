@@ -28,15 +28,48 @@ export const isTurnLook = (x: unknown): x is TurnLook => x === 'solid' || x === 
  * of the steady light. Each player picks their own from their phone; the host picks the table's default. Every
  * renderer (screen, phone, real button) draws these however it can, and a button that doesn't know one ignores it.
  */
-export type TurnEffect = 'ring' | 'ripple' | 'sparkle' | 'rainbow' | 'none';
+export type TurnEffect =
+  | 'ring' | 'ripple' | 'sparkle' | 'rainbow' | 'cop' | 'explosion' | 'fireworks' | 'lightning' | 'fire' | 'siren'
+  | 'laser' | 'comet' | 'warp' | 'confetti' | 'disco' | 'glitch' | 'neon' | 'alarm' | 'thump' | 'none';
 
-export const TURN_EFFECTS: { id: TurnEffect; name: string; hint: string }[] = [
-  { id: 'ring', name: 'Ring', hint: 'A ring bursts out from the button' },
-  { id: 'ripple', name: 'Ripple', hint: 'Two waves roll out from the centre' },
-  { id: 'sparkle', name: 'Sparkles', hint: 'A moment of twinkles' },
-  { id: 'rainbow', name: 'Rainbow', hint: 'A second of every colour, then yours' },
-  { id: 'none', name: 'None', hint: 'The light just comes on' },
+/** Particles the screen draws for an effect, on top of what the light itself does. */
+export type FxLayer = 'stars' | 'rings' | 'debris' | 'confetti' | 'embers' | 'beam';
+
+export interface TurnEffectSpec {
+  id: TurnEffect;
+  name: string;
+  hint: string;
+  /** How long it plays. */
+  ms: number;
+  layer?: FxLayer;
+  /** How many particles the layer has. */
+  count?: number;
+}
+
+export const TURN_EFFECTS: TurnEffectSpec[] = [
+  { id: 'ring', name: 'Ring', hint: 'A ring bursts out from the button', ms: 520 },
+  { id: 'ripple', name: 'Ripple', hint: 'Two waves roll out from the centre', ms: 1100, layer: 'rings', count: 2 },
+  { id: 'sparkle', name: 'Sparkles', hint: 'A moment of twinkles', ms: 1000, layer: 'stars', count: 10 },
+  { id: 'rainbow', name: 'Rainbow', hint: 'A second of every colour, then yours', ms: 1200 },
+  { id: 'cop', name: 'Cop lights', hint: 'Red, blue, red, blue', ms: 1600 },
+  { id: 'explosion', name: 'Explosion', hint: 'A white flash and a shower of debris', ms: 1200, layer: 'debris', count: 14 },
+  { id: 'fireworks', name: 'Fireworks', hint: 'Three bursts of coloured sparks', ms: 1700, layer: 'stars', count: 18 },
+  { id: 'lightning', name: 'Lightning', hint: 'Flickers of white', ms: 900 },
+  { id: 'fire', name: 'Fire', hint: 'Flickering flames and rising embers', ms: 1500, layer: 'embers', count: 9 },
+  { id: 'siren', name: 'Siren', hint: 'A beacon sweeping round in your colour', ms: 1400, layer: 'beam' },
+  { id: 'laser', name: 'Laser', hint: 'A thin beam sweeps round, fast', ms: 1200, layer: 'beam' },
+  { id: 'comet', name: 'Comet', hint: 'A bright dot races round the rim with a tail', ms: 1300, layer: 'beam' },
+  { id: 'warp', name: 'Warp', hint: 'Rings fall inward, then a flash', ms: 1100, layer: 'rings', count: 3 },
+  { id: 'confetti', name: 'Confetti', hint: 'A shower of colour', ms: 1600, layer: 'confetti', count: 16 },
+  { id: 'disco', name: 'Disco', hint: 'Every colour, fast', ms: 1200 },
+  { id: 'glitch', name: 'Glitch', hint: 'Green, jittery, briefly broken', ms: 900 },
+  { id: 'neon', name: 'Neon', hint: 'Flickers on like a neon sign', ms: 1200 },
+  { id: 'alarm', name: 'Alarm', hint: 'Three red strobes', ms: 900 },
+  { id: 'thump', name: 'Thump', hint: 'Two big beats', ms: 1000 },
+  { id: 'none', name: 'None', hint: 'The light just comes on', ms: 0 },
 ];
+
+export const turnEffectSpec = (id: TurnEffect): TurnEffectSpec => TURN_EFFECTS.find((e) => e.id === id) ?? TURN_EFFECTS[0];
 
 export const isTurnEffect = (x: unknown): x is TurnEffect => TURN_EFFECTS.some((e) => e.id === x);
 

@@ -104,10 +104,8 @@
   cursor: pointer;
 }
 .looks button:last-child { border-right: 0; }
-.looks--wrap { flex-wrap: wrap; }
-.looks--wrap button { flex: 1 0 30%; border-bottom: 1px solid var(--line-2); }
-.looks--wrap button:nth-child(3n) { border-right: 0; }
-.looks--wrap button:nth-last-child(-n + 2) { border-bottom: 0; }
+.looks--wrap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line-2); }
+.looks--wrap button { border: 0; background: #080b13; }
 .looks button:hover { color: var(--text); }
 .looks button[aria-checked='true'] { color: #fff; background: linear-gradient(180deg, rgba(242, 184, 75, 0.32), rgba(242, 184, 75, 0.12)); text-shadow: 0 0 10px rgba(242, 184, 75, 0.8); }
 .toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); cursor: pointer; }

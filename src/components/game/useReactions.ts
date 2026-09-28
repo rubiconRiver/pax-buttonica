@@ -3,7 +3,7 @@ import type { TurnEffect } from '../../engine/outputs';
 import type { Fx, GameState } from '../../engine/types';
 
 /** A one-shot the button draws: the engine's reactions, and the player's chosen turn effect. */
-export type ReactionKind = 'denied' | 'ack' | 'hint' | 'burst' | 'ripple' | 'sparkle' | 'rainbow';
+export type ReactionKind = 'denied' | 'ack' | 'hint' | 'burst' | Exclude<TurnEffect, 'ring' | 'none'>;
 export type Reaction = { id: number; kind: ReactionKind } | null;
 
 const REACTIONS: Partial<Record<Fx['kind'], ReactionKind>> = {

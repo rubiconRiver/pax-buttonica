@@ -225,10 +225,22 @@
   100% { scale: 2.3; opacity: 0; border-width: 0.5px; }
 }
 
-/* Turn effects, to taste. Ripple: two waves roll out from the centre, over the dome and past its rim. */
-.dev__ripples { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
-.dev__ripples i {
-  position: absolute;
+/* ── Turn effects, to taste ──────────────────────────────────────────────────
+   (Selectors double up on [data-react] so an effect outranks the light's own mode rules while it plays.)
+   Each one is a short animation on the light itself (its colour, --led, and its brightness, --lum) and, for some,
+   a layer of particles (.dev__fx--*). The catalogue, with names and lengths, is TURN_EFFECTS in src/engine/outputs.ts. */
+
+@property --led {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffffff;
+}
+
+.dev__fx { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.dev__fx i { position: absolute; display: block; }
+
+/* Ripple: two waves roll out from the centre, over the dome and past its rim. Warp: three fall inward, then a flash. */
+.dev__fx--rings i {
   inset: 25%;
   border-radius: 50%;
   border: 3px solid color-mix(in srgb, var(--led) 60%, white);
@@ -236,41 +248,232 @@
   box-shadow: 0 0 18px var(--led), inset 0 0 10px color-mix(in srgb, var(--led) 60%, transparent);
   opacity: 0;
   animation: dev-ripple 1s cubic-bezier(0.25, 0.6, 0.35, 1) forwards;
+  animation-delay: calc(var(--i) * 0.28s);
 }
-.dev__ripples i:nth-child(2) { animation-delay: 0.28s; }
 @keyframes dev-ripple {
   0% { scale: 0.25; opacity: 1; }
   55% { opacity: 0.85; }
   100% { scale: 2.5; opacity: 0; border-width: 1px; }
 }
-/* Sparkles: ten twinkles fly out from the dome, each on its own beat. */
-.dev__sparks { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
-.dev__sparks i {
-  position: absolute;
+.dev[data-react][data-react='warp'] .dev__fx--rings i { animation: dev-warp-ring 0.6s ease-in forwards; animation-delay: calc(var(--i) * 0.16s); }
+@keyframes dev-warp-ring {
+  0% { scale: 2.6; opacity: 0; border-width: 1px; }
+  20% { opacity: 0.9; }
+  100% { scale: 0.15; opacity: 0; }
+}
+.dev[data-react][data-react='warp'] { animation: dev-warp 1.1s linear forwards; }
+@keyframes dev-warp {
+  0%, 70% { --lum: 0.3; }
+  78% { --lum: 1; --led: #ffffff; }
+  100% { --lum: 1; }
+}
+
+/* Sparkles: stars fly out from the dome, each on its own spoke and beat. Fireworks: three bursts, every colour. */
+.dev__fx--stars i {
   left: 50%;
   top: 50%;
   width: calc(var(--size) * 0.1);
   height: calc(var(--size) * 0.1);
   margin: calc(var(--size) * -0.05);
-  background: #fff;
+  --star: #ffffff;
+  background: var(--star);
   clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
-  filter: drop-shadow(0 0 3px #fff) drop-shadow(0 0 7px var(--led));
+  filter: drop-shadow(0 0 3px var(--star)) drop-shadow(0 0 7px var(--led));
   opacity: 0;
   /* Rotate first, then fly: each spark leaves along its own spoke. */
   transform: rotate(calc(var(--i) * 36deg)) translateY(calc(var(--size) * -0.2)) scale(0.2);
   animation: dev-spark 0.75s ease-out forwards;
 }
-.dev__sparks i:nth-child(odd) { animation-delay: 0.09s; }
-.dev__sparks i:nth-child(3n) { animation-delay: 0.18s; }
-.dev__sparks i:nth-child(4n) { animation-delay: 0.05s; }
+.dev__fx--stars i:nth-child(odd) { animation-delay: 0.09s; }
+.dev__fx--stars i:nth-child(3n) { animation-delay: 0.18s; }
+.dev__fx--stars i:nth-child(4n) { animation-delay: 0.05s; }
 @keyframes dev-spark {
   0% { opacity: 0; transform: rotate(calc(var(--i) * 36deg)) translateY(calc(var(--size) * -0.2)) scale(0.2); }
   30% { opacity: 1; transform: rotate(calc(var(--i) * 36deg)) translateY(calc(var(--size) * -0.44)) scale(1.3); }
   100% { opacity: 0; transform: rotate(calc(var(--i) * 36deg)) translateY(calc(var(--size) * -0.7)) scale(0.5); }
 }
-/* Rainbow: a second of every colour, then your own. */
-.dev[data-react='rainbow'] { --lum: 1; }
-.dev[data-react='rainbow'] :is(.dev__light, .dev__halo, .dev__well) { animation: dev-hue 1.1s linear 1; }
+.dev[data-react][data-react='fireworks'] .dev__fx--stars i {
+  --star: hsl(calc(var(--i) * 61deg) 100% 65%);
+  filter: drop-shadow(0 0 3px var(--star)) drop-shadow(0 0 8px var(--star));
+  transform: rotate(calc(var(--i) * 60deg)) translateY(calc(var(--size) * -0.2)) scale(0.2);
+  animation: dev-firework 0.8s ease-out forwards;
+  animation-delay: 0s;
+}
+.dev[data-react][data-react='fireworks'] .dev__fx--stars i:nth-child(n + 7) { animation-delay: 0.4s; }
+.dev[data-react][data-react='fireworks'] .dev__fx--stars i:nth-child(n + 13) { animation-delay: 0.8s; }
+@keyframes dev-firework {
+  0% { opacity: 0; transform: rotate(calc(var(--i) * 60deg + var(--i) * 7deg)) translateY(calc(var(--size) * -0.15)) scale(0.3); }
+  25% { opacity: 1; transform: rotate(calc(var(--i) * 60deg + var(--i) * 7deg)) translateY(calc(var(--size) * -0.5)) scale(1.4); }
+  100% { opacity: 0; transform: rotate(calc(var(--i) * 60deg + var(--i) * 7deg)) translateY(calc(var(--size) * -0.85)) scale(0.3); }
+}
+.dev[data-react][data-react='fireworks'] { animation: dev-fireworks 1.7s linear forwards; }
+@keyframes dev-fireworks {
+  0%, 2%, 24%, 26%, 48%, 50% { --lum: 1; --led: #ffffff; }
+  12%, 36%, 60%, 100% { --lum: 1; }
+}
+
+/* Explosion: a white flash, then debris flies out and tumbles. */
+.dev[data-react][data-react='explosion'] { animation: dev-explosion 1.2s ease-out forwards; }
+@keyframes dev-explosion {
+  0% { --lum: 1; --led: #ffffff; }
+  10% { --lum: 1; --led: #ffd166; }
+  40% { --lum: 1; --led: #ff7a1a; }
+  100% { --lum: 1; }
+}
+.dev[data-react][data-react='explosion'] .dev__dome { animation: dev-kick 0.5s cubic-bezier(0.2, 1.8, 0.4, 1); }
+@keyframes dev-kick {
+  0% { scale: 1.16; }
+  100% { scale: 1; }
+}
+.dev__fx--debris i {
+  left: 50%;
+  top: 50%;
+  width: calc(var(--size) * 0.06);
+  height: calc(var(--size) * 0.04);
+  margin: calc(var(--size) * -0.02) calc(var(--size) * -0.03);
+  background: hsl(calc(20deg + var(--i) * 3deg) 100% calc(55% + var(--i) * 2%));
+  box-shadow: 0 0 6px #ff8a1f;
+  opacity: 0;
+  animation: dev-debris 0.9s cubic-bezier(0.1, 0.7, 0.4, 1) forwards;
+  animation-delay: calc(var(--i) * 0.012s);
+}
+@keyframes dev-debris {
+  0% { opacity: 1; transform: rotate(calc(var(--i) * 26deg)) translateY(calc(var(--size) * -0.1)) rotate(0deg); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(calc(var(--i) * 26deg)) translateY(calc(var(--size) * -0.9)) rotate(calc(var(--i) * 190deg)); }
+}
+
+/* Confetti: bits of every colour fall past the dome, twisting. */
+.dev__fx--confetti { inset: -40% -20% 0; overflow: visible; }
+.dev__fx--confetti i {
+  left: calc(6% + var(--i) * 5.6%);
+  top: 0;
+  width: calc(var(--size) * 0.07);
+  height: calc(var(--size) * 0.045);
+  background: hsl(calc(var(--i) * 47deg) 95% 62%);
+  opacity: 0;
+  animation: dev-confetti 1.3s ease-in forwards;
+  animation-delay: calc((var(--i) * 37 - 16 * round(down, var(--i) * 37 / 16)) * 0.02s);
+}
+@keyframes dev-confetti {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg) rotateX(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(calc(var(--size) * 1.5)) rotate(calc(var(--i) * 65deg)) rotateX(720deg); }
+}
+
+/* Fire: the light flickers orange and yellow; embers drift up from the dome. */
+.dev[data-react][data-react='fire'] { animation: dev-fire 1.5s linear forwards; }
+@keyframes dev-fire {
+  0% { --lum: 0.8; --led: #ff6a00; }
+  9% { --lum: 1; --led: #ffb300; }
+  17% { --lum: 0.7; --led: #ff3d00; }
+  26% { --lum: 1; --led: #ffc933; }
+  38% { --lum: 0.75; --led: #ff6a00; }
+  50% { --lum: 1; --led: #ffd166; }
+  62% { --lum: 0.7; --led: #ff4d00; }
+  74% { --lum: 1; --led: #ffb300; }
+  86% { --lum: 0.8; --led: #ff6a00; }
+  100% { --lum: 1; }
+}
+.dev__fx--embers i {
+  left: calc(25% + var(--i) * 6%);
+  bottom: 40%;
+  width: calc(var(--size) * 0.05);
+  height: calc(var(--size) * 0.05);
+  border-radius: 50%;
+  background: #ffc14d;
+  box-shadow: 0 0 6px #ff7a1a, 0 0 12px #ff4d00;
+  opacity: 0;
+  animation: dev-ember 1.1s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.07s);
+}
+@keyframes dev-ember {
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc((var(--i) - 4) * 6px), calc(var(--size) * -0.9)) scale(0.3); }
+}
+
+/* Beams: something sweeps round the dome. Siren: two beacon wedges in your colour. Laser: a thin bright wedge, fast.
+   Comet: a bright dot with a tail, racing round the rim. */
+.dev__fx--beam i {
+  inset: -30%;
+  border-radius: 50%;
+  mask: radial-gradient(circle, transparent 36%, #000 40%, #000 62%, transparent 70%);
+  animation: dev-spin 0.7s linear 2;
+}
+.dev[data-react][data-react='siren'] .dev__fx--beam i {
+  background: conic-gradient(from 0deg, transparent 0 20deg, color-mix(in srgb, var(--led) 85%, white) 40deg, transparent 60deg, transparent 200deg, color-mix(in srgb, var(--led) 85%, white) 220deg, transparent 240deg);
+  filter: blur(2px) drop-shadow(0 0 10px var(--led));
+}
+.dev[data-react][data-react='laser'] .dev__fx--beam i {
+  background: conic-gradient(from 0deg, transparent 0 4deg, #ffffff 6deg, color-mix(in srgb, var(--led) 70%, white) 8deg, transparent 12deg);
+  filter: drop-shadow(0 0 6px #fff) drop-shadow(0 0 10px var(--led));
+  animation: dev-spin 0.4s linear 3;
+}
+.dev[data-react][data-react='comet'] .dev__fx--beam i {
+  mask: radial-gradient(circle, transparent 46%, #000 49%, #000 58%, transparent 61%);
+  background: conic-gradient(from 0deg, transparent 0deg, color-mix(in srgb, var(--led) 40%, transparent) 260deg, color-mix(in srgb, var(--led) 60%, white) 350deg, #ffffff 360deg);
+  filter: drop-shadow(0 0 8px var(--led));
+  animation: dev-spin 0.65s cubic-bezier(0.4, 0, 0.6, 1) 2;
+}
+@keyframes dev-spin { to { rotate: 360deg; } }
+.dev[data-react][data-react='siren'], .dev[data-react][data-react='laser'], .dev[data-react][data-react='comet'] { --lum: 1; }
+
+/* The rest is the light alone. */
+.dev[data-react][data-react='rainbow'] { --lum: 1; }
+.dev[data-react][data-react='rainbow'] :is(.dev__light, .dev__halo, .dev__well) { animation: dev-hue 1.1s linear 1; }
+
+.dev[data-react][data-react='cop'] { animation: dev-cop 1.6s steps(1, end) forwards; }
+@keyframes dev-cop {
+  0%, 25%, 50%, 75% { --lum: 1; --led: #ff2233; }
+  12.5%, 37.5%, 62.5%, 87.5% { --lum: 1; --led: #2f6bff; }
+  100% { --lum: 1; }
+}
+.dev[data-react][data-react='alarm'] { animation: dev-alarm 0.9s steps(1, end) forwards; }
+@keyframes dev-alarm {
+  0%, 33%, 66% { --lum: 1; --led: #ff2d45; }
+  16%, 50%, 83% { --lum: 0.05; --led: #ff2d45; }
+  100% { --lum: 1; }
+}
+.dev[data-react][data-react='disco'] { animation: dev-disco 1.2s steps(1, end) forwards; }
+@keyframes dev-disco {
+  0% { --lum: 1; --led: #ff3b3b; }
+  12% { --lum: 1; --led: #ffd21f; }
+  24% { --lum: 1; --led: #2f8cff; }
+  36% { --lum: 1; --led: #ff4dd2; }
+  48% { --lum: 1; --led: #3ce08a; }
+  60% { --lum: 1; --led: #ff8a1f; }
+  72% { --lum: 1; --led: #a24bff; }
+  84% { --lum: 1; --led: #ffffff; }
+  100% { --lum: 1; }
+}
+.dev[data-react][data-react='lightning'] { animation: dev-lightning 0.9s steps(1, end) forwards; }
+@keyframes dev-lightning {
+  0%, 14%, 30%, 60% { --lum: 0.15; }
+  6%, 24%, 26%, 48%, 52%, 80% { --lum: 1; --led: #ffffff; }
+  100% { --lum: 1; }
+}
+.dev[data-react][data-react='neon'] { animation: dev-neon 1.2s steps(1, end) forwards; }
+@keyframes dev-neon {
+  0%, 12%, 30%, 34%, 52% { --lum: 0.08; }
+  6%, 20%, 40%, 58%, 100% { --lum: 1; }
+  22%, 44% { --lum: 0.45; }
+}
+.dev[data-react][data-react='glitch'] { animation: dev-glitch 0.9s steps(1, end) forwards; }
+@keyframes dev-glitch {
+  0%, 30%, 60% { --lum: 1; --led: #39ff14; translate: -4px 0; }
+  10%, 40%, 70% { --lum: 0.2; --led: #39ff14; translate: 5px 0; }
+  20%, 50%, 80% { --lum: 1; --led: #ff2bd6; translate: -2px 0; }
+  90% { --lum: 0.1; translate: 3px 0; }
+  100% { --lum: 1; translate: 0 0; }
+}
+.dev[data-react][data-react='thump'] { --lum: 1; }
+.dev[data-react][data-react='thump'] .dev__dome { animation: dev-thump 1s cubic-bezier(0.2, 1.4, 0.4, 1); }
+@keyframes dev-thump {
+  0%, 44%, 100% { scale: 1; }
+  12% { scale: 1.18; }
+  56% { scale: 1.14; }
+}
 
 /* Keyboard hint */
 .dev__key {
@@ -326,5 +529,5 @@
   .dev[data-mode='pulse'] { animation-duration: 3.4s; }
   .dev[data-mode='pulse'][data-look='heartbeat'] { animation: none; --lum: 1; }
   .dev[data-react='denied'] { animation: none; }
-  .dev__shock, .dev__ripples, .dev__sparks { display: none; }
+  .dev__shock, .dev__fx { display: none; }
 }

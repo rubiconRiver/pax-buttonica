@@ -5,7 +5,7 @@
  * Transport: newline-delimited JSON over USB serial (115200 baud) between the
  * browser and the hub. The hub relays each message to/from buttons over ESP-NOW.
  */
-import type { DeviceOutput, LedMode, TurnLook } from '../engine/outputs';
+import type { DeviceOutput, LedMode, TurnEffect, TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import type { Note, Wave } from '../audio/jingles';
 
@@ -35,7 +35,7 @@ export type ToDevice =
   | { t: 'led'; dev: string; c: string; m: LedMode; p?: number }
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
   /** `ack`, `denied` and `confirm` every button renders; the rest are turn effects a multi-pixel button may draw and any button may ignore. */
-  | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | 'ripple' | 'sparkle' | 'rainbow' }
+  | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | Exclude<TurnEffect, 'ring' | 'none'> }
   /** `bright`: 0–100, a share of the button's full output. `pulse`: how to draw "your move" (default: breathe). */
   | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; pulse?: TurnLook }
   | { t: 'id'; dev: string };

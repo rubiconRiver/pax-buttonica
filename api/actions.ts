@@ -14,7 +14,7 @@ const MAX_BYTES = 1_000;
 const TTL_MS = 10 * 60 * 1000;
 
 /** Turn effects a phone may ask its seat to preview (src/engine/outputs.ts). */
-const TURN_FX = new Set(['ring', 'ripple', 'sparkle', 'rainbow', 'none']);
+const TURN_FX = new Set(['ring', 'ripple', 'sparkle', 'rainbow', 'cop', 'explosion', 'fireworks', 'lightning', 'fire', 'siren', 'laser', 'comet', 'warp', 'confetti', 'disco', 'glitch', 'neon', 'alarm', 'thump', 'none']);
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
