@@ -1,4 +1,6 @@
 import { deviceTag } from '../engine/engine';
+import { TURN_EFFECTS } from '../engine/outputs';
+import { hubEffect } from '../components/game/useGameAudio';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { JINGLES } from '../audio/jingles';
@@ -97,6 +99,15 @@ export function Bench() {
                   {(['ack', 'denied', 'confirm'] as const).map((k) => (
                     <button key={k} type="button" className="btn btn--sm" onClick={() => sendToDevice({ t: 'fx', dev: d.dev, k })}>fx: {k}</button>
                   ))}
+                </div>
+                {/* Every turn effect a player can pick, by the name the button is sent. Ones the firmware doesn't draw yet are ignored by it. */}
+                <div className="bench__row bench__row--fx" aria-label="Turn effects">
+                  {TURN_EFFECTS.filter((e) => e.id !== 'none').map((e) => {
+                    const k = hubEffect(e.id)!;
+                    return (
+                      <button key={e.id} type="button" className="btn btn--sm" title={`${e.hint} · sent as fx: ${k}`} onClick={() => sendToDevice({ t: 'fx', dev: d.dev, k })}>fx: {k}</button>
+                    );
+                  })}
                 </div>
                 <div className="bench__presses">
                   {presses.filter((p) => p.dev === d.dev).slice(0, 4).map((p) => <span key={p.id} className="chip chip--gold">{p.input}</span>)}
