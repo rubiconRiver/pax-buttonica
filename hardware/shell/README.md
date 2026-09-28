@@ -20,6 +20,15 @@ A cap sliding in a bore is a plunger, and a plunger jams when the press lands mo
 
 The click stack has three MEASURE guesses in it (the panel's drop, the Atom's height, the peg's seating), so `stl-mini/` has pegs from `nub-0.5` to `nub-2.5`: the right one is the shortest that still clicks before the stop, with the bezel seated.
 
+## Three shells round the same cap (v1, v2, v3)
+
+`make_shell_v1.py` is the seamless hex tower (76 across the flats, 58 tall: cell, Rider, platform, Atom, cap, all stacked). Two alternatives keep the cap, cage, peg, springs, collar and travel exactly as they are and change only what is under the Atom:
+
+- **v2, the two-layer box** (`make_shell_v2.py`, `stl-v2/`): 72 × 72 mm with rounded corners, 50 mm tall. The cell and the Rider lie side by side on the lid inside full-height fences, and the fences hold the platform up (no columns). A square is the smallest shape that takes them side by side; a hex would need 84 mm across the flats. Three screws under the feet, four feet, the port in the +y wall.
+- **v3, the one-layer pod** (`make_shell_v3.py`, `stl-v3/`): 72 × 98 mm, 38 mm tall, two printed parts round the cap. Nothing under the Atom: the lid is the floor (collar, Atom fence, spring pockets, cell fences on it) and the cell lies in a low tail behind the cap with the Rider on top of it, under the same flat roof the cap's lip is in. Springs at 0, 180 and 270 degrees, none toward the tail. Four screws, four feet, the port in the tail's +x wall.
+
+All three are clash-checked at rest and pressed, and viewable side by side at true scale on the comparison page (claude.ai/artifact/QKLn1FnnAUmjudd9YNhDKJ). Both alternatives share `check_and_write()` and `rbox_prism()` from `make_shell_v2.py`. Both are battery builds only.
+
 ## What's where
 
 - **Key Unit** on the body floor, dropped onto two pegs that fit its own mounting holes, keycap on the axis. Its cable leaves toward −y.
