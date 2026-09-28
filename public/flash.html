@@ -135,8 +135,10 @@
     fetch(`/firmware/${what}/manifest.json`).then((r) => r.json()).then((m) => { $(what + 'ver').textContent = 'firmware ' + m.version; }).catch(() => { $(what + 'ver').textContent = 'no image published'; });
   }
 
-  // Open a port for a moment and ask what's on it; close it again.
-  async function whatIs(port) {
+  // Open a port for a moment and ask what's on it; close it again. Never longer than six seconds: a port that
+  // will not open or close (another tab has it, or the browser's serial support is a polyfill) is reported as busy.
+  const whatIs = (port) => Promise.race([whatIsNow(port), new Promise((r) => setTimeout(() => r({ t: 'busy' }), 6000))]);
+  async function whatIsNow(port) {
     let answered = null;
     try {
       await port.open({ baudRate: 115200 });
@@ -180,6 +182,7 @@
   async function ask() {
     const out = $('answer');
     if (!navigator.serial) { out.innerHTML = '<span class="bad">This browser has no Web Serial. Use Chrome or Edge.</span>'; return; }
+    if (navigator.userAgent.includes('Firefox')) { out.innerHTML = '<span class="bad">This is Firefox; its serial support is an add-on and only half works here. Use Chrome or Edge.</span>'; return; }
     $('who').disabled = true;
     const ports = await (navigator.serial.getPorts?.() ?? []);
     if (!ports.length) { out.innerHTML = 'No Atom allowed yet. Plug one in and click <b>Allow another Atom</b>.'; $('who').disabled = false; return; }
