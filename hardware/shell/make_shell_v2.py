@@ -10,7 +10,9 @@ top of the other. The Atom still sits on a platform above them, under the cap.
             the power cable near the -y edge, notches round the three tabs. It rests on the lid's fences.
   lid       flat plate with fences the full height of the compartment: a U round the cell, a stop and a side
             wall for the Rider, standing up to the platform so it can't rock. Three countersunk screws, four feet.
-  cap, cage, nub, spring   as make_shell_mini.py, unchanged.
+  cap, cage   as make_shell_mini.py, unchanged. No springs: the cap rests on the Atom's switch through the peg.
+  nub       the peg, 3.5 mm head (nub-3.0 and nub-4.0 to choose from): taller than the mini's, to take up the 2 mm
+            the springs used to hold the cap up by.
 
   .venv/bin/python make_shell_v2.py    ->  stl-v2/
 
@@ -19,9 +21,8 @@ along y, USB-C at the +y wall (the port), USB-A at its -y end with the plug poin
 through the platform's hole just past the plug and into the Atom's USB-C, which faces +x (the Atom is turned
 round from the mini, and the springs are mirrored to suit, so no spring stands beside the plug).
 
-Assembly (housing upside down): cage with hex and peg into the cap; cap into the housing, flange up; three
-springs on the flange; Atom into the platform's fence, hex cable in; platform down onto the springs, notches
-over the tabs; lid: cell in its U, Rider between its walls with the USB-C at the window, cable up through the
+Assembly (housing upside down): cage with hex and peg into the cap; cap into the housing, flange up;
+Atom into the platform's fence, hex cable in; platform in, notches over the tabs, the cable in its slot; lid: cell in its U, Rider between its walls with the USB-C at the window, cable up through the
 platform's hole into the Atom; lid on, three screws, four feet.
 """
 import importlib.util
@@ -74,6 +75,12 @@ RIDER_CX = RIDER_X0 + RIDER_FOOT[0] / 2                                # 16.6, w
 PLUG = (12.0, 15.0, 7.0)                                               # the USB-A plug body out of the Rider's -y end
 CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
 #   The cable has a plug on each end and neither passes a hole, so it has to slip in from the side.
+# No printed springs (2026-09-28): with no bezel pressing on it, the cap resting on the Atom's own switch through
+# the peg returns by itself, and Garett's test of exactly that felt better than the sprung one. The peg is taller
+# to take up the 2 mm the springs used to hold the cap up by, less REST_PLAY so it can never hold the switch down.
+SPRINGS = False
+REST_PLAY = 0.5                      # how far the cap sits below the lip at rest, resting on the switch
+PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.5 without springs, 2.0 with
 SPRING_ANGLES = (0, 120, 240)                                          # mirrored from the mini: the Atom is turned round, USB-C toward +x
 m.SPRING_ANGLES = SPRING_ANGLES                                        # springs_in_place() reads it
 cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve
@@ -122,7 +129,7 @@ def platform():
     fence -= cbox(0, 0, -1, m.ATOM[0] + 20, 14, 5)
     solid += fence
     cuts = []
-    for a in SPRING_ANGLES:
+    for a in (SPRING_ANGLES if SPRINGS else ()):
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     x0, y0, sx, sy = CABLE_HOLE
     cuts.append(box(x0, y0, -PLATFORM_T - 1, sx, sy, PLATFORM_T + 2))
@@ -163,7 +170,10 @@ def bought(pressed=False):
 
 
 def printed_parts():
-    return {'housing': housing(), 'platform': platform(), 'lid': lid(), 'cap': m.cap(), 'cage': m.cage(), 'nub': m.nub(), 'spring': m.spring(m.SPRING_FREE)}
+    parts = {'housing': housing(), 'platform': platform(), 'lid': lid(), 'cap': m.cap(), 'cage': m.cage(), 'nub': m.nub(PEG_H)}
+    if SPRINGS:
+        parts['spring'] = m.spring(m.SPRING_FREE)
+    return parts
 
 
 def check_and_write(printed, flipped, out_dir, label):
@@ -174,13 +184,20 @@ def check_and_write(printed, flipped, out_dir, label):
         bb = out.bounding_box()
         print(f'  {name:9s} {bb[3] - bb[0]:6.1f} x {bb[4] - bb[1]:5.1f} x {bb[5] - bb[2]:5.1f} mm  {out.volume() / 1000:6.1f} cm3  genus {out.genus()}')
     clashes = 0
+    sprung = 'spring' in printed
     for pressed in (False, True):
         state = {**printed, **bought(pressed)}
-        del state['spring']
-        state['springs'] = m.springs_in_place((m.FLANGE_BOTTOM - 1.2 if not pressed else m.WALL_TOP - 1.2) - 0.05)
-        if pressed:
-            for k in ('cap', 'cage', 'nub'):
-                state[k] = state[k].translate([0, 0, -m.TRAVEL])
+        if sprung:
+            del state['spring']
+            state['springs'] = m.springs_in_place((m.FLANGE_BOTTOM - 1.2 if not pressed else m.WALL_TOP - 1.2) - 0.05)
+            drop = m.TRAVEL if pressed else 0.0
+        else:
+            # resting on the switch, a little below the lip; pressed, the switch's own travel and what the flexures give
+            drop = REST_PLAY + (m.TRAVEL - m.DISC_GAP if pressed else 0.0)
+            state['hex'] = bought(False)['hex']          # the hex rides in the cap: it moves as the cap does, below
+        if drop:
+            for k in ('cap', 'cage', 'nub') + (() if sprung else ('hex',)):
+                state[k] = state[k].translate([0, 0, -drop])
         names = list(state)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -192,7 +209,8 @@ def check_and_write(printed, flipped, out_dir, label):
     colours = {'housing': '#3a3a40', 'platform': '#55555c', 'lid': '#2a2a2e', 'cage': '#8a8a92', 'nub': '#e07b39', 'cap': '#ffffff', 'springs': '#c9a227',
                'hex': '#2e7d32', 'atom': '#1a3a6e', 'cell': '#8a8a55', 'rider': '#1b5e20'}
     everything = {k: v for k, v in printed.items() if k != 'spring'}
-    everything.update(bought()); everything['springs'] = m.springs_in_place(m.FLANGE_BOTTOM - 1.25)
+    everything.update(bought())
+    if sprung: everything['springs'] = m.springs_in_place(m.FLANGE_BOTTOM - 1.25)
     m.section_svg(everything, colours, os.path.join(HERE, f'section-{label}-front.svg'), 'xz')
     m.section_svg(everything, colours, os.path.join(HERE, f'section-{label}-side.svg'), 'yz')
 
@@ -200,3 +218,9 @@ def check_and_write(printed, flipped, out_dir, label):
 if __name__ == '__main__':
     print(f'v2 box: {W:.0f} x {W:.0f} mm, {m.CAP_TOP - BOTTOM:.1f} mm tall to the cap, housing {TOP - BOTTOM:.1f} mm, port on +y')
     check_and_write(printed_parts(), {'housing', 'cap'}, os.path.join(HERE, OUT), OUT)
+    if not SPRINGS:
+        # pegs to choose from: the shortest that clicks cleanly without the cap rattling is the one
+        for h in (3.0, 3.5, 4.0):
+            m.write_stl(m.for_printing(m.nub(h), False), os.path.join(HERE, OUT, f'nub-{h:.1f}.stl'))
+        stale = os.path.join(HERE, OUT, 'spring.stl')
+        if os.path.exists(stale): os.remove(stale)
