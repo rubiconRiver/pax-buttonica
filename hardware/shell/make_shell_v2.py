@@ -72,7 +72,8 @@ RIDER_X0 = CELL_X0 + m.CELL[0] + CLR + FENCE_T + CLR                   # 4.1: pa
 RIDER_Y0 = IN / 2 - CLR - RIDER_FOOT[1]                                # -8: its USB-C end 0.5 from the +y wall
 RIDER_CX = RIDER_X0 + RIDER_FOOT[0] / 2                                # 16.6, where the port is
 PLUG = (12.0, 15.0, 7.0)                                               # the USB-A plug body out of the Rider's -y end
-CABLE_HOLE = (10.0, -31.0, 8.0, 6.0)                                   # x0, y0, sx, sy in the platform, just past the Rider's USB-A plug
+CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
+#   The cable has a plug on each end and neither passes a hole, so it has to slip in from the side.
 SPRING_ANGLES = (0, 120, 240)                                          # mirrored from the mini: the Atom is turned round, USB-C toward +x
 m.SPRING_ANGLES = SPRING_ANGLES                                        # springs_in_place() reads it
 cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve

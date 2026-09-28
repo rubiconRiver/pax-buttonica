@@ -104,7 +104,9 @@ def platform():
     for a in m.SPRING_ANGLES:
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     # the power cable comes up beside the Atom's USB-C
-    cuts.append(cbox(-m.ATOM[0] / 2 - 15, 0, -PLATFORM_T - 1, 8, 10, PLATFORM_T + 2))
+    # a slot open to the platform's edge, not a hole: the cable has a plug on each end and slips in from the side
+    # 14 mm wide, at 225 degrees: between the springs at 180 and 300, outside the collar
+    cuts.append(box(-PLATFORM_R - 2, -7, -PLATFORM_T - 1, PLATFORM_R + 2 - (m.COLLAR_R + 1.0), 14, PLATFORM_T + 2).rotate([0, 0, 45]))
     # notches round the housing's screw tabs
     cuts += [cyl(2 * NOTCH_R, PLATFORM_T + 2, *at(CORNER_R, a), -PLATFORM_T - 1, seg=32) for a in TAB_ANGLES]
     return solid - union(cuts)

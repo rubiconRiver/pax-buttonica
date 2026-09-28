@@ -89,7 +89,7 @@ RIDER_FOOT = (m.RIDER[1], m.RIDER[0])                      # turned: 25 along x,
 RIDER_Z = LID_Z + m.CELL[2] + m.LAYER_GAP
 RIDER_Y0 = IN / 2 - CLR - RIDER_FOOT[1]                    # its USB-C end 0.5 from the +y wall
 PLUG = (14.0, 8.0, 7.0)                                    # a RIGHT-ANGLE USB-A plug out of the Rider's -y end    MEASURE
-CABLE_HOLE = (-4.0, -28.5, 8.0, 5.5)                       # in the platform, just past the Atom's USB-C plug
+CABLE_HOLE = (-7.0, -33.0, 14.0, 9.5)                      # a SLOT open to the platform's -y edge: the cable has a plug on each end and slips in from the side
 
 
 def rbox_prism(w, d, r, h, z=0.0, ct=0.0, cb=0.0):
