@@ -270,6 +270,8 @@
     if (m.t === 'bat') row(m.dev).mv = m.mv;
     if (m.t === 'lost') row(m.dev).lost = true;
     if (m.t === 'btn') say(`${m.dev} ${m.e}`);
+    if (m.t === 'lost') say(`${m.dev} lost: the hub's sends to it stopped being acknowledged`);
+    if (m.t === 'ota' && m.st !== 'ok') say(`${m.dev} ${line}`);
     for (const l of [...listeners]) l(m);
   }
 
@@ -314,6 +316,7 @@
     const mine = (m) => m.t === 'ota' && m.dev === dev;
     b.update.disabled = true;
     b.fwEl.textContent = 'starting…';
+    say(`${dev}: sending ${image.length} bytes in ${Math.ceil(image.length / CHUNK)} chunks, ${inFlight()} in flight (hub ${hubFw})`);
     await send({ t: 'ota', dev, size: image.length, md5: published.md5 });
     const ready = await waitFor((m) => mine(m) && (m.st === 'ready' || m.st === 'err'), 5000);
     if (ready.st === 'err') throw new Error(ready.why || 'refused');
