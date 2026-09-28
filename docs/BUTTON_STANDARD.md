@@ -117,7 +117,20 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 {"t":"rssi","dev":"A1B2C3D4E5F6","dbm":-58}
 ```
 
-`rssi` is how strongly the hub heard that button, in dBm, at most once a second. The reference hub also answers a button that broadcasts (one that has no hub yet, or lost it) with a `hub` line addressed to it, so the button can pair without waiting for the host to say something. Around −50 is excellent, −70 is fine, below about −80 is getting marginal. The test bench shows it, so range can be checked at the real table.
+`rssi` is how strongly the hub heard that button, in dBm, at most once a second. Around −50 is excellent, −70 is fine, below about −80 is getting marginal. The test bench shows it, so range can be checked at the real table.
+
+### Pairing: the hub says who the hub is
+
+```json
+{"t":"hub","dev":"A1B2C3D4E5F6","v":0,"fw":"0.2.2","id":"0A1B2C3D4E5F"}
+```
+
+The hub answers every `hello` it hears with this line, addressed to that button by name and carrying the hub's own `id`. That answer is the pairing and the heartbeat at once, and it is the only thing the hub does on its own account:
+
+- A button **believes in a hub only while that hub keeps speaking to it by name**: any line carrying the button's own `dev`. It adopts the sender of such a line as its hub, and treats the hub as gone after 35 s without one (three missed answers) or eight unacknowledged sends. Nothing is remembered across power cycles.
+- A button **ignores every line that does not carry its own `dev`**. This matters: a button with no hub looks for one by broadcasting its `hello`, every other button hears that, and a button that adopts "whoever spoke" as its hub will pair with another button. The reference firmware did exactly that until 0.3.7, and six buttons on one desk paired with each other.
+- Not linked, a button sends `hello` to everyone every 3 s; linked, to the hub every 10 s. Presses go to the last hub it knew, or to everyone if it never knew one; the hub passes on whatever it hears.
+- The reference button shows the state on its light until the host sends its first `led`: amber blinking while it looks for the hub, a steady green centre once linked. In a game the light is the host's, and an amber dot blinks in the middle of it if the hub goes away.
 
 ### Host → button
 
