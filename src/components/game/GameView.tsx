@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from 'react';
 import { unlockAudio } from '../../audio/synth';
-import { currentScorer, isVirtualDevice, seatSpots, simDevice, turnElapsed, turnOrder } from '../../engine/engine';
+import { currentScorer, isVirtualDevice, seatOfDevice, seatSpots, simDevice, turnElapsed, turnOrder, type GameEvent } from '../../engine/engine';
 import { ownerOfButton } from '../../state/profiles';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
@@ -37,6 +37,18 @@ const PHASE_TITLES: Record<string, string> = {
   agenda: 'Agenda phase',
 };
 
+const PRESSES: Partial<Record<DeviceInput, string>> = { tap: 'tap', double: 'double-tap', hold: 'hold' };
+
+/** What an undo took back, in words: the log line the action wrote, or else whose press it was. */
+function undoneText(g: GameState, e: GameEvent, index: number): string {
+  const line = g.log.find((l) => l.event === index);
+  if (line) return line.text;
+  const a = e.action;
+  const seat = a.type === 'INPUT' ? a.seat : a.type === 'DEVICE_INPUT' ? seatOfDevice(g, a.dev) : -1;
+  const press = a.type === 'INPUT' || a.type === 'DEVICE_INPUT' ? PRESSES[a.input] : undefined;
+  return seat >= 0 && press ? `${g.players[seat].name}'s ${press}` : 'the last action';
+}
+
 function useNow(running: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -64,6 +76,25 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const [banner, setBanner] = useState<{ id: number; text: string; sub?: string; color?: string; holdMs?: number } | null>(null);
   const devices = useRef<(DeviceHandle | null)[]>([]);
   const dispatch = useCallback((a: Action) => store.dispatch(a), [store]);
+  // The keyboard's undo is the one that happens by accident, so it says what it took back, with a Redo, for a moment.
+  const [undone, setUndone] = useState<{ id: number; text: string } | null>(null);
+  const undo = useCallback((announce: boolean) => {
+    const { events, game: now } = store.get();
+    const i = lastUndoable(events);
+    if (i < 0 || !now) return;
+    const text = undoneText(now, events[i], i);
+    store.undo();
+    setUndone((u) => (announce ? { id: (u?.id ?? 0) + 1, text } : null));
+  }, [store]);
+  const redo = useCallback(() => {
+    store.redo();
+    setUndone(null);
+  }, [store]);
+  useEffect(() => {
+    if (!undone) return;
+    const t = window.setTimeout(() => setUndone(null), 5000);
+    return () => window.clearTimeout(t);
+  }, [undone]);
   const outputs = useMemo(() => deriveOutputs(game), [game]);
   // How each seat likes its light: their own choice from their phone, else the table's.
   const seatPrefs = useMemo(
@@ -161,14 +192,17 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       return Number.isInteger(k) && k >= 1 && k <= n ? k - 1 : -1;
     };
     const down = (e: KeyboardEvent) => {
+      const typing = e.target instanceof Element && e.target.closest('input, select, textarea');
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z') {
+        // In a text box it's the box's own undo. Held down, it's one undo, not one per key repeat.
+        if (typing) return;
         e.preventDefault();
-        if (e.shiftKey) store.redo();
-        else store.undo();
+        if (e.repeat) return;
+        if (e.shiftKey) redo();
+        else undo(true);
         return;
       }
       if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-      const typing = e.target instanceof Element && e.target.closest('input, select, textarea');
       if (!typing && e.key.toLowerCase() === 'b') return setBoard((b) => (b === 'closed' ? 'open' : 'closed'));
       if (e.key === 'Escape') return setBoard('closed');
       const s = seatOf(e);
@@ -184,7 +218,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       window.removeEventListener('keydown', down);
       window.removeEventListener('keyup', up);
     };
-  }, [n, store]);
+  }, [n, undo, redo]);
 
   // Phase changes sweep a banner across the table.
   const lastPhaseFx = useRef(game.fxSeq);
@@ -251,7 +285,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
   return (
     <div className="game" data-demo={demo || undefined} onPointerDownCapture={unlockAudio}>
-      <TopBar game={game} demo={demo} canUndo={lastUndoable(events) >= 0} canRedo={future.length > 0} dispatch={dispatch} onUndo={store.undo} onRedo={store.redo} onExit={onExit} onScoreboard={() => setBoard((b) => (b === 'closed' ? 'open' : 'closed'))} />
+      <TopBar game={game} demo={demo} canUndo={lastUndoable(events) >= 0} canRedo={future.length > 0} dispatch={dispatch} onUndo={() => undo(false)} onRedo={redo} onExit={onExit} onScoreboard={() => setBoard((b) => (b === 'closed' ? 'open' : 'closed'))} />
 
       {board !== 'closed' && (
         <div className="boardwrap">
@@ -304,7 +338,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
                 />
               );
             })}
-            <CenterPanel game={game} now={now} liveMs={liveMs} holdMs={settings.holdMs} dispatch={dispatch} onUndo={store.undo} onNewGame={onExit} />
+            <CenterPanel game={game} now={now} liveMs={liveMs} holdMs={settings.holdMs} dispatch={dispatch} onUndo={() => undo(false)} onNewGame={onExit} />
             {banner && (
               <div className="banner" key={banner.id} data-card={banner.color ? '' : undefined} data-hold={banner.holdMs ? '' : undefined} style={{ '--cc': banner.color, '--hold-ms': banner.holdMs ? `${banner.holdMs}ms` : undefined } as CSSProperties}>
                 <span>
@@ -317,6 +351,12 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
               <div className="toast" key={toast.id} data-kind={toast.kind}>
                 {toast.seat != null && <b>{game.players[toast.seat].name}: </b>}
                 {toast.note}
+              </div>
+            )}
+            {undone && future.length > 0 && !toast && (
+              <div className="undone" key={undone.id} role="status">
+                <span>Undone: {undone.text}</span>
+                <button type="button" className="btn btn--sm" onClick={redo}>Redo</button>
               </div>
             )}
           </div>

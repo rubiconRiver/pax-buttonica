@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const PORT = 5199;
+// Another worktree's dev server on the same port would be reused, and its code tested instead: E2E_PORT picks another.
+const PORT = Number(process.env.E2E_PORT ?? 5199);
 
 export default defineConfig({
   testDir: 'e2e',

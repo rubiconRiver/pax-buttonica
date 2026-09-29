@@ -229,6 +229,16 @@ kbd {
 
 .scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: #2c3450 transparent; }
 
+/* The crash screen: what shows instead of a blank page if drawing the page throws. */
+.crash { min-height: 100dvh; display: grid; place-items: center; padding: 16px; }
+.crash__card { width: min(560px, 100%); padding: 28px 26px 22px; display: grid; gap: 14px; animation: arrive 0.25s var(--out); }
+.crash h1 { font-size: clamp(26px, 6vw, 36px); text-transform: uppercase; }
+.crash p { margin: 0; color: #c9d0e2; }
+.crash p b { color: var(--gold-2); font-weight: 600; }
+.crash__actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.crash p.crash__oops { color: #ffd9de; }
+.crash__error { font-size: 12px; color: var(--faint); overflow-wrap: anywhere; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
   .dev[data-mode='pulse'], .dev[data-mode='flash'] { animation-duration: 2s !important; animation-iteration-count: infinite !important; }

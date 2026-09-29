@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
+import { CrashGuard } from '../components/CrashGuard';
 import { GameView } from '../components/game/GameView';
+import { useWakeLock } from '../components/useWakeLock';
 import { startSync, stopSync } from '../remote/sync';
 import { archiveGame } from '../state/archive';
 import { useStore } from '../state/createStore';
@@ -14,6 +16,8 @@ export function Play() {
     startSync();
     return stopSync;
   }, []);
+  // A long think at the table must not put the screen to sleep.
+  useWakeLock(!!game);
   if (!game) {
     return (
       <Setup
@@ -25,16 +29,18 @@ export function Play() {
     );
   }
   return (
-    <GameView
-      store={liveGame}
-      game={game}
-      onExit={() => {
-        if (window.confirm('End this game? The table will be cleared.')) {
-          // The log stays in this browser for downloading later; the site's copy goes.
-          archiveGame(liveGame.get());
-          liveGame.clear();
-        }
-      }}
-    />
+    <CrashGuard store={liveGame}>
+      <GameView
+        store={liveGame}
+        game={game}
+        onExit={() => {
+          if (window.confirm('End this game? The table will be cleared.')) {
+            // The log stays in this browser for downloading later; the site's copy goes.
+            archiveGame(liveGame.get());
+            liveGame.clear();
+          }
+        }}
+      />
+    </CrashGuard>
   );
 }

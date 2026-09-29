@@ -7,6 +7,7 @@ npm run e2e                         # everything
 npx playwright test full-game       # one file
 npx playwright test -g "reload"     # tests whose name matches
 npx playwright show-report          # after a failure: screenshots, and a trace you can scrub through
+E2E_PORT=5217 npm run e2e           # when another worktree's dev server holds 5199 (it would be reused, and its code tested)
 ```
 
 ## What is covered
@@ -28,6 +29,7 @@ npx playwright show-report          # after a failure: screenshots, and a trace 
 | `status-phase.spec.ts` | The end of a round: every light goes rainbow under a banner that holds, scoring goes round in initiative order one player at a time (taps, the scoreboard's Done, the table's buttons, skipping), then the tidy-up; undo through it; every step switched off in settings; the turn-order layout against the seating layout. |
 | `rewind.spec.ts` | The game as an action log: undo and redo, rewinding from a line of the Ship's log, a phone keeping its seat through a rewind, the referee's levers, downloading the log during and after a game, another laptop picking up the log. |
 | `profiles.spec.ts` | Saved players against a stand-in for the database (`api.ts`): newest edit wins, deletions travel, offline catches up later, clip uploads. |
+| `safety.spec.ts` | Game-night safety nets: a saved game that breaks the table shows a crash screen (across reloads) from which the log can be saved and the last action undone, with nothing lost; a held Ctrl+Z undoes once and names what it undid, with a Redo; Ctrl+Z while typing is the text box's own; the host screen and phones keep a wake lock. |
 | `pages.spec.ts` | Every page renders; navigation; the documents; the parts list arithmetic and memory; nothing scrolls sideways on a phone. |
 
 ## How the tests work

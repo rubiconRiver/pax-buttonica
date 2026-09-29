@@ -554,6 +554,26 @@
   animation: toast 2.8s var(--out) forwards;
 }
 .toast[data-kind='hint'] { border-color: var(--line-2); background: rgba(13, 18, 30, 0.96); color: var(--text); box-shadow: none; }
+/* After an undo: what was taken back, and a Redo within reach while the note shows. It shares the toasts' spot. */
+.undone {
+  position: absolute;
+  left: 50%;
+  bottom: 3%;
+  translate: -50% 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 6px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: 2px;
+  background: rgba(13, 18, 30, 0.96);
+  font-size: 13px;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: toast 5s var(--out) forwards;
+}
+.undone .btn { pointer-events: auto; }
 @keyframes toast {
   0% { opacity: 0; transform: translateY(10px) scale(0.94); }
   6% { opacity: 1; transform: none; }

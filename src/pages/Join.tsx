@@ -7,6 +7,7 @@ import { Device } from '../components/Device';
 import { Scoreboard } from '../components/game/Scoreboard';
 import { reactionFor, useReactions, type Reaction } from '../components/game/useReactions';
 import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
+import { useWakeLock } from '../components/useWakeLock';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode, seatOfDevice } from '../engine/engine';
 import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
@@ -110,22 +111,6 @@ function useGame(code: string) {
   return { link, record, say };
 }
 
-/** Keep the phone awake while it's being a button. */
-function useWakeLock(active: boolean) {
-  useEffect(() => {
-    if (!active || !('wakeLock' in navigator)) return;
-    let lock: WakeLockSentinel | null = null;
-    const take = () => navigator.wakeLock.request('screen').then((l) => (lock = l)).catch(() => {});
-    const onVisible = () => document.visibilityState === 'visible' && take();
-    void take();
-    document.addEventListener('visibilitychange', onVisible);
-    return () => {
-      document.removeEventListener('visibilitychange', onVisible);
-      void lock?.release();
-    };
-  }, [active]);
-}
-
 export function Join() {
   const params = useParams();
   const navigate = useNavigate();
@@ -177,7 +162,8 @@ function PhoneButton({ code }: { code: string }) {
   const lastMode = useRef<string | null>(null);
   const dev = deviceId();
   const connected = link === 'connected';
-  useWakeLock(connected);
+  // Awake for as long as the page is open: a phone that locks during an outage misses the table coming back.
+  useWakeLock();
 
   const game: GameState | null = record?.state ?? null;
   // The seat this phone holds, or its owner's seat when a real button holds it: then the phone is a companion.
