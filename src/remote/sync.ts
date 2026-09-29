@@ -51,8 +51,16 @@ export const syncStatus = createStore<SyncStatus>({ code: null, site: 'idle', se
 
 const WRITE_DEBOUNCE_MS = 150;
 const READ_EVERY_MS = 500;
+/** A read that hasn't come back in this long is given up on, so one lost request can't stop the reading. */
+const READ_STALL_MS = 10_000;
+/** api/actions.ts hands back at most this many at a time. */
+const INBOX_PAGE = 200;
+/** A press this much older than the site's clock is from a moment that has passed (the laptop was away): dropped. */
+const STALE_PRESS_MS = 30_000;
 const PRESENCE_TTL_MS = 45_000;
 const PROFILES_EVERY_MS = 5_000;
+/** How far into the inbox this laptop has read, and who it has heard from, so a reload carries on where it was. */
+const INBOX_KEY = 'pb.inbox.v1';
 
 const seen = new Map<string, number>();
 let writeTimer = 0;
@@ -64,6 +72,12 @@ let sentEvents = 0;
 let sentEpoch = -1;
 let readTimer = 0;
 let readAfter = 0;
+/** Skipping what is already in the inbox (see loadInbox). */
+let catchingUp = false;
+let inboxSaved = false;
+/** When the read in flight began (0: none), and which read it is: an answer to an older one is thrown away. */
+let readingSince = 0;
+let readGen = 0;
 let lastProfiles = 0;
 let started = false;
 let unsubscribe: (() => void)[] = [];
@@ -142,18 +156,59 @@ export interface Preview {
 export const previews = createStore<Preview | null>(null);
 let previewSeq = 0;
 
+function loadInbox(code: string) {
+  seen.clear();
+  readAfter = 0;
+  inboxSaved = false;
+  // With no record of how far this laptop read: a game with nothing in its log has taken nothing from its inbox, so all
+  // of it is new; any other game came from another laptop (or this browser lost its data), which dealt with what is there.
+  catchingUp = liveGame.get().events.length > 0;
+  try {
+    const saved = JSON.parse(localStorage.getItem(INBOX_KEY) ?? 'null') as { code: string; after: number; seen: [string, number][] } | null;
+    if (saved?.code !== code || !Number.isFinite(saved.after)) return;
+    readAfter = saved.after;
+    catchingUp = false;
+    inboxSaved = true;
+    for (const [dev, t] of saved.seen ?? []) if (Date.now() - t < PRESENCE_TTL_MS) seen.set(dev, t);
+  } catch {
+    // Nothing usable: as if nothing was saved.
+  }
+}
+
+function saveInbox(code: string) {
+  try {
+    localStorage.setItem(INBOX_KEY, JSON.stringify({ code, after: readAfter, seen: [...seen] }));
+    inboxSaved = true;
+  } catch {
+    // Storage full or unavailable: a reload will catch up instead.
+  }
+}
+
 async function read() {
   const game = liveGame.get().game;
   if (!game || syncStatus.get().site === 'taken') return;
+  // One read at a time: a slow answer overtaken by the next read would hand over the same presses twice.
+  if (readingSince && Date.now() - readingSince < READ_STALL_MS) return;
+  const gen = ++readGen;
+  readingSince = Date.now();
+  const code = game.code;
   try {
-    const res = await apiJson<{ actions: { seq: number; data: Inbound; at: number }[] }>(`/api/actions?code=${game.code}&key=${hostKey()}&after=${readAfter}`);
-    if (!res) return;
+    const res = await apiJson<{ actions: { seq: number; data: Inbound; at: number }[]; now?: number }>(`/api/actions?code=${code}&key=${hostKey()}&after=${readAfter}`);
+    if (!res || gen !== readGen) return;
+    const now = res.now ?? Math.max(0, ...res.actions.map((a) => a.at));
     let unknownProfile = false;
-    for (const { seq, data } of res.actions) {
-      readAfter = Math.max(readAfter, seq);
+    for (const { seq, data, at } of res.actions) {
+      if (seq <= readAfter) continue;
+      readAfter = seq;
       if (typeof data.dev !== 'string') continue;
       const dev = data.dev.slice(0, 40);
+      // Catching up, what is there has been dealt with (by the laptop this game came from); only who is around counts.
+      if (catchingUp) {
+        if (at > now - PRESENCE_TTL_MS) seen.set(dev, Date.now());
+        continue;
+      }
       seen.set(dev, Date.now());
+      if ((data.type === 'input' || data.type === 'preview') && at < now - STALE_PRESS_MS) continue;
       if (data.type === 'input' && data.input) liveGame.dispatch({ type: 'DEVICE_INPUT', dev, input: data.input, at: Date.now() });
       else if (data.type === 'identify') {
         const profileId = typeof data.profileId === 'string' ? data.profileId : null;
@@ -161,6 +216,8 @@ async function read() {
         liveGame.dispatch({ type: 'IDENTIFY', dev, profileId, at: Date.now() });
       } else if (data.type === 'preview' && isTurnEffect(data.fx)) previews.set({ id: ++previewSeq, dev, fx: data.fx });
     }
+    if (res.actions.length < INBOX_PAGE) catchingUp = false;
+    if (!catchingUp && (res.actions.length || !inboxSaved)) saveInbox(code);
     listPhones();
     // Someone new, or someone who changed their sounds on their phone: fetch the profiles now rather than later.
     if (unknownProfile || (seen.size && Date.now() - lastProfiles > PROFILES_EVERY_MS)) {
@@ -168,31 +225,45 @@ async function read() {
       void syncProfiles();
     }
   } catch (err) {
-    if ((err as { status?: number }).status === 403) syncStatus.set((s) => ({ ...s, site: 'taken' }));
+    if (gen === readGen && (err as { status?: number }).status === 403) syncStatus.set((s) => ({ ...s, site: 'taken' }));
     // otherwise: offline for a moment; the next read will try again
+  } finally {
+    if (gen === readGen) readingSince = 0;
   }
 }
 
 // ── Lifecycle ───────────────────────────────────────────────────────────────
 
+/** Stop reading: whatever read is still in flight is ignored when it comes back. */
+function stopReading() {
+  window.clearInterval(readTimer);
+  readTimer = 0;
+  readGen++;
+  readingSince = 0;
+}
+
 function begin(game: GameState) {
-  seen.clear();
-  readAfter = 0;
+  stopReading();
+  loadInbox(game.code);
   lastWritten = '';
   sentEvents = 0;
   sentEpoch = -1;
   syncStatus.set({ code: game.code, site: 'idle', seq: 0, phones: [] });
-  window.clearInterval(readTimer);
+  listPhones();
   readTimer = window.setInterval(() => void read(), READ_EVERY_MS);
   scheduleWrite();
 }
 
 function end(code: string) {
-  window.clearInterval(readTimer);
+  stopReading();
   window.clearTimeout(writeTimer);
-  readTimer = 0;
   seen.clear();
   lastWritten = '';
+  try {
+    if (JSON.parse(localStorage.getItem(INBOX_KEY) ?? 'null')?.code === code) localStorage.removeItem(INBOX_KEY);
+  } catch {
+    // nothing to tidy
+  }
   const was = syncStatus.get().site;
   syncStatus.set({ code: null, site: 'idle', seq: 0, phones: [] });
   if (was !== 'taken') void apiJson(`/api/game?code=${code}&key=${hostKey()}`, { method: 'DELETE' }).catch(() => {});
@@ -230,9 +301,8 @@ export function startSync() {
   unsubscribe.push(() => {
     window.removeEventListener('online', online);
     window.clearInterval(housekeeping);
-    window.clearInterval(readTimer);
+    stopReading();
     window.clearTimeout(writeTimer);
-    readTimer = 0;
     lastWritten = '';
     syncStatus.set({ code: null, site: 'idle', seq: 0, phones: [] });
   });

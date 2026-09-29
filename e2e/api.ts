@@ -22,6 +22,11 @@ export class FakeApi {
   actions: { seq: number; code: string; data: any; at: number }[] = [];
   requests: { method: string; url: string; body?: any }[] = [];
   online = true;
+  /** A slow site: the host's reads of the inbox take this long (real time) to answer. */
+  inboxDelayMs = 0;
+  /** The most reads of the inbox the host has had waiting at once. */
+  inboxMostAtOnce = 0;
+  private inboxAtOnce = 0;
   private seq = 0;
 
   async install(context: BrowserContext) {
@@ -119,9 +124,21 @@ export class FakeApi {
       const key = url.searchParams.get('key');
       if (g.hostKey !== key) return route.fulfill({ status: 403, json: { error: 'This game belongs to another laptop.' } });
       const after = Number(url.searchParams.get('after') ?? 0);
-      return route.fulfill({ json: { actions: this.actions.filter((a) => a.code === code && a.seq > after).map(({ seq, data, at }) => ({ seq, data, at })) } });
+      const json = { actions: this.actions.filter((a) => a.code === code && a.seq > after).map(({ seq, data, at }) => ({ seq, data, at })), now: Date.now() };
+      this.inboxMostAtOnce = Math.max(this.inboxMostAtOnce, ++this.inboxAtOnce);
+      try {
+        if (this.inboxDelayMs) await new Promise((r) => setTimeout(r, this.inboxDelayMs));
+        return await route.fulfill({ json });
+      } finally {
+        this.inboxAtOnce--;
+      }
     }
     return route.fulfill({ status: 405, json: { error: 'method' } });
+  }
+
+  /** Something in the inbox as if a phone had sent it `ago` ms ago (by the site's clock). */
+  post(code: string, data: object, ago = 0) {
+    this.actions.push({ seq: ++this.seq, code: code.toUpperCase(), data, at: Date.now() - ago });
   }
 
   /** The record for a code, as the site holds it. */

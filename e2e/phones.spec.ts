@@ -1,5 +1,6 @@
+import type { BrowserContext, Page } from '@playwright/test';
 import { FakeApi } from './api';
-import { Board, HOLD_MS, Table, expect, liveGame, openSettings, readStorage, setSlider, setUpGame, test } from './helpers';
+import { Board, HOLD_MS, Table, expect, liveGame, liveSlot, openSettings, readStorage, setSlider, setUpGame, test } from './helpers';
 import { FANFARE_MS, pickCards } from './flows';
 import { gameCode, openPhone, tick, tinyWav } from './phones';
 
@@ -289,6 +290,95 @@ test('the laptop reloads: same code, the phone never notices', async ({ page, co
   await expect(table.center.locator('.center__active')).toHaveText('Ben');
 });
 
+/** Ana on her phone, Ben and Cleo on the table's buttons, the action phase begun and Ana to act. */
+async function anaToActOnHerPhone(page: Page, context: BrowserContext) {
+  const site = await hostWithSite(page, context);
+  const phone = await openPhone(context, site.code);
+  await phone.iAm('Ana');
+  await tick([page, phone.page]);
+  await site.table.tapKey('2');
+  await site.table.tapKey('3');
+  await pickCards(site.table, SIX);
+  await site.table.expectActive('Ana');
+  await tick([page, phone.page]);
+  await phone.expectLight('pulse');
+  return { ...site, phone, dev: await phone.dev(), both: [page, phone.page] };
+}
+
+/** Every press the laptop has taken from a device, in order. */
+async function pressesFrom(page: Page, dev: string): Promise<string[]> {
+  const { events } = (await liveSlot(page)) as { events: { action: { type: string; dev?: string; input?: string } }[] };
+  return events.filter((e) => e.action.type === 'DEVICE_INPUT' && e.action.dev === dev).map((e) => e.action.input!);
+}
+
+test('the laptop reloads mid-game: presses it already took are not taken again', async ({ page, context }) => {
+  const { code, table, phone, dev, both } = await anaToActOnHerPhone(page, context);
+  await phone.tap();
+  await tick(both);
+  await table.expectToast('Ana: Hold to end your turn');
+  await phone.hold();
+  await tick(both);
+  await table.expectActive('Ben');
+  await table.hold('Ben');
+  await table.hold('Cleo');
+  await table.expectActive('Ana');
+  await tick(both);
+
+  await page.reload();
+  await expect(page.locator('.topbar')).toContainText(code);
+  await tick(both);
+  await table.expectActive('Ana'); // her hold from last time, taken again, would end this turn
+  expect(await pressesFrom(page, dev)).toEqual(['tap', 'hold']);
+  await expect(page.locator('.topbar'), 'the phone is still counted').toContainText(`${code} · 1`);
+});
+
+test('a press made while the laptop is away counts when it is back, once', async ({ page, context }) => {
+  const { table, phone, dev, both } = await anaToActOnHerPhone(page, context);
+  await phone.tap();
+  await tick(both);
+  await table.expectToast('Ana: Hold to end your turn');
+
+  // The laptop reloads, and Ana holds while it is gone.
+  await page.goto('about:blank');
+  await phone.hold();
+  await tick([phone.page]);
+  await page.goto('/play');
+  await tick(both);
+  await table.expectActive('Ben');
+  await phone.expectLight('dim');
+  expect(await pressesFrom(page, dev)).toEqual(['tap', 'hold']);
+
+  // Off to the home page and back: nothing is taken twice that way either.
+  await page.getByTitle('Back to the home page').click();
+  await page.getByRole('link', { name: 'Resume your game' }).click();
+  await tick(both);
+  await table.expectActive('Ben');
+  expect(await pressesFrom(page, dev)).toEqual(['tap', 'hold']);
+});
+
+test('a slow site: one read of the inbox at a time, and nothing taken twice', async ({ page, context }) => {
+  const { api, table, phone, dev, both } = await anaToActOnHerPhone(page, context);
+  api.inboxDelayMs = 250;
+  api.inboxMostAtOnce = 0;
+  await phone.hold();
+  await tick(both, 6);
+  await table.expectActive('Ben');
+  await tick(both, 3);
+  expect(await pressesFrom(page, dev)).toEqual(['hold']);
+  expect(api.inboxMostAtOnce, 'the laptop waits for one answer before asking again').toBe(1);
+});
+
+test('a press that sat in the inbox for a minute (the laptop was offline) is let go', async ({ page, context }) => {
+  const { api, code, table, dev, both } = await anaToActOnHerPhone(page, context);
+  api.post(code, { dev, type: 'input', input: 'hold' }, 60_000);
+  await tick(both);
+  await table.expectActive('Ana');
+  api.post(code, { dev, type: 'input', input: 'hold' }, 5_000);
+  await tick(both);
+  await table.expectActive('Ben');
+  expect(await pressesFrom(page, dev)).toEqual(['hold']);
+});
+
 test('a phone that stops checking in is no longer counted; one that comes back keeps its seat', async ({ page, context }) => {
   const { code, table } = await hostWithSite(page, context);
   const phone = await openPhone(context, code);
@@ -404,6 +494,10 @@ test.describe('the game on the site', () => {
     await tick([laptop, phone.page]);
     await expect(laptop.locator('.topbar')).toContainText(`${code} · 1`);
     await expect(phone.who).toHaveText('Ben');
+    // What was in the inbox, the old laptop already took: the new one takes none of it again.
+    const dev = await phone.dev();
+    const { events } = (await liveSlot(laptop)) as { events: { action: { type: string; dev?: string } }[] };
+    expect(events.filter((e) => e.action.dev === dev).map((e) => e.action.type), 'Ben said who he is once').toEqual(['IDENTIFY']);
 
     // The old laptop can no longer save: the game belongs to the new one.
     await page.getByRole('button', { name: 'Give Ana a point' }).click();

@@ -48,6 +48,10 @@ export class Phone {
   identity(): Promise<Record<string, string>> {
     return this.page.evaluate(() => Object.fromEntries(Object.keys(sessionStorage).filter((k) => k.startsWith('pb.phone.')).map((k) => [k, sessionStorage.getItem(k)!])));
   }
+  /** The phone's device id, as the game knows it. */
+  dev(): Promise<string> {
+    return this.page.evaluate(() => sessionStorage.getItem('pb.phone.dev')!);
+  }
   get light(): Locator {
     return this.page.locator('.dev');
   }

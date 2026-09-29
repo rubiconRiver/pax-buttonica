@@ -49,10 +49,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     if (req.method === 'GET') {
-      const [row] = await sql`select seq, record, updated_at from game_states where code = ${code}`;
-      if (!row || Number(row.updated_at) < now - STALE_MS) return res.status(404).json({ error: 'No game with that code.' });
+      // Phones ask several times a second and are usually told "nothing new": only send the record when there is.
       const after = Number(req.query.after);
-      if (Number.isFinite(after) && Number(row.seq) <= after) return res.status(204).end();
+      const known = Number.isFinite(after) ? Math.max(-1, Math.min(Math.floor(after), Number.MAX_SAFE_INTEGER)) : -1;
+      const [row] = await sql`select seq, case when seq > ${known} then record end as record, updated_at from game_states where code = ${code}`;
+      if (!row || Number(row.updated_at) < now - STALE_MS) return res.status(404).json({ error: 'No game with that code.' });
+      if (Number(row.seq) <= known) return res.status(204).end();
       if (req.query.full) return res.status(200).json({ seq: Number(row.seq), record: row.record, events: await events(code), updatedAt: Number(row.updated_at) });
       const { base: _base, ...slim } = row.record as { base?: unknown };
       return res.status(200).json({ seq: Number(row.seq), record: slim, updatedAt: Number(row.updated_at) });
@@ -81,13 +83,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (!rows.length) return res.status(403).json({ error: 'This game belongs to another laptop.' });
       if (eventCount != null) {
         const first = eventCount - incoming.length;
-        await sql`delete from game_events where code = ${code} and i >= ${Math.max(0, first)}`;
-        for (const [k, e] of incoming.entries()) {
-          if (!e || typeof e !== 'object' || typeof e.at !== 'number' || !e.action) continue;
-          const i = first + k;
-          if (i < 0) continue;
-          await sql`insert into game_events (code, i, at, action) values (${code}, ${i}, ${e.at}, ${JSON.stringify({ action: e.action, ...(e.auto ? { auto: true } : {}), ...(e.noop ? { noop: true } : {}) })}::jsonb) on conflict (code, i) do update set at = excluded.at, action = excluded.action`;
-        }
+        // All in one statement: after an undo the whole log comes again, a thousand events late in a game.
+        const list = incoming.flatMap((e, k) =>
+          !e || typeof e !== 'object' || typeof e.at !== 'number' || !e.action || first + k < 0
+            ? []
+            : [{ i: first + k, at: Math.round(e.at), action: { action: e.action, ...(e.auto ? { auto: true } : {}), ...(e.noop ? { noop: true } : {}) } }],
+        );
+        await sql.transaction((tx) => [
+          tx`delete from game_events where code = ${code} and i >= ${Math.max(0, first)}`,
+          ...(list.length
+            ? [tx`insert into game_events (code, i, at, action)
+                select ${code}::text, e.i, e.at, e.action from jsonb_to_recordset(${JSON.stringify(list)}::jsonb) as e(i integer, at bigint, action jsonb)
+                on conflict (code, i) do update set at = excluded.at, action = excluded.action`]
+            : []),
+        ]);
       }
       return res.status(200).json({ ok: true, seq: Number(rows[0].seq) });
     }

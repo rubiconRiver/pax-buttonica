@@ -3,7 +3,7 @@
  * through its rules engine; the result comes back to the phone in the next copy of the game.
  *
  *   POST /api/actions?code=ABCD            { dev, type: 'input', input } | { dev, type: 'identify', profileId } | { dev, type: 'hello' } | { dev, type: 'preview', fx }
- *   GET  /api/actions?code=ABCD&key=…&after=N   → { actions: [{ seq, data }] }      host only
+ *   GET  /api/actions?code=ABCD&key=…&after=N   → { actions: [{ seq, data, at }], now }      host only; `at` and `now` on the site's clock
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { CODE, KEY, ensureSchema, sql } from './_db.js';
@@ -49,7 +49,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const after = Math.max(0, Number(req.query.after) || 0);
       const rows = await sql`select seq, data, at from game_actions where code = ${code} and seq > ${after} order by seq limit 200`;
       if (Math.random() < 0.05) await sql`delete from game_actions where at < ${now - TTL_MS}`;
-      return res.status(200).json({ actions: rows.map((r) => ({ seq: Number(r.seq), data: r.data, at: Number(r.at) })) });
+      return res.status(200).json({ actions: rows.map((r) => ({ seq: Number(r.seq), data: r.data, at: Number(r.at) })), now });
     }
 
     res.setHeader('Allow', 'GET, POST');
