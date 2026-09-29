@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react';
 import { useStore } from '../../state/createStore';
 import { LAYOUTS, SCORING_CUES, settingsStore } from '../../state/settings';
 import { DEFAULT_FANFARE_MS } from '../../engine/engine';
-import { TURN_EFFECTS, TURN_LOOKS } from '../../engine/outputs';
+import { MIN_BRIGHTNESS, MIN_WAITING, TURN_EFFECTS, TURN_LOOKS } from '../../engine/outputs';
 import { syncStatus } from '../../remote/sync';
 import { exportGame } from '../../state/archive';
 import { liveGame } from '../../state/game';
+
+const pct = (x: number) => `${Math.round(x * 100)}%`;
 
 export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo }: { onClose(): void; onExit(): void; onReseat(): void; onPrimaryStage(on: boolean): void; demo: boolean }) {
   const s = useStore(settingsStore);
@@ -62,10 +64,6 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         </div>
         <small className="muted">What a button does the moment its turn starts. Players can pick their own from their phone.</small>
       </div>
-      <label className="field" title="Real buttons only. The screen's buttons don't change.">
-        <span>Button brightness <b className="mono-num">{Math.round(s.brightness * 100)}%</b></span>
-        <input type="range" min={0.1} max={1} step={0.05} value={s.brightness} onChange={(e) => set({ brightness: +e.target.value })} />
-      </label>
       <label className="field">
         <span>Volume <b className="mono-num">{Math.round(s.volume * 100)}%</b></span>
         <input type="range" min={0} max={1} step={0.05} value={s.volume} onChange={(e) => set({ volume: +e.target.value })} />
@@ -78,6 +76,20 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <input type="checkbox" checked={s.primaryStage} onChange={(e) => { set({ primaryStage: e.target.checked }); onPrimaryStage(e.target.checked); }} />
         <span>Strategy cards: primary first, then secondaries</span>
       </label>
+      <div className="settings__h">Button brightness</div>
+      <label className="field" title="Your move, and every steady light">
+        <span>Your turn <b className="mono-num">{pct(s.brightness)}</b></span>
+        <input type="range" min={MIN_BRIGHTNESS} max={1} step={0.05} value={s.brightness} onChange={(e) => set({ brightness: +e.target.value })} />
+      </label>
+      <label className="field" title="Everyone who is waiting, and the low point of a breathing or blinking light">
+        <span>Waiting <b className="mono-num">{pct(s.waitingBrightness)}</b></span>
+        <input type="range" min={MIN_WAITING} max={0.5} step={0.01} value={s.waitingBrightness} onChange={(e) => set({ waitingBrightness: +e.target.value })} />
+      </label>
+      <label className="field" title="Turn effects, and the press and the hold">
+        <span>Effects <b className="mono-num">{pct(s.effectsBrightness)}</b></span>
+        <input type="range" min={MIN_BRIGHTNESS} max={1} step={0.05} value={s.effectsBrightness} onChange={(e) => set({ effectsBrightness: +e.target.value })} />
+      </label>
+      <small className="muted">Of each real button's full brightness. Players can dim their own from their phone. The screen keeps your turn at full and the others in proportion.</small>
       <div className="settings__h">Status phase</div>
       <label className="toggle" title="When the last player passes, every light cycles through the rainbow for a moment">
         <input type="checkbox" checked={s.fanfareMs > 0} onChange={(e) => set({ fanfareMs: e.target.checked ? DEFAULT_FANFARE_MS : 0 })} />

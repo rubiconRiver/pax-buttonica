@@ -14,11 +14,15 @@ const RED = 'ff3b3b';
 const ORANGE = 'ff8a1f';
 const YELLOW = 'ffd21f';
 
-async function startWithHub(page: import('@playwright/test').Page) {
+/** The table's default light levels on the wire: your turn at half, waiting at a tenth, effects at 80 %. */
+const LEVELS = { bright: 50, dim: 10, fx: 80 };
+
+/** Buttons on `fw` (A and B; C is the old three-button device). */
+async function startWithHub(page: import('@playwright/test').Page, fw = '0.1.0') {
   await installFakeHub(page);
   await setUpGame(page, { names: ['Ana', 'Ben', 'Cleo'] });
   await page.getByRole('button', { name: 'Hub', exact: true }).click();
-  await feed(page, { t: 'hub', v: 0, fw: '0.1.0' }, hello(A), hello(B), hello(C, { btn: 3, led: 'ring', audio: 'none' }));
+  await feed(page, { t: 'hub', v: 0, fw: '0.1.0' }, hello(A, undefined, fw), hello(B, undefined, fw), hello(C, { btn: 3, led: 'ring', audio: 'none' }));
   await expect(page.getByRole('button', { name: 'Hub · 3' })).toBeVisible();
   return new Table(page);
 }
@@ -27,8 +31,9 @@ test('connecting asks the hub to announce itself and configures every button tha
   await startWithHub(page);
   const out = await sent(page);
   expect(out[0]).toEqual({ t: 'hub?' });
-  // Settings for the table, and how to draw "your move" (solid, unless the host or the player says otherwise) at full brightness.
-  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 2000, flash: 2000, bright: 100, pulse: 'solid' });
+  // Settings for the table: hold and blink times, the three light levels, and how to draw "your move" (solid, unless
+  // the host or the player says otherwise).
+  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'solid' });
   // A later hello may be a heartbeat, or the same button back from a battery swap with its memory wiped.
   // Either way it is told its settings and its light again.
   const leds = (await sent(page)).filter((m) => m.t === 'led' && m.dev === A).length;
@@ -50,7 +55,8 @@ test('seat claiming with real buttons: white breathing, then your colour', async
   // Ana is called first, and presses the button that happens to be B.
   await feed(page, press(B, 'tap'));
   await expect(table.center.locator('.center__active')).toHaveText('Ben');
-  expect(await lastLed(page, B)).toEqual({ t: 'led', dev: B, c: RED, m: 'solid' });
+  // Claimed: a hold on it means nothing until the game starts, and the button is told so.
+  expect(await lastLed(page, B)).toEqual({ t: 'led', dev: B, c: RED, m: 'solid', h: 0 });
   expect(await lastLed(page, A)).toMatchObject({ c: 'ffffff', m: 'pulse' });
   expect(await sent(page)).toContainEqual({ t: 'fx', dev: B, k: 'ack' });
 
@@ -86,7 +92,8 @@ test('a turn played entirely on real buttons', async ({ page }) => {
   expect(await lastLed(page, A)).toMatchObject({ c: 'e5484d', m: 'flash' });
   expect((await lastLed(page, A))!.p).toBeLessThan(2000);
 
-  // Locked in: the button is told to shake its head.
+  // Locked in: the button is told to shake its head (this firmware is too old to have known already).
+  expect((await lastLed(page, A))!.h).toBe(0);
   await feed(page, press(A, 'hold'));
   await table.expectToast(/finish the primary first/);
   expect((await sent(page)).filter((m) => m.t === 'fx' && m.dev === A && m.k === 'denied')).toHaveLength(1);
@@ -159,7 +166,50 @@ test('settings reach the buttons live', async ({ page }) => {
   const panel = await openSettings(page);
   await setSlider(panel.locator('input[type=range]').first(), 1500);
   await setSlider(panel.locator('input[type=range]').nth(1), 3000);
-  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000, bright: 100, pulse: 'solid' });
+  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000, ...LEVELS, pulse: 'solid' });
+});
+
+test('three light levels: your turn, waiting and effects, set by the host; the screen follows the last two in proportion', async ({ page }) => {
+  const table = await startWithHub(page);
+  for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectLights({ Ana: 'pulse', Ben: 'dim' });
+  const lum = () => table.light('Ben').evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--lum')));
+  expect(await lum(), 'waiting at 10 % next to your turn at 50 %: a fifth, as the screen always drew it').toBeCloseTo(0.2, 3);
+
+  const panel = await openSettings(page);
+  await setSlider(panel.getByRole('slider', { name: /Your turn/ }), 0.8);
+  await setSlider(panel.getByRole('slider', { name: /Waiting/ }), 0.04);
+  await setSlider(panel.getByRole('slider', { name: /Effects/ }), 1);
+  await expect(panel).toContainText('Waiting 4%');
+  for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toEqual({ t: 'cfg', dev, hold: 900, flash: 2000, bright: 80, dim: 4, fx: 100, pulse: 'solid' });
+  await expect.poll(lum).toBeCloseTo(0.05, 3);
+  expect(await lastLed(page, B), 'no new light: only how bright it is').toMatchObject({ c: ORANGE, m: 'dim' });
+});
+
+test('a button that knows a hold will be refused refuses it itself, and is not told twice', async ({ page }) => {
+  const table = await startWithHub(page, '0.3.10');
+  for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectActive('Ana');
+  // Ana's hold would end her turn; Ben's would do nothing.
+  expect((await lastLed(page, A))!.h).toBeUndefined();
+  expect(await lastLed(page, B)).toMatchObject({ c: ORANGE, m: 'dim', h: 0 });
+
+  await feed(page, press(A, 'double'));
+  await table.center.getByRole('button', { name: '1 Leadership' }).click();
+  expect(await lastLed(page, A)).toMatchObject({ m: 'flash', h: 0 });
+  await feed(page, press(A, 'hold'));
+  await table.expectToast(/finish the primary first/);
+  expect((await sent(page)).filter((m) => m.t === 'fx' && m.dev === A && m.k === 'denied'), 'it already shook its head').toHaveLength(0);
+
+  // Secondaries: a hold answers the card, as a tap does, so Ben's button may take one.
+  await page.clock.fastForward(700);
+  await feed(page, press(A, 'tap'));
+  expect(await lastLed(page, B)).toMatchObject({ m: 'flash' });
+  expect((await lastLed(page, B))!.h).toBeUndefined();
+  await feed(page, press(B, 'hold'));
+  expect(await lastLed(page, B)).toMatchObject({ c: ORANGE, m: 'dim', h: 0 });
 });
 
 test('the look of "your move" and the brightness are configuration, not a different light', async ({ page }) => {
@@ -171,9 +221,9 @@ test('the look of "your move" and the brightness are configuration, not a differ
   const panel = await openSettings(page);
   await panel.getByRole('radio', { name: 'Breathe' }).click();
   await panel.getByRole('radio', { name: 'Heartbeat' }).click();
-  await setSlider(panel.locator('input[type=range]').nth(2), 0.5);
+  await setSlider(panel.getByRole('slider', { name: /Your turn/ }), 0.7);
   const cfgs = (await sent(page)).filter((m) => m.t === 'cfg' && m.dev === A);
-  expect(cfgs.at(-1)).toEqual({ t: 'cfg', dev: A, hold: 2000, flash: 2000, bright: 50, pulse: 'heartbeat' });
+  expect(cfgs.at(-1)).toEqual({ t: 'cfg', dev: A, hold: 900, flash: 2000, ...LEVELS, bright: 70, pulse: 'heartbeat' });
   expect(cfgs.some((m) => m.pulse === 'pulse')).toBe(true);
   // No new light was sent for it: the colour and meaning didn't change.
   expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse' });

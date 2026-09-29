@@ -1,5 +1,5 @@
 import { cardByNumber, colorById } from './data';
-import { currentPicker, currentScorer, currentVoter } from './engine';
+import { currentPicker, currentScorer, currentVoter, holdCounts } from './engine';
 import type { GameState } from './types';
 
 /**
@@ -77,11 +77,47 @@ export const isTurnEffect = (x: unknown): x is TurnEffect => TURN_EFFECTS.some((
 export const MIN_BRIGHTNESS = 0.1;
 export const clampBrightness = (b: unknown): number => (typeof b === 'number' && Number.isFinite(b) ? Math.min(1, Math.max(MIN_BRIGHTNESS, b)) : 1);
 
+/**
+ * How bright a real button draws each kind of light, each a share of its full output: `turn` for your move (and
+ * every steady light), `waiting` for `dim` (and the floor under the animated modes), `effects` for the one-shots, the
+ * press and the hold. The host sets them for the table; a player's own brightness scales all three on their button.
+ */
+export interface LightLevels {
+  turn: number;
+  waiting: number;
+  effects: number;
+}
+
+export const DEFAULT_LEVELS: LightLevels = { turn: 0.5, waiting: 0.1, effects: 0.8 };
+
+/** Waiting may go lower than the others: it only has to be told apart from off. */
+export const MIN_WAITING = 0.01;
+
+const share = (x: unknown, fallback: number, min: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(1, Math.max(min, x)) : fallback);
+
+/** The three levels from the host's settings (or a phone's copy of them); anything missing is the default. */
+export const levelsOf = (s: { brightness?: unknown; waitingBrightness?: unknown; effectsBrightness?: unknown }): LightLevels => ({
+  turn: share(s.brightness, DEFAULT_LEVELS.turn, MIN_BRIGHTNESS),
+  waiting: share(s.waitingBrightness, DEFAULT_LEVELS.waiting, MIN_WAITING),
+  effects: share(s.effectsBrightness, DEFAULT_LEVELS.effects, MIN_BRIGHTNESS),
+});
+
+/**
+ * A screen can't be half as bright as a button, so it draws your move at full and the other two in proportion to
+ * it: `dim` is how bright waiting is, `fx` how bright effects are, each 0–1 (the defaults give the screen's usual 0.2 and 1).
+ */
+export const screenLevels = (l: LightLevels): { dim: number; fx: number } => ({
+  dim: Math.min(1, l.waiting / l.turn),
+  fx: Math.min(1, l.effects / l.turn),
+});
+
 export interface DeviceOutput {
   color: string;
   mode: LedMode;
   /** Why the light looks like this — shown in the simulator, ignored by hardware. */
   reason: string;
+  /** Whether a hold would do anything right now. False: the button can show the refusal while it is still held. Absent means yes. */
+  hold?: boolean;
 }
 
 /** What a button nobody has claimed yet shows while seats are being claimed. */
@@ -89,64 +125,67 @@ export const UNCLAIMED: DeviceOutput = { color: '#ffffff', mode: 'pulse', reason
 
 /** Pure function of game state → what every button should be showing right now. */
 export function deriveOutputs(g: GameState): DeviceOutput[] {
-  return g.players.map((p, seat): DeviceOutput => {
-    const own = colorById(p.color).led;
-    if (g.seating) {
-      return g.bindings[seat]
-        ? { color: own, mode: 'solid', reason: 'Seat claimed' }
-        : { color: own, mode: 'off', reason: 'No button yet' };
+  return g.players.map((_, seat) => ({ ...light(g, seat), hold: holdCounts(g, seat) }));
+}
+
+function light(g: GameState, seat: number): DeviceOutput {
+  const p = g.players[seat];
+  const own = colorById(p.color).led;
+  if (g.seating) {
+    return g.bindings[seat]
+      ? { color: own, mode: 'solid', reason: 'Seat claimed' }
+      : { color: own, mode: 'off', reason: 'No button yet' };
+  }
+  switch (g.phase) {
+    case 'strategy': {
+      if (seat === currentPicker(g)) return { color: own, mode: 'pulse', reason: 'Choosing a strategy card' };
+      return p.cards.length
+        ? { color: own, mode: 'dim', reason: 'Has chosen' }
+        : { color: own, mode: 'off', reason: 'Waiting to choose' };
     }
-    switch (g.phase) {
-      case 'strategy': {
-        if (seat === currentPicker(g)) return { color: own, mode: 'pulse', reason: 'Choosing a strategy card' };
-        return p.cards.length
-          ? { color: own, mode: 'dim', reason: 'Has chosen' }
-          : { color: own, mode: 'off', reason: 'Waiting to choose' };
-      }
-      case 'action': {
-        const sp = g.strategyPlay;
-        if (sp) {
-          const c = cardByNumber(sp.card);
-          if (sp.stage === 'primary') {
-            return seat === sp.by
-              ? { color: c.color, mode: 'flash', reason: `Doing the ${c.name} primary — tap when done` }
-              : p.passed
-                ? { color: own, mode: 'off', reason: 'Passed' }
-                : { color: own, mode: 'dim', reason: `${c.name} primary in progress` };
-          }
-          if (seat === sp.by) {
-            return sp.acks.every(Boolean)
-              ? { color: own, mode: 'pulse', reason: 'Everyone responded — hold to end turn' }
-              : { color: c.color, mode: 'solid', reason: `Played ${c.name}` };
-          }
-          return sp.acks[seat]
-            ? { color: own, mode: 'dim', reason: 'Responded' }
-            : { color: c.color, mode: 'flash', reason: `${c.name} played — tap when done` };
+    case 'action': {
+      const sp = g.strategyPlay;
+      if (sp) {
+        const c = cardByNumber(sp.card);
+        if (sp.stage === 'primary') {
+          return seat === sp.by
+            ? { color: c.color, mode: 'flash', reason: `Doing the ${c.name} primary — tap when done` }
+            : p.passed
+              ? { color: own, mode: 'off', reason: 'Passed' }
+              : { color: own, mode: 'dim', reason: `${c.name} primary in progress` };
         }
-        if (seat === g.active) return { color: own, mode: 'pulse', reason: 'Your turn — hold to end it' };
-        if (p.passed) return { color: own, mode: 'off', reason: 'Passed' };
-        return { color: own, mode: 'dim', reason: 'Waiting' };
-      }
-      case 'status': {
-        if (g.statusStep === 'fanfare') return { color: own, mode: 'rainbow', reason: 'The round is over!' };
-        if (g.statusStep === 'scoring') {
-          if (seat === currentScorer(g)) return { color: own, mode: 'pulse', reason: 'Your turn to score — tap when done' };
-          return g.scoringOrder.indexOf(seat) < g.scoringIdx
-            ? { color: own, mode: 'dim', reason: 'Scored' }
-            : { color: own, mode: 'dim', reason: 'Waiting to score' };
+        if (seat === sp.by) {
+          return sp.acks.every(Boolean)
+            ? { color: own, mode: 'pulse', reason: 'Everyone responded — hold to end turn' }
+            : { color: c.color, mode: 'solid', reason: `Played ${c.name}` };
         }
-        return g.ready[seat]
-          ? { color: own, mode: 'dim', reason: 'Ready' }
-          : { color: '#ffffff', mode: 'pulse', reason: 'Status phase — tap when ready' };
+        return sp.acks[seat]
+          ? { color: own, mode: 'dim', reason: 'Responded' }
+          : { color: c.color, mode: 'flash', reason: `${c.name} played — tap when done` };
       }
-      case 'agenda':
-        return seat === currentVoter(g)
-          ? { color: own, mode: 'pulse', reason: 'Your vote — tap when done' }
-          : { color: own, mode: 'dim', reason: 'Waiting to vote' };
-      case 'finished':
-        return seat === g.winner
-          ? { color: own, mode: 'rainbow', reason: 'Winner!' }
-          : { color: own, mode: 'dim', reason: 'Game over' };
+      if (seat === g.active) return { color: own, mode: 'pulse', reason: 'Your turn — hold to end it' };
+      if (p.passed) return { color: own, mode: 'off', reason: 'Passed' };
+      return { color: own, mode: 'dim', reason: 'Waiting' };
     }
-  });
+    case 'status': {
+      if (g.statusStep === 'fanfare') return { color: own, mode: 'rainbow', reason: 'The round is over!' };
+      if (g.statusStep === 'scoring') {
+        if (seat === currentScorer(g)) return { color: own, mode: 'pulse', reason: 'Your turn to score — tap when done' };
+        return g.scoringOrder.indexOf(seat) < g.scoringIdx
+          ? { color: own, mode: 'dim', reason: 'Scored' }
+          : { color: own, mode: 'dim', reason: 'Waiting to score' };
+      }
+      return g.ready[seat]
+        ? { color: own, mode: 'dim', reason: 'Ready' }
+        : { color: '#ffffff', mode: 'pulse', reason: 'Status phase — tap when ready' };
+    }
+    case 'agenda':
+      return seat === currentVoter(g)
+        ? { color: own, mode: 'pulse', reason: 'Your vote — tap when done' }
+        : { color: own, mode: 'dim', reason: 'Waiting to vote' };
+    case 'finished':
+      return seat === g.winner
+        ? { color: own, mode: 'rainbow', reason: 'Winner!' }
+        : { color: own, mode: 'dim', reason: 'Game over' };
+  }
 }

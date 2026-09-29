@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import * as engineModule from './engine';
-import { createGame, currentScorer, seatOfDevice, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
+import { core, createGame, currentScorer, seatOfDevice, endTurnBlocker, holdCounts, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
 import { cardByNumber } from './data';
-import { deriveOutputs } from './outputs';
+import { DEFAULT_LEVELS, MIN_WAITING, deriveOutputs, levelsOf, screenLevels } from './outputs';
 import { createGameStore } from '../state/game';
 import type { Action, GameState, PlayerSetup } from './types';
 
@@ -203,6 +203,68 @@ describe('action phase', () => {
     expect(choosing.choosingCard).toBe(true);
     expect(reduce(choosing, { type: 'ADVANCE', at: 1 }).choosingCard).toBe(false);
     expect(reduce(choosing, { type: 'GOTO', phase: 'agenda', at: 1 }).choosingCard).toBe(false);
+  });
+});
+
+describe('what a hold would do', () => {
+  /** A hold counts if it changes the game; a refusal leaves only an effect and a log line. */
+  const counts = (g: GameState, seat: number) => core(reduce(g, { type: 'INPUT', seat, input: 'hold', at: 1 })) !== core(g);
+
+  it('is known before the hold, at every step of a game', () => {
+    const steps: Action[] = [
+      ...[1, 2, 3, 4, 5, 6, 7, 8].map(pick),
+      { type: 'INPUT', seat: 0, input: 'double', at: 0 }, // two cards in hand: which one?
+      { type: 'PLAY_CARD', card: 1, at: 0 }, // the primary
+      { type: 'PRIMARY_DONE', at: 0 }, // secondaries
+      { type: 'INPUT', seat: 1, input: 'tap', at: 0 },
+      { type: 'ACK_ALL', at: 0 }, // all clear
+      { type: 'INPUT', seat: 0, input: 'hold', at: 0 }, // the next player's turn
+      { type: 'ADVANCE', at: 0 }, // status: the fanfare
+      { type: 'FANFARE_DONE', at: 0 }, // scoring, one at a time
+      { type: 'INPUT', seat: 0, input: 'tap', at: 0 },
+      { type: 'SKIP_SCORING', at: 0 }, // the tidy-up
+      { type: 'INPUT', seat: 2, input: 'tap', at: 0 },
+      { type: 'SET_CUSTODIANS', removed: true },
+      { type: 'READY_ALL', at: 0 }, // agenda
+      { type: 'VOTE_DONE', at: 0 },
+      { type: 'START_SEATING', at: 0 },
+      { type: 'SKIP_SEATING', devices: [0, 1, 2, 3].map(simDevice), at: 0 },
+      { type: 'VP', seat: 2, delta: 10, at: 0 }, // finished
+    ];
+    let g = createGame(setup(4), { vpTarget: 10, speaker: 0, primaryStage: true }, 0);
+    const answers = new Set<boolean>();
+    for (const a of [null, ...steps]) {
+      if (a) g = reduce(g, a);
+      for (let seat = 0; seat < 4; seat++) {
+        expect(holdCounts(g, seat), `after ${a?.type ?? 'the start'} (${g.phase}), seat ${seat}`).toBe(counts(g, seat));
+        answers.add(holdCounts(g, seat));
+      }
+    }
+    expect(g.phase).toBe('finished');
+    expect([...answers].sort()).toEqual([false, true]);
+  });
+
+  it('goes out with every light, and a refused hold says it was a hold', () => {
+    let g = reduce(sixInAction(), { type: 'INPUT', seat: 5, input: 'strategy', at: 10 });
+    // Everyone else can answer the card with a hold; the player who played it can't end their turn yet.
+    expect(deriveOutputs(g).map((o) => o.hold)).toEqual([true, true, true, true, true, false]);
+    g = reduce(g, { type: 'INPUT', seat: 5, input: 'hold', at: 20 });
+    expect(g.fx.at(-1)).toMatchObject({ kind: 'denied', seat: 5, input: 'hold' });
+    // The host's own end-turn button isn't anyone's press.
+    g = reduce(g, { type: 'END_TURN', at: 25 });
+    expect(g.fx.at(-1)).toMatchObject({ kind: 'denied', seat: 5 });
+    expect(g.fx.at(-1)?.input).toBeUndefined();
+    g = reduce(g, { type: 'ACK_ALL', at: 30 });
+    expect(deriveOutputs(g).map((o) => o.hold)).toEqual([false, false, false, false, false, true]);
+  });
+});
+
+describe('light levels', () => {
+  it('fills in and clamps the host\'s levels; the screen keeps your turn at full and the others in proportion', () => {
+    expect(levelsOf({})).toEqual(DEFAULT_LEVELS);
+    expect(levelsOf({ brightness: 5, waitingBrightness: 0, effectsBrightness: 'bright' })).toEqual({ turn: 1, waiting: MIN_WAITING, effects: DEFAULT_LEVELS.effects });
+    expect(screenLevels(DEFAULT_LEVELS)).toEqual({ dim: 0.2, fx: 1 });
+    expect(screenLevels({ turn: 0.4, waiting: 0.2, effects: 0.2 })).toEqual({ dim: 0.5, fx: 0.5 });
   });
 });
 

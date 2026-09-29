@@ -42,7 +42,7 @@ function HeroButton() {
         }}
       />
       <div className="hero__msg" key={msg?.id ?? 0} data-idle={!msg || undefined}>
-        {msg?.text ?? 'Go on. Tap it, double-tap it, hold it for two seconds.'}
+        {msg?.text ?? 'Go on. Tap it, double-tap it, hold it for a second.'}
       </div>
     </div>
   );
@@ -101,7 +101,7 @@ export function Landing() {
         <div className="section__head">
           <div className="eyebrow">The whole interface</div>
           <h2>Four lights and three gestures</h2>
-          <p>Tap means <b>"I'm done."</b> Double-tap means <b>"I'm playing my strategy card."</b> Hold for two seconds means <b>"end my turn."</b> That's the manual.</p>
+          <p>Tap means <b>"I'm done."</b> Double-tap means <b>"I'm playing my strategy card."</b> Hold for a second means <b>"end my turn."</b> That's the manual.</p>
         </div>
         <div className="lights">
           {LIGHTS.map((l) => (

@@ -1,5 +1,7 @@
 /* The button. One custom property, --lum (0..1), is "how bright is the LED right now";
-   every glow, spill and reflection is derived from it so all modes stay consistent. */
+   every glow, spill and reflection is derived from it so all modes stay consistent.
+   --gain scales it while an effect plays. The host's light levels arrive as --dim-lum (waiting) and --fx-gain
+   (effects), in proportion to "your move" (screenLevels in src/engine/outputs.ts). */
 
 @property --lum {
   syntax: '<number>';
@@ -11,6 +13,7 @@
   --size: 140px;
   --led: #ffffff;
   --lum: 0;
+  --gain: 1;
   position: relative;
   width: var(--size);
   height: var(--size);
@@ -22,7 +25,7 @@
 }
 
 .dev[data-mode='off'] { --lum: 0.025; }
-.dev[data-mode='dim'] { --lum: 0.2; }
+.dev[data-mode='dim'] { --lum: var(--dim-lum, 0.2); }
 .dev[data-mode='solid'] { --lum: 1; }
 .dev[data-mode='pulse'] { animation: dev-pulse 1.7s ease-in-out infinite; }
 /* "Your move", drawn to taste: steady, or two quick beats then a rest (the firmware's heartbeat, 1.3 s). */
@@ -61,7 +64,7 @@
   inset: -55%;
   border-radius: 50%;
   background: radial-gradient(closest-side, color-mix(in srgb, var(--led) 62%, transparent) 0%, color-mix(in srgb, var(--led) 18%, transparent) 45%, transparent 72%);
-  opacity: calc(var(--lum) * 0.8);
+  opacity: calc(var(--lum) * var(--gain) * 0.8);
   pointer-events: none;
 }
 .dev[data-mode='rainbow'] .dev__halo { animation: dev-hue 2.2s linear infinite; }
@@ -89,7 +92,7 @@
   box-shadow:
     inset 0 5px 12px #000,
     0 1px 0 rgba(255, 255, 255, 0.12),
-    inset 0 0 calc(var(--size) * 0.16) color-mix(in srgb, var(--led) calc(var(--lum) * 85%), transparent);
+    inset 0 0 calc(var(--size) * 0.16) color-mix(in srgb, var(--led) calc(var(--lum) * var(--gain) * 85%), transparent);
 }
 
 /* Hold-to-confirm ring. */
@@ -119,6 +122,15 @@
 @keyframes dev-ring {
   to { stroke-dashoffset: 0; }
 }
+/* A hold that would do nothing: the ring is red and full at once, and shakes for as long as it is held (as a real
+   button does when told "h": 0). The hold is still reported; the game decides. */
+.dev[data-refused] .dev__ring-fill { stroke: #ff2d45; filter: drop-shadow(0 0 3px #ff2d45) drop-shadow(0 0 8px #ff2d45); }
+.dev[data-refused][data-holding] .dev__ring-fill { animation: none; stroke-dashoffset: 0; }
+.dev[data-refused][data-holding] .dev__ring { animation: dev-refuse 0.22s linear infinite; }
+@keyframes dev-refuse {
+  25% { translate: -2px 0; }
+  75% { translate: 2px 0; }
+}
 
 /* The dome itself. */
 .dev__dome {
@@ -134,7 +146,7 @@
   box-shadow:
     0 calc(var(--size) * 0.05) 0 #07090e,
     0 calc(var(--size) * 0.085) calc(var(--size) * 0.09) rgba(0, 0, 0, 0.65),
-    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * 60%), transparent);
+    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * var(--gain) * 60%), transparent);
   transition: transform 0.24s cubic-bezier(0.2, 1.6, 0.35, 1), box-shadow 0.24s ease-out;
   outline: none;
 }
@@ -148,7 +160,7 @@
   box-shadow:
     0 calc(var(--size) * 0.006) 0 #07090e,
     0 calc(var(--size) * 0.02) calc(var(--size) * 0.03) rgba(0, 0, 0, 0.7),
-    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * 60%), transparent);
+    0 0 calc(var(--size) * 0.3) color-mix(in srgb, var(--led) calc(var(--lum) * var(--gain) * 60%), transparent);
   transition-duration: 0.045s;
   transition-timing-function: ease-out;
 }
@@ -164,7 +176,7 @@
 }
 
 .dev__light {
-  opacity: var(--lum);
+  opacity: calc(var(--lum) * var(--gain));
   background: radial-gradient(circle at 38% 30%, color-mix(in oklab, var(--led) 72%, white) 0%, var(--led) 46%, color-mix(in oklab, var(--led) 58%, #000) 100%);
 }
 
@@ -172,7 +184,7 @@
 .dev__core {
   background: radial-gradient(circle at 50% 52%, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.2) 24%, transparent 56%);
   mix-blend-mode: screen;
-  opacity: calc((var(--lum) - 0.3) * 0.6);
+  opacity: calc((var(--lum) * var(--gain) - 0.3) * 0.6);
 }
 
 .dev__spec {
@@ -236,7 +248,8 @@
   initial-value: #ffffff;
 }
 
-.dev__fx { position: absolute; inset: 0; pointer-events: none; z-index: 2; }
+.dev[data-react]:not([data-react='denied'], [data-react='hint']) { --gain: var(--fx-gain, 1); }
+.dev__fx { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: var(--gain); }
 .dev__fx i { position: absolute; display: block; }
 
 /* Ripple: two waves roll out from the centre, over the dome and past its rim. Warp: three fall inward, then a flash. */

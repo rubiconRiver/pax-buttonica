@@ -5,6 +5,7 @@ import { deriveOutputs } from '../engine/outputs';
 import type { GameState } from '../engine/types';
 import { useStore } from '../state/createStore';
 import { seedDemo } from '../state/demo';
+import { DEFAULT_SETTINGS } from '../state/settings';
 import { createGameStore } from '../state/game';
 import { HexTable } from './game/HexTable';
 import { seatPosition } from './game/geometry';
@@ -92,7 +93,7 @@ function MiniTableView({ game }: { game: GameState }) {
             output={outputs[seat]}
             look="pulse"
             size={92}
-            holdMs={2000}
+            holdMs={DEFAULT_SETTINGS.holdMs}
             isSpeaker={game.speaker === seat}
             hasZero={false}
             isActive={game.active === seat}

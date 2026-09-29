@@ -47,9 +47,9 @@ export const sent = (page: Page): Promise<any[]> => page.evaluate(() => (window 
 void hub;
 
 /** The most recent light sent to a button. */
-export async function lastLed(page: Page, dev: string): Promise<{ c: string; m: string; p?: number } | undefined> {
+export async function lastLed(page: Page, dev: string): Promise<{ c: string; m: string; p?: number; h?: 0 } | undefined> {
   return (await sent(page)).filter((m) => m.t === 'led' && m.dev === dev).pop();
 }
 
-export const hello = (dev: string, caps = { btn: 1, led: 'ring', audio: 'none' }) => ({ t: 'hello', dev, fw: '0.1.0', caps });
+export const hello = (dev: string, caps = { btn: 1, led: 'ring', audio: 'none' }, fw = '0.1.0') => ({ t: 'hello', dev, fw, caps });
 export const press = (dev: string, e: 'tap' | 'double' | 'hold', b = 0) => ({ t: 'btn', dev, b, e });

@@ -1,5 +1,5 @@
 import { DEFAULT_FANFARE_MS } from '../engine/engine';
-import type { TurnEffect, TurnLook } from '../engine/outputs';
+import { DEFAULT_LEVELS, type TurnEffect, type TurnLook } from '../engine/outputs';
 import { createStore } from './createStore';
 
 /** What the player whose turn it is to score gets, besides their light: the turn-start ring and their entrance music, a chime, or nothing. */
@@ -36,8 +36,12 @@ export interface Settings {
   turnLight: TurnLook;
   /** What a button does the moment its turn starts, unless its player chose for themselves. */
   turnFx: TurnEffect;
-  /** Real buttons only: a share of their full brightness, 0.1–1. */
+  /** Real buttons: how bright "your move" and every steady light is, a share of their full output, 0.1–1… */
   brightness: number;
+  /** …how bright waiting (`dim`) is… */
+  waitingBrightness: number;
+  /** …and the one-shots: effects, the press, the hold. The screen and phones follow the last two in proportion (`screenLevels`). */
+  effectsBrightness: number;
   /** Players laid out in the order they act, or where they sit. */
   layout: Layout;
   /** Status phase: how long every light celebrates the end of the round (0 = not at all)… */
@@ -49,7 +53,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  holdMs: 2000,
+  holdMs: 900,
   flashMs: 2000,
   sound: true,
   volume: 0.8,
@@ -59,11 +63,36 @@ export const DEFAULT_SETTINGS: Settings = {
   autoScoreboard: true,
   turnLight: 'solid',
   turnFx: 'ring',
-  brightness: 1,
+  brightness: DEFAULT_LEVELS.turn,
+  waitingBrightness: DEFAULT_LEVELS.waiting,
+  effectsBrightness: DEFAULT_LEVELS.effects,
   layout: 'order',
   fanfareMs: DEFAULT_FANFARE_MS,
   scoreInOrder: true,
   scoringCue: 'turn',
 };
 
-export const settingsStore = createStore<Settings>(DEFAULT_SETTINGS, 'pb.settings.v1');
+const KEY = 'pb.settings.v2';
+
+/**
+ * Settings are saved whole the first time anything is touched, so a changed default never reached a laptop that had
+ * saved them. v1 → v2 (2026-09-29): the hold went from 2 s to 0.9 s and brightness from 100 % to 50 %. Where a v1
+ * still has the old default, nobody chose it: it moves to the new one. Anything set by hand stays.
+ */
+function migrate() {
+  try {
+    if (localStorage.getItem(KEY) != null) return;
+    const raw = localStorage.getItem('pb.settings.v1');
+    if (!raw) return;
+    const old = JSON.parse(raw) as Partial<Settings>;
+    if (old.holdMs === 2000) delete old.holdMs;
+    if (old.brightness === 1) delete old.brightness;
+    localStorage.setItem(KEY, JSON.stringify(old));
+    localStorage.removeItem('pb.settings.v1');
+  } catch {
+    // Private mode or corrupt data: the defaults will do.
+  }
+}
+
+migrate();
+export const settingsStore = createStore<Settings>(DEFAULT_SETTINGS, KEY);

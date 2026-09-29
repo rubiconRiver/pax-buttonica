@@ -10,7 +10,7 @@ import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
 import { useWakeLock } from '../components/useWakeLock';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode, seatOfDevice } from '../engine/engine';
-import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
+import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, levelsOf, screenLevels, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
 import type { GameState, SoundRef } from '../engine/types';
 import type { GameRecord } from '../remote/sync';
 import { snapshotOf } from '../remote/messages';
@@ -179,6 +179,8 @@ function PhoneButton({ code }: { code: string }) {
   const look: TurnLook = me?.light ?? tableLook;
   const tableFx: TurnEffect = record?.settings.turnFx ?? 'ring';
   const myFx: TurnEffect = me?.turnFx ?? tableFx;
+  // Waiting and effects as bright, next to "your move", as the host set them for the real buttons.
+  const screen = screenLevels(levelsOf(record?.settings ?? {}));
   const effects = useMemo(() => (game ? game.players.map((_, i) => (i === seat ? myFx : undefined)) : []), [game, seat, myFx]);
   const reactions = useReactions(game ?? EMPTY, effects);
   // Trying an effect out: drawn here at once, and the table shows it on my seat (and my real button, if I have one).
@@ -282,7 +284,7 @@ function PhoneButton({ code }: { code: string }) {
     <div
       className="join"
       onPointerDownCapture={unlockAudio}
-      style={{ '--pc': live ? output.color : '#8d97af', '--flash-ms': `${record?.settings.flashMs ?? 2000}ms` } as CSSProperties}
+      style={{ '--pc': live ? output.color : '#8d97af', '--flash-ms': `${record?.settings.flashMs ?? 2000}ms`, '--dim-lum': screen.dim, '--fx-gain': screen.fx } as CSSProperties}
     >
       <header className="join__top">
         {me ? (
@@ -303,7 +305,8 @@ function PhoneButton({ code }: { code: string }) {
         mode={live ? output.mode : 'off'}
         look={look}
         size={size}
-        holdMs={record?.settings.holdMs ?? 2000}
+        holdMs={record?.settings.holdMs}
+        holdOk={!live || output.hold !== false}
         label="Your button"
         react={tried ?? (live && seat >= 0 ? reactions[seat] : null)}
         onInput={(input) => (input === 'tap' || input === 'double' || input === 'hold') && say({ type: 'input', input })}

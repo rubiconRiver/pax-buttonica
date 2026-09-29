@@ -4,6 +4,7 @@ import type { ReactionKind } from './game/useReactions';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
 import { HEARTBEAT_MS, PULSE_MS } from '../hardware/protocol';
+import { DEFAULT_SETTINGS } from '../state/settings';
 import '../styles/device.css';
 
 /** Presses shorter than this are taps; longer ones that let go early are abandoned holds. */
@@ -28,6 +29,8 @@ interface Props {
   look?: TurnLook;
   size?: number;
   holdMs?: number;
+  /** False when a hold would do nothing right now: the ring goes red while held and the hold ends refused, not confirmed. */
+  holdOk?: boolean;
   /** 1 = just the dome. 3 = dome plus strategy and pass shortcuts. */
   buttons?: number;
   pan?: number;
@@ -40,7 +43,7 @@ interface Props {
 }
 
 export const Device = forwardRef<DeviceHandle, Props>(function Device(
-  { color, mode, look = 'pulse', size = 140, holdMs = 2000, buttons = 1, pan = 0, label, hotkey, react, silent, onInput },
+  { color, mode, look = 'pulse', size = 140, holdMs = DEFAULT_SETTINGS.holdMs, holdOk = true, buttons = 1, pan = 0, label, hotkey, react, silent, onInput },
   ref,
 ) {
   const [pressed, setPressed] = useState(false);
@@ -52,6 +55,9 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   const timers = useRef<number[]>([]);
   const stopCharge = useRef<() => void>(() => {});
   const live = useRef({ pressed: false, held: false });
+  // Read when the hold time is up, not when the press began: the game may have changed its mind meanwhile.
+  const holdOkNow = useRef(holdOk);
+  holdOkNow.current = holdOk;
   const interactive = !!onInput;
   const root = useRef<HTMLDivElement>(null);
 
@@ -81,14 +87,20 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
     if (!silent) sfx.down(pan);
     timers.current.push(
       window.setTimeout(() => {
-        if (!silent) stopCharge.current = startCharge(holdMs - TAP_MAX_MS, pan);
+        if (!silent && holdOkNow.current) stopCharge.current = startCharge(holdMs - TAP_MAX_MS, pan);
       }, TAP_MAX_MS),
       window.setTimeout(() => {
         live.current.held = true;
         stopCharge.current();
         setHeld(true);
-        setShock((n) => n + 1);
-        if (!silent) sfx.confirm(pan);
+        // Still reported: the game decides. A refusal it explains plays its own sound; this is only the light.
+        if (holdOkNow.current) {
+          setShock((n) => n + 1);
+          if (!silent) sfx.confirm(pan);
+        } else {
+          setReaction('denied');
+          window.setTimeout(() => setReaction((r) => (r === 'denied' ? null : r)), reactionMs('denied'));
+        }
         onInput?.('hold');
       }, holdMs),
     );
@@ -140,6 +152,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
       data-pressed={pressed || undefined}
       data-holding={(pressed && !held) || undefined}
       data-held={held || undefined}
+      data-refused={!holdOk || undefined}
       data-react={reaction ?? undefined}
       data-static={!interactive || undefined}
     >

@@ -8,7 +8,7 @@ test('the tour follows along as the visitor plays', async ({ page }) => {
   const tour = page.locator('.tour');
   await expect(tour).toContainText('How it works · 1/6');
   await expect(tour.locator('h3')).toHaveText('Whose turn is it?');
-  await expect(tour).toContainText('press and hold their button for 2 seconds');
+  await expect(tour).toContainText('press and hold their button for 0.9 seconds');
 
   await table.hold('Dave');
   await expect(tour.locator('h3')).toHaveText('Playing a strategy card');

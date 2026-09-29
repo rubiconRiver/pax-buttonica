@@ -3,7 +3,7 @@ import { unlockAudio } from '../../audio/synth';
 import { currentScorer, isVirtualDevice, seatOfDevice, seatSpots, simDevice, turnElapsed, turnOrder, type GameEvent } from '../../engine/engine';
 import { ownerOfButton } from '../../state/profiles';
 import { cardByNumber, colorById } from '../../engine/data';
-import { UNCLAIMED, clampBrightness, deriveOutputs } from '../../engine/outputs';
+import { UNCLAIMED, clampBrightness, deriveOutputs, levelsOf, screenLevels } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
 import { connectHub, hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
 import { snapshotOf } from '../../remote/messages';
@@ -118,6 +118,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
   const now = useNow(game.clockStartedAt != null);
   const liveMs = turnElapsed(game, now);
   const n = game.players.length;
+  const screen = screenLevels(levelsOf(settings));
   // Whose moment it is: the active player, or whoever is scoring while the status phase goes round.
   const spotlight = game.seating ? null : game.active ?? currentScorer(game);
 
@@ -296,7 +297,7 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
       <main className="game__main">
         <div className="stage">
-          <div className="table" data-phase={game.phase} data-layout={settings.layout} style={{ '--n': n } as CSSProperties}>
+          <div className="table" data-phase={game.phase} data-layout={settings.layout} style={{ '--n': n, '--dim-lum': screen.dim, '--fx-gain': screen.fx } as CSSProperties}>
             {!inRow && <HexTable homes={homes} />}
             {drawOrder.map((spot) => {
               const seat = spots.indexOf(spot);

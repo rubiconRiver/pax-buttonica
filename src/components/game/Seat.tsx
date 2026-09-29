@@ -49,6 +49,7 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
         look={look}
         size={size}
         holdMs={holdMs}
+        holdOk={output.hold !== false}
         buttons={player.buttons}
         pan={pos.pan}
         hotkey={onInput ? String(spot + 1) : undefined}

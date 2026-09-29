@@ -211,6 +211,29 @@ export function endTurnBlocker(g: GameState): string | null {
   return null;
 }
 
+/**
+ * Whether a hold from this seat would do anything right now (the same answer `handleInput` gives). A button that
+ * knows can show a refused hold while it is still held, instead of filling its ring for nothing.
+ */
+export function holdCounts(g: GameState, seat: number): boolean {
+  if (g.seating) return false;
+  switch (g.phase) {
+    case 'action': {
+      const sp = g.strategyPlay;
+      if (sp?.stage === 'secondary' && !sp.acks[seat]) return true;
+      return seat === g.active && !endTurnBlocker(g);
+    }
+    case 'status':
+      if (g.statusStep === 'fanfare') return false;
+      if (g.statusStep === 'scoring') return seat === currentScorer(g);
+      return !g.ready[seat];
+    case 'agenda':
+      return seat === currentVoter(g);
+    default:
+      return false;
+  }
+}
+
 // ── Helpers (mutate a draft) ────────────────────────────────────────────────
 
 function fx(g: GameState, f: Omit<Fx, 'id'>) {
@@ -225,8 +248,8 @@ function log(g: GameState, text: string, extra: Partial<LogEntry> = {}) {
   if (g.log.length > MAX_LOG) g.log.splice(0, g.log.length - MAX_LOG);
 }
 
-function deny(g: GameState, seat: number, why: string) {
-  fx(g, { kind: 'denied', seat, note: why });
+function deny(g: GameState, seat: number, why: string, input?: DeviceInput) {
+  fx(g, { kind: 'denied', seat, note: why, ...(input ? { input } : {}) });
   log(g, `${g.players[seat].name}: ${why}`, { seat, tone: 'warn' });
 }
 
@@ -426,11 +449,11 @@ function ack(g: GameState, seat: number) {
   }
 }
 
-function endTurn(g: GameState, at: number) {
+function endTurn(g: GameState, at: number, input?: DeviceInput) {
   const seat = g.active;
   if (g.phase !== 'action' || seat == null) return;
   const blocker = endTurnBlocker(g);
-  if (blocker) return deny(g, seat, blocker.charAt(0).toLowerCase() + blocker.slice(1));
+  if (blocker) return deny(g, seat, blocker.charAt(0).toLowerCase() + blocker.slice(1), input);
   finishTurn(g, at, 'end');
 }
 
@@ -498,7 +521,7 @@ function handleInput(g: GameState, seat: number, input: DeviceInput, at: number)
         if (at - sp.at >= PRIMARY_GUARD_MS) primaryDone(g);
         return;
       }
-      if (input === 'hold') return endTurn(g, at);
+      if (input === 'hold') return endTurn(g, at, input);
       if (input === 'double') {
         // Quietly ignore double-taps that can't mean "play my card".
         if (!sp && !g.actedThisTurn && !g.choosingCard) playCard(g, at);

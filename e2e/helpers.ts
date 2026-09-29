@@ -1,7 +1,7 @@
 import { expect, test as base, type Locator, type Page } from '@playwright/test';
 
 /** The default hold-to-end-turn time. Tests run against the real default, not a shortened one. */
-export const HOLD_MS = 2000;
+export const HOLD_MS = 900;
 /** Engine: a tap this soon after the double-tap that played the card is ignored. */
 export const PRIMARY_GUARD_MS = 600;
 
@@ -15,14 +15,14 @@ const IGNORED_CONSOLE = [
 
 /**
  * Every test gets:
- *  - a clock that only moves when the test says so: a two-second hold takes no time at all, and is exactly two seconds;
+ *  - a clock that only moves when the test says so: a hold takes no time at all, and is exactly as long as it says;
  *  - no network beyond the dev server: /api answers "offline" (exactly what Vite dev does in spirit)
  *    unless a test installs FakeApi, and Google Fonts are blocked;
  *  - a tripwire: any uncaught exception or console.error fails the test.
  */
 export const test = base.extend<{ problems: string[] }>({
   context: async ({ context }, use) => {
-    // Time stands still unless a test moves it, so "1.9 seconds" means exactly that however busy the machine is.
+    // Time stands still unless a test moves it, so "0.8 seconds" means exactly that however busy the machine is.
     const t0 = new Date('2026-10-03T19:00:00-04:00').getTime();
     await context.clock.install({ time: t0 });
     await context.clock.pauseAt(t0 + 1000);

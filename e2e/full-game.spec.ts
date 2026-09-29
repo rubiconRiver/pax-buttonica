@@ -1,4 +1,4 @@
-import { Board, Table, claimSeatsInOrder, expect, liveGame, readStorage, setUpGame, test } from './helpers';
+import { Board, HOLD_MS, Table, claimSeatsInOrder, expect, liveGame, readStorage, setUpGame, test } from './helpers';
 import { everyonePasses, everyoneReady, everyoneScores, initiativeOrder, pass, pickCards, playStrategyCard, scard, statusFanfare, takeTurn, type Picks, voteRound } from './flows';
 
 /**
@@ -67,7 +67,7 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
     await table.hold(OWEN);
     await table.expectActive(PRIYA);
     // …and letting go early doesn't count.
-    await table.hold(PRIYA, 1500);
+    await table.hold(PRIYA, HOLD_MS - 200);
     await table.expectActive(PRIYA);
     await takeTurn(table, PRIYA);
 
@@ -86,7 +86,7 @@ test('a complete six-player game, from setup to the throne', async ({ page }) =>
     await page.clock.fastForward(60_000);
     await expect(table.center.locator('.center__clock')).toHaveText(frozen);
     await page.getByTitle('Resume the turn clock').click();
-    await expect(table.center.locator('.center__hint')).toContainText('hold 2s to end the turn');
+    await expect(table.center.locator('.center__hint')).toContainText('hold 0.9s to end the turn');
     await takeTurn(table, MARC);
 
     for (const name of [GARETT, CHANTAL, OWEN]) await takeTurn(table, name);

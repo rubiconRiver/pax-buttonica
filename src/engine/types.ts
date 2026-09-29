@@ -111,6 +111,8 @@ export interface Fx {
   seat?: number;
   card?: number;
   note?: string;
+  /** On a `denied`: the press that was refused, when it was a hold (which a button may already have refused itself). */
+  input?: DeviceInput;
 }
 
 export interface LogEntry {

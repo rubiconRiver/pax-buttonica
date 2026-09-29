@@ -32,12 +32,16 @@ export type FromDevice =
   | { t: 'lost'; dev: string };
 
 export type ToDevice =
-  | { t: 'led'; dev: string; c: string; m: LedMode; p?: number }
+  /** `h: 0`: a hold means nothing right now, so the button can refuse it while it is held (absent: it might). */
+  | { t: 'led'; dev: string; c: string; m: LedMode; p?: number; h?: 0 }
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
   /** `ack`, `denied` and `confirm` every button renders; the rest are turn effects a multi-pixel button may draw and any button may ignore. */
   | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | Exclude<TurnEffect, 'ring' | 'none'> }
-  /** `bright`: 0–100, a share of the button's full output. `pulse`: how to draw "your move" (default: breathe). */
-  | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; pulse?: TurnLook }
+  /**
+   * Light levels, each 0–100, a share of the button's full output: `bright` your move and every steady light, `dim`
+   * waiting, `fx` the one-shots (a brightness, not a turn effect). `pulse`: how to draw "your move" (default: breathe).
+   */
+  | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; dim?: number; fx?: number; pulse?: TurnLook }
   | { t: 'id'; dev: string };
 
 /**
@@ -66,5 +70,5 @@ export const phaseNow = (mode: LedMode, flashMs: number): number | undefined =>
 
 export const ledFrame = (dev: string, o: DeviceOutput, flashMs: number): ToDevice => {
   const p = phaseNow(o.mode, flashMs);
-  return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }) };
+  return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }), ...(o.hold === false ? { h: 0 as const } : {}) };
 };

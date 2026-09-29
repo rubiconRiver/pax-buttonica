@@ -126,7 +126,7 @@ export function ButtonConcept() {
         <article className="panel concept__card lit" data-mode="pulse">
           <div className="eyebrow">Standard</div>
           <h3>One button</h3>
-          <p>Tap: done. Double-tap: my strategy card. Hold two seconds: end my turn, while a white arc fills round the ring.</p>
+          <p>Tap: done. Double-tap: my strategy card. Hold a second: end my turn, while a white arc fills round the ring.</p>
           <ButtonRender />
         </article>
         <article className="panel concept__card lit" data-mode="pulse">

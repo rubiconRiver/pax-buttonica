@@ -76,7 +76,7 @@ function lines(c: Choices): Line[] {
           role: 'The light under the dome: any colour, and the white arc that fills while you hold.',
           explain: (
             <>
-              Eight full-colour LEDs on a small ring, each with its own tiny controller chip, so the board can set every LED separately over a single data wire. That's what lets the button breathe in a player's colour, blink in a strategy card's colour, and sweep a white arc round the ring during the two-second hold. Three wires: power, ground, data.
+              Eight full-colour LEDs on a small ring, each with its own tiny controller chip, so the board can set every LED separately over a single data wire. That's what lets the button breathe in a player's colour, blink in a strategy card's colour, and sweep a white arc round the ring during the hold. Three wires: power, ground, data.
             </>
           ),
           watch: <>Set <code>LED_COUNT 8</code> in <code>firmware/button/config.h</code> (it's the default).</>,

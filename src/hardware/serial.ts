@@ -2,7 +2,7 @@
  * EXPERIMENTAL — written against the draft standard, not yet tested on real
  * hardware (none exists yet). Web Serial needs Chrome or Edge, and HTTPS.
  */
-import { clampBrightness, type DeviceOutput, type TurnLook } from '../engine/outputs';
+import { levelsOf, type DeviceOutput, type TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import { createStore } from '../state/createStore';
 import { settingsStore } from '../state/settings';
@@ -54,28 +54,34 @@ let writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
 let onInput: ((dev: string, input: DeviceInput) => void) | null = null;
 let logSeq = 0;
 const lastFrames = new Map<string, string>();
+/** Buttons whose last light said a hold means nothing right now (`h: 0`). */
+const toldNoHold = new Set<string>();
 const enc = new TextEncoder();
 
 /** How each seat likes its button: the player's own taste on top of the table's. */
 export interface SeatPrefs {
   look: TurnLook;
-  /** Their share of the table's brightness, 0.1–1. */
+  /** Their share of the table's brightness, 0.1–1: it scales all three levels on their button. */
   bright: number;
 }
 /** What each button was last told about its taste, so a cfg only goes out when that changes. */
 const prefs = new Map<string, SeatPrefs>();
 
-/** Everything a button is configured with: hold and blink times for the table, look and brightness for its seat. */
+/** Everything a button is configured with: hold and blink times and light levels for the table, look and brightness for its seat. */
 function cfgFrame(dev: string): ToDevice {
-  const { holdMs, flashMs, turnLight, brightness } = settingsStore.get();
+  const settings = settingsStore.get();
+  const { turn, waiting, effects } = levelsOf(settings);
   const mine = prefs.get(dev);
+  const level = (x: number) => Math.max(1, Math.round(x * (mine?.bright ?? 1) * 100));
   return {
     t: 'cfg',
     dev,
-    hold: holdMs,
-    flash: flashMs,
-    bright: Math.round(clampBrightness(brightness) * (mine?.bright ?? 1) * 100),
-    pulse: mine?.look ?? turnLight,
+    hold: settings.holdMs,
+    flash: settings.flashMs,
+    bright: level(turn),
+    dim: level(waiting),
+    fx: level(effects),
+    pulse: mine?.look ?? settings.turnLight,
   };
 }
 
@@ -102,6 +108,23 @@ export function playsOwnSounds(dev: string | null): boolean {
 }
 
 export const isOnHub = (dev: string | null) => !!dev && !!writer && hubStatus.get().devices.some((d) => d.dev === dev);
+
+/** "0.3.10" is later than "0.3.9". */
+const fwAtLeast = (fw: string, min: string) => {
+  const a = fw.split('.').map(Number);
+  const b = min.split('.').map(Number);
+  for (let i = 0; i < b.length; i++) if ((a[i] || 0) !== b[i]) return (a[i] || 0) > b[i];
+  return true;
+};
+
+/**
+ * True if this button has already shown a refused hold by itself: it was told `h: 0`, and its firmware (0.3.9 on)
+ * draws the refusal when the hold time is up. The host's own `denied` on top would only make it shake twice.
+ */
+export function refusedHoldItself(dev: string): boolean {
+  const fw = hubStatus.get().devices.find((d) => d.dev === dev)?.fw;
+  return toldNoHold.has(dev) && !!fw && fwAtLeast(fw, '0.3.9');
+}
 
 function patch(dev: string, next: Partial<HubDevice>) {
   const known = hubStatus.get().devices.some((d) => d.dev === dev);
@@ -148,7 +171,7 @@ function handle(msg: FromDevice) {
   }
 }
 
-// Hold time, blink speed, brightness and the table's look follow the settings, live.
+// Hold time, blink speed, light levels and the table's look follow the settings, live.
 settingsStore.subscribe(() => {
   for (const d of hubStatus.get().devices) sendToDevice(cfgFrame(d.dev));
 });
@@ -223,6 +246,7 @@ async function openHub(p: SerialPortLike) {
   port = p;
   writer = p.writable!.getWriter();
   lastFrames.clear();
+  toldNoHold.clear();
   prefs.clear();
   hubStatus.set({ connected: true, devices: [], log: [] });
   // Anything without a "dev" makes the hub announce itself, and buttons re-announce on their heartbeat.
@@ -275,9 +299,11 @@ export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[]
       sendToDevice(cfgFrame(dev));
     }
     const o = seat >= 0 ? outputs[seat] : unclaimed ?? DARK;
-    const key = `${o.color}|${o.mode}`;
+    const key = `${o.color}|${o.mode}|${o.hold !== false}`;
     if (lastFrames.get(dev) === key) continue;
     lastFrames.set(dev, key);
+    if (o.hold === false) toldNoHold.add(dev);
+    else toldNoHold.delete(dev);
     sendToDevice(ledFrame(dev, o, settingsStore.get().flashMs));
   }
 }

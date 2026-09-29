@@ -1,5 +1,5 @@
 import { FakeApi } from './api';
-import { Board, Table, expect, liveGame, readStorage, setSlider, setUpGame, test } from './helpers';
+import { Board, HOLD_MS, Table, expect, liveGame, openSettings, readStorage, setSlider, setUpGame, test } from './helpers';
 import { FANFARE_MS, pickCards } from './flows';
 import { gameCode, openPhone, tick, tinyWav } from './phones';
 
@@ -78,7 +78,7 @@ test('the whole phone flow: who you are, your seat, your light, your presses', a
   await phone.tap();
   await tick(both);
   await table.expectToast('Ben: Hold to end your turn');
-  await phone.hold(1500);
+  await phone.hold(HOLD_MS - 200);
   await tick(both);
   await table.expectActive('Ben');
   await phone.hold();
@@ -134,6 +134,16 @@ test('two phones, two players: each sees only their own light', async ({ page, c
   await tick(all);
   await ana.expectLight('pulse');
   await ben.expectLight('dim');
+  // Only Ana's hold would count, so Ben's button says so while it is held.
+  await expect(ana.light).not.toHaveAttribute('data-refused');
+  await expect(ben.light).toHaveAttribute('data-refused', 'true');
+  // Waiting is as bright, next to "your move", as the host has set it for the real buttons.
+  const lum = () => ben.light.evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--lum')));
+  expect(await lum()).toBeCloseTo(0.2, 3);
+  await setSlider((await openSettings(page)).getByRole('slider', { name: /Waiting/ }), 0.05);
+  await page.keyboard.press('Escape');
+  await tick(all);
+  await expect.poll(lum).toBeCloseTo(0.1, 3);
   await ana.hold();
   await tick(all);
   await ana.expectLight('dim');

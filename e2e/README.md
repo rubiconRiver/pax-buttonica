@@ -34,7 +34,7 @@ E2E_PORT=5217 npm run e2e           # when another worktree's dev server holds 5
 
 ## How the tests work
 
-- **Time stands still.** `helpers.ts` installs Playwright's clock and pauses it, so the app's timers, `Date.now()` and `performance.now()` only move when a test says so. A two-second hold takes no time and is exactly two seconds. Use `page.clock.fastForward(ms)`; never `waitForTimeout`. Timestamps that have to be "newer than the browser's" must come from the page (`page.evaluate(() => Date.now())`), not from Node.
+- **Time stands still.** `helpers.ts` installs Playwright's clock and pauses it, so the app's timers, `Date.now()` and `performance.now()` only move when a test says so. A hold takes no time and is exactly as long as it says. Use `page.clock.fastForward(ms)`; never `waitForTimeout`. Timestamps that have to be "newer than the browser's" must come from the page (`page.evaluate(() => Date.now())`), not from Node.
 - **No network.** `/api` answers "offline" unless a test installs `FakeApi` (`api.ts`, an in-memory version of the functions in `api/`); Google Fonts are blocked. Phone tabs share the browser's storage with the host tab, so `phones.ts` gives each its own identity, and all tabs share one paused clock: `tick()` advances it in rounds so the site can carry a message and its answer.
 - **A tripwire.** Any uncaught exception or `console.error` in any tab fails the test, whatever else it was checking.
 - **Buttons are pressed with the number keys**, which drive the same `down()` / `up()` as a finger on the dome. Keys follow places at the table, not seat order, so helpers look the key up (`table.key('Sarah')`).

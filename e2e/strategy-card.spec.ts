@@ -102,7 +102,7 @@ test.describe('setting: primary first, then secondaries', () => {
     const panel = await openSettings(page);
     await panel.getByLabel('Strategy cards: primary first, then secondaries').uncheck();
     await page.keyboard.press('Escape');
-    expect((await readStorage(page, 'pb.settings.v1')).primaryStage).toBe(false);
+    expect((await readStorage(page, 'pb.settings.v2')).primaryStage).toBe(false);
 
     await table.doubleTap('Dave');
     await expect(table.center.locator('.ability__label')).toHaveText('Secondary ability');

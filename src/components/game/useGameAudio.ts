@@ -4,7 +4,7 @@ import { sfx, turnLane } from '../../audio/synth';
 import { seatSpots } from '../../engine/engine';
 import type { TurnEffect } from '../../engine/outputs';
 import type { GameState, SoundRef } from '../../engine/types';
-import { isOnHub, playsOwnSounds, sendToDevice } from '../../hardware/serial';
+import { isOnHub, playsOwnSounds, refusedHoldItself, sendToDevice } from '../../hardware/serial';
 import { settingsStore } from '../../state/settings';
 import { seatPosition } from './geometry';
 
@@ -39,7 +39,7 @@ export function useGameAudio(game: GameState | null, enabled = true, effects: (T
         else turnLane.play(ref, pan);
       };
       if (dev && isOnHub(dev)) {
-        if (f.kind === 'denied') sendToDevice({ t: 'fx', dev, k: 'denied' });
+        if (f.kind === 'denied' && !(f.input === 'hold' && refusedHoldItself(dev))) sendToDevice({ t: 'fx', dev, k: 'denied' });
         if (f.kind === 'ack' || f.kind === 'ready' || f.kind === 'claim') sendToDevice({ t: 'fx', dev, k: 'ack' });
         if (f.kind === 'turnStart' || f.kind === 'score') {
           const k = f.seat != null ? hubEffect(effects[f.seat] ?? 'ring') : null;

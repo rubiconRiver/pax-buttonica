@@ -1,4 +1,4 @@
-import { Board, HOLD_MS, Table, expect, lab, openDemo, openSettings, readStorage, setSlider, test } from './helpers';
+import { Board, HOLD_MS, Table, expect, lab, openDemo, openSettings, readStorage, seedStorage, setSlider, test } from './helpers';
 
 /**
  * Tap, double-tap and hold are the entire vocabulary of a button, and the on-screen button measures them with the
@@ -6,7 +6,7 @@ import { Board, HOLD_MS, Table, expect, lab, openDemo, openSettings, readStorage
  */
 
 test.describe('hold to end the turn', () => {
-  test('two seconds ends the turn; 1.9 does not', async ({ page }) => {
+  test('0.9 seconds ends the turn; 0.8 does not', async ({ page }) => {
     const table = await openDemo(page);
     await table.hold('Dave', HOLD_MS - 100);
     await table.expectActive('Dave');
@@ -31,9 +31,18 @@ test.describe('hold to end the turn', () => {
     await expect(table.light('Dave')).not.toHaveAttribute('data-pressed', 'true');
   });
 
-  test("somebody else's hold is ignored", async ({ page }) => {
+  test("somebody else's hold is ignored, and their button says so while it is held", async ({ page }) => {
     const table = await openDemo(page);
-    await table.hold('Jen');
+    await expect(table.light('Dave')).not.toHaveAttribute('data-refused', 'true');
+    await expect(table.light('Jen')).toHaveAttribute('data-refused', 'true');
+    const key = await table.key('Jen');
+    await page.keyboard.down(key);
+    await expect(table.light('Jen')).toHaveAttribute('data-holding', 'true');
+    // The ring is red and full at once: no filling it for nothing.
+    await expect(table.light('Jen').locator('.dev__ring-fill')).toHaveCSS('stroke-dashoffset', '0px');
+    await page.clock.fastForward(HOLD_MS);
+    await expect(table.light('Jen')).toHaveAttribute('data-react', 'denied');
+    await page.keyboard.up(key);
     await table.expectActive('Dave');
     await expect(table.toast).toHaveCount(0);
   });
@@ -49,10 +58,32 @@ test.describe('hold to end the turn', () => {
     await table.expectActive('Dave');
     await table.hold('Dave', 1000);
     await table.expectActive('Kyle');
-    expect((await readStorage(page, 'pb.settings.v1')).holdMs).toBe(1000);
+    expect((await readStorage(page, 'pb.settings.v2')).holdMs).toBe(1000);
     await page.reload();
     await expect(page.locator('.center__hint')).toContainText('hold 1s to end the turn');
   });
+});
+
+test('a laptop that saved its settings before keeps what it chose, and gets the new hold and brightness', async ({ page }) => {
+  // 2 s and 100 % were the defaults then: nobody chose them. The volume and the layout somebody did.
+  await seedStorage(page, { 'pb.settings.v1': { holdMs: 2000, brightness: 1, volume: 0.3, layout: 'table' } });
+  await openDemo(page);
+  await expect(page.locator('.center__hint')).toContainText('hold 0.9s to end the turn');
+  let panel = await openSettings(page);
+  await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.5');
+  await expect(panel.getByRole('slider', { name: /Volume/ })).toHaveValue('0.3');
+  await expect(panel.getByRole('radio', { name: 'Seating' })).toHaveAttribute('aria-checked', 'true');
+  expect(await readStorage(page, 'pb.settings.v1')).toBeNull();
+
+  // Chosen by hand, it stays.
+  await page.evaluate(() => {
+    localStorage.removeItem('pb.settings.v2');
+    localStorage.setItem('pb.settings.v1', JSON.stringify({ holdMs: 1500, brightness: 0.7 }));
+  });
+  await page.reload();
+  await expect(page.locator('.center__hint')).toContainText('hold 1.5s to end the turn');
+  panel = await openSettings(page);
+  await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.7');
 });
 
 test.describe('taps', () => {

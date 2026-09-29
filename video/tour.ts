@@ -57,7 +57,7 @@ class Actor {
     await beat(this.page, 70);
     await this.page.mouse.up();
   }
-  async hold(target: Locator, ms = 2150) {
+  async hold(target: Locator, ms = 1150) {
     await this.glide(target);
     await beat(this.page, 150);
     await this.page.mouse.down();
@@ -176,7 +176,7 @@ test('record the tour', async ({ browser, baseURL }) => {
   await beat(page, 500);
   await host.click(dome('Steph'));
   await beat(page, 1500);
-  await stage.caption('All clear', 'Now she can go. <b>Hold for two seconds</b> to end the turn. No accidental passes.');
+  await stage.caption('All clear', 'Now she can go. <b>Hold for a second</b> to end the turn. No accidental passes.');
   await sarah.hold(sarah.ui.locator('.dev__dome'));
   await beat(page, 1200);
   await stage.caption('Next', "Kyle's phone lights up, and his entrance music plays. Everybody picks their own. Choose wisely.");
