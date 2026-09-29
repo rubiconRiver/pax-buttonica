@@ -13,11 +13,11 @@ export const STRATEGY_CARDS: StrategyCard[] = [
   { n: 1, name: 'Leadership', color: '#e5484d', primary: 'Gain 3 command tokens, buy more with influence.', secondary: 'Buy command tokens with influence.' },
   { n: 2, name: 'Diplomacy', color: '#f08c3a', primary: 'Lock down a system, ready two planets.', secondary: 'Spend a token to ready two planets.' },
   { n: 3, name: 'Politics', color: '#f2cc45', primary: 'Pick the speaker, draw action cards, peek at agendas.', secondary: 'Spend a token to draw two action cards.' },
-  { n: 4, name: 'Construction', color: '#46b86c', primary: 'Place a space dock or PDS, then one more PDS.', secondary: 'Spend a token to place one structure.' },
-  { n: 5, name: 'Trade', color: '#2ec4b0', primary: 'Gain 3 trade goods, refresh commodities.', secondary: 'Spend a token to refresh commodities.' },
+  { n: 4, name: 'Construction', color: '#46b86c', primary: 'Place a space dock or PDS, then one more PDS.', secondary: 'Spend a token in a system to place one structure there.' },
+  { n: 5, name: 'Trade', color: '#2ec4b0', primary: 'Gain 3 trade goods, refresh commodities, pick who gets the secondary free.', secondary: 'Spend a token to refresh commodities.' },
   { n: 6, name: 'Warfare', color: '#3b9bf5', primary: 'Pull a token off the board, shuffle your pools.', secondary: 'Spend a token to produce at home.' },
   { n: 7, name: 'Technology', color: '#5468f0', primary: 'Research a tech, pay 6 for a second.', secondary: 'Spend a token and 4 resources to research.' },
-  { n: 8, name: 'Imperial', color: '#a562f0', primary: 'Score a public objective, or gain a point on Mecatol.', secondary: 'Spend a token to draw a secret objective.' },
+  { n: 8, name: 'Imperial', color: '#a562f0', primary: 'Score a public objective; 1 VP if you control Mecatol Rex, else draw a secret.', secondary: 'Spend a token to draw a secret objective.' },
 ];
 
 export const cardByNumber = (n: number): StrategyCard => STRATEGY_CARDS[n - 1];

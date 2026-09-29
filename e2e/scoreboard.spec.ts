@@ -194,4 +194,11 @@ test('the target decides the winner: first to 14 is not over at 10', async ({ pa
   await expect(table.center).toContainText('claims the throne in round 1');
   await expect(page.getByRole('button', { name: 'Give Ana a point' }), 'no more points once someone has won').toBeDisabled();
   expect((await liveGame(page)).winner).toBe(1);
+
+  // That last point was a mistake: taking it back picks the game up where it was.
+  await page.getByRole('button', { name: 'Remove a point from Ben' }).click();
+  await table.expectVp('Ben', 13);
+  await table.expectPhase('Strategy');
+  await expect(page.getByRole('button', { name: 'Give Ana a point' })).toBeEnabled();
+  expect((await liveGame(page)).winner).toBeNull();
 });

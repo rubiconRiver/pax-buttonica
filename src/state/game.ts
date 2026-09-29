@@ -38,10 +38,13 @@ function rebuilt(slot: GameSlot, events: GameEvent[]): GameState {
   return { ...g, fx: [], fxSeq: Math.max(g.fxSeq, slot.game?.fxSeq ?? 0) };
 }
 
-/** Undo and rewind cut real events but keep the app's own housekeeping, which would only happen again. */
+/**
+ * Undo and rewind cut real events but keep the app's own housekeeping, which would only happen again. Refused presses
+ * are dropped, so redo never takes a step that visibly does nothing.
+ */
 function cut(slot: GameSlot, from: number): GameSlot {
   const kept = slot.events.slice(0, from).concat(slot.events.slice(from).filter((e) => e.auto));
-  const gone = slot.events.slice(from).filter((e) => !e.auto);
+  const gone = slot.events.slice(from).filter((e) => !e.auto && !e.noop);
   return { ...slot, events: kept, future: [...gone, ...slot.future], epoch: slot.epoch + 1, game: rebuilt(slot, kept) };
 }
 

@@ -168,6 +168,8 @@ export interface GameState {
   agenda: AgendaState | null;
 
   winner: number | null;
+  /** Where play stood when someone won, so taking the winning point back picks the game up again. */
+  wonFrom?: { phase: Phase; active: number | null; strategyPlay: StrategyPlay | null } | null;
 
   /**
    * Which physical device sits at each seat (index = seat). Simulated buttons

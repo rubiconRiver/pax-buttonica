@@ -91,6 +91,13 @@ test('a random first speaker is always someone at the table', async ({ page }) =
   const g = await liveGame(page);
   expect([0, 1, 2]).toContain(g.speaker);
   expect(g.seating).not.toBeNull();
+
+  // The table disagrees with the dice: the gavel moves the token, and the new speaker chooses first.
+  await page.getByRole('button', { name: /Skip/ }).click();
+  const table = new Table(page);
+  const other = ['Ana', 'Ben', 'Cleo'][(g.speaker + 1) % 3];
+  await table.roster(other).locator('.roster__speaker').click();
+  await expect(table.center.locator('.center__title')).toHaveText(`${other} is choosing`);
 });
 
 test('the game survives a reload, the landing page offers to resume it, and ending it asks first', async ({ page }) => {

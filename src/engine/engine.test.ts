@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import * as engineModule from './engine';
 import { createGame, currentScorer, seatOfDevice, endTurnBlocker, initiativeOrder, pendingAcks, reduce, scoreBreakdown, seatSpots, simDevice, turnOrder } from './engine';
+import { cardByNumber } from './data';
 import { deriveOutputs } from './outputs';
+import { createGameStore } from '../state/game';
 import type { Action, GameState, PlayerSetup } from './types';
 
 const setup = (n: number): PlayerSetup[] =>
@@ -46,6 +48,26 @@ describe('strategy phase', () => {
     let g = createGame(setup(6), { vpTarget: 10, speaker: 0 }, 0);
     g = run(g, pick(3), pick(3));
     expect(g.pickIdx).toBe(1);
+  });
+
+  it('a first speaker put right before anyone chooses chooses first; once choosing has begun the order stands', () => {
+    let g = createGame(setup(6), { vpTarget: 10, speaker: 4 }, 0);
+    g = reduce(g, { type: 'SET_SPEAKER', seat: 1 });
+    expect(g.pickOrder).toEqual([1, 2, 3, 4, 5, 0]);
+    expect(turnOrder(g)[0]).toBe(1);
+    g = run(g, pick(3), { type: 'SET_SPEAKER', seat: 3 });
+    expect(g.speaker).toBe(3);
+    expect(g.pickOrder).toEqual([1, 2, 3, 4, 5, 0]);
+    expect(g.pickIdx).toBe(1);
+    // Twice round at four players.
+    g = reduce(createGame(setup(4), { vpTarget: 10, speaker: 3 }, 0), { type: 'SET_SPEAKER', seat: 1 });
+    expect(g.pickOrder).toEqual([1, 2, 3, 0, 1, 2, 3, 0]);
+  });
+});
+
+describe('strategy card reminders', () => {
+  it('Imperial scores a public and then pays out for Mecatol Rex, or a secret without it', () => {
+    expect(cardByNumber(8).primary).toMatch(/public objective.*Mecatol Rex.*secret/);
   });
 });
 
@@ -156,6 +178,31 @@ describe('action phase', () => {
     let g = createGame(players, { vpTarget: 10, speaker: 0 }, 0);
     for (let i = 0; i < 6; i++) g = reduce(g, pick(6 - i));
     expect(g.active).toBe(0);
+  });
+
+  it('gives the zero token back to the Naalu every round', () => {
+    const players = setup(6);
+    players[2].faction = 'The Naalu Collective';
+    let g = createGame(players, { vpTarget: 10, speaker: 0 }, 0);
+    expect(g.zeroToken).toBe(2);
+    // Gift of Prescience lends it out for a round.
+    g = run(g, { type: 'SET_ZERO_TOKEN', seat: 4 }, { type: 'GOTO', phase: 'next-round', at: 0 });
+    expect(g.zeroToken).toBe(2);
+    expect(createGame(setup(6), { vpTarget: 10, speaker: 0 }, 0).zeroToken).toBeNull();
+  });
+
+  it('a jump to the status or agenda phase leaves no card in play and nobody choosing one', () => {
+    const playing = reduce(sixInAction(true), { type: 'INPUT', seat: 5, input: 'double', at: 0 });
+    expect(playing.strategyPlay).not.toBeNull();
+    expect(reduce(playing, { type: 'GOTO', phase: 'status', at: 1 }).strategyPlay).toBeNull();
+    expect(reduce(playing, { type: 'GOTO', phase: 'agenda', at: 1 })).toMatchObject({ strategyPlay: null, active: null });
+
+    let g = createGame(setup(4), { vpTarget: 10, speaker: 0 }, 0);
+    for (let c = 1; c <= 8; c++) g = reduce(g, pick(c));
+    const choosing = reduce(g, { type: 'INPUT', seat: 0, input: 'strategy', at: 0 });
+    expect(choosing.choosingCard).toBe(true);
+    expect(reduce(choosing, { type: 'ADVANCE', at: 1 }).choosingCard).toBe(false);
+    expect(reduce(choosing, { type: 'GOTO', phase: 'agenda', at: 1 }).choosingCard).toBe(false);
   });
 });
 
@@ -308,6 +355,31 @@ describe('scoring and clock', () => {
     expect(deriveOutputs(g)[3].mode).toBe('rainbow');
   });
 
+  it('taking the winning point back picks the game up where it stopped', () => {
+    let g = reduce(sixInAction(true), { type: 'INPUT', seat: 5, input: 'double', at: 100 });
+    g = reduce(g, { type: 'ADD_EXTRA', seat: 3, label: 'Agenda', points: 10, at: 200 });
+    expect(g.phase).toBe('finished');
+    expect(g.players[5].timeMs).toBe(200);
+    // Someone else's points, or the winner's still at the target, change nothing.
+    g = run(g, { type: 'VP', seat: 1, delta: -1, at: 300 }, { type: 'ADD_EXTRA', seat: 3, label: 'Relic', points: 1, at: 300 }, { type: 'VP', seat: 3, delta: -1, at: 300 });
+    expect(g.phase).toBe('finished');
+
+    g = reduce(g, { type: 'VP', seat: 3, delta: -1, at: 900 });
+    expect(g.phase).toBe('action');
+    expect(g.winner).toBeNull();
+    expect(g.active).toBe(5);
+    expect(g.strategyPlay).toMatchObject({ card: 1, by: 5, stage: 'primary' });
+    expect(g.log.at(-1)?.text).toBe('P3 is back under 10 — the game goes on.');
+    expect(deriveOutputs(g)[5].mode).toBe('flash');
+    // The turn clock starts again from the moment the point came off.
+    g = run(g, { type: 'INPUT', seat: 5, input: 'tap', at: 1000 }, { type: 'ACK_ALL', at: 1000 }, { type: 'END_TURN', at: 1500 });
+    expect(g.players[5].timeMs).toBe(200 + 600);
+    expect(g.active).toBe(4);
+    // And winning again still works.
+    g = reduce(g, { type: 'VP', seat: 3, delta: 1, at: 2000 });
+    expect(g).toMatchObject({ phase: 'finished', winner: 3 });
+  });
+
   it('does not count paused time', () => {
     let g = sixInAction(); // seat 5's turn started at 0
     g = run(g, { type: 'PAUSE', at: 1000 }, { type: 'RESUME', at: 9000 }, { type: 'END_TURN', at: 9500 });
@@ -366,6 +438,19 @@ describe('seat claiming', () => {
     expect(seatSpots(g)).toEqual([2, 3, 4, 5, 0, 1]);
     g = reduce(g, { type: 'END_TURN', at: 5200 });
     expect(g.players[5].timeMs).toBe(1200);
+  });
+
+  it('starting the claiming over mid-claim still starts the clock again at the end, and a paused game stays paused', () => {
+    const everyone = [0, 1, 2, 3, 4, 5].map(simDevice);
+    let g = run(sixInAction(), { type: 'START_SEATING', at: 1000 }, { type: 'START_SEATING', at: 2000 });
+    expect(g.paused).toBe(true);
+    g = reduce(g, { type: 'SKIP_SEATING', devices: everyone, at: 5000 });
+    expect(g.paused).toBe(false);
+    g = reduce(g, { type: 'END_TURN', at: 5200 });
+    expect(g.players[5].timeMs).toBe(1200);
+
+    g = run(sixInAction(), { type: 'PAUSE', at: 1000 }, { type: 'START_SEATING', at: 2000 }, { type: 'START_SEATING', at: 3000 }, { type: 'SKIP_SEATING', devices: everyone, at: 5000 });
+    expect(g.paused).toBe(true);
   });
 });
 
@@ -494,6 +579,26 @@ describe('the action log', () => {
     // Every log line knows which event wrote it.
     expect(again.log.find((l) => l.text.includes('plays 1'))?.event).toBe(6);
     expect(again.log.find((l) => l.text.includes('Round 1'))?.event).toBeUndefined();
+  });
+});
+
+describe('undo and redo', () => {
+  it('redo skips the refused presses that did nothing', () => {
+    const store = createGameStore();
+    store.start(setup(6), { vpTarget: 10, speaker: 0, code: 'REDO' });
+    for (let i = 0; i < 6; i++) store.dispatch(pick(6 - i));
+    store.dispatch({ type: 'PLAY_CARD', at: 10 });
+    // Holding to end the turn before the primary is done: refused, twice.
+    store.dispatch({ type: 'INPUT', seat: 5, input: 'hold', at: 20 });
+    store.dispatch({ type: 'INPUT', seat: 5, input: 'hold', at: 30 });
+    expect(store.get().events.slice(-2).every((e) => e.noop)).toBe(true);
+
+    store.undo();
+    expect(store.get().game?.strategyPlay).toBeNull();
+    expect(store.get().future.map((e) => e.action.type)).toEqual(['PLAY_CARD']);
+    store.redo();
+    expect(store.get().game?.strategyPlay?.card).toBe(1);
+    expect(store.get().future).toEqual([]);
   });
 });
 

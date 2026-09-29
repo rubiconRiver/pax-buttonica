@@ -44,7 +44,6 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     timeMs: 0,
     turns: 0,
   }));
-  const naalu = players.findIndex((p) => p.faction === NAALU);
   const g: GameState = {
     code: options.code ?? newCode(),
     phase: 'strategy',
@@ -52,7 +51,7 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     vpTarget: options.vpTarget,
     players,
     speaker: options.speaker,
-    zeroToken: naalu >= 0 ? naalu : null,
+    zeroToken: null,
     custodiansRemoved: false,
     objectives: [],
     laws: [],
@@ -243,6 +242,14 @@ function clockStop(g: GameState, at: number): number {
   return total;
 }
 
+/** Choosing goes clockwise from the speaker, twice round at four players or fewer. */
+function setPickOrder(g: GameState) {
+  const n = g.players.length;
+  const once = Array.from({ length: n }, (_, i) => (g.speaker + i) % n);
+  g.pickOrder = cardsPerPlayer(n) === 2 ? [...once, ...once] : once;
+  g.pickIdx = 0;
+}
+
 function startRound(g: GameState, _at: number) {
   g.round += 1;
   g.phase = 'strategy';
@@ -257,10 +264,10 @@ function startRound(g: GameState, _at: number) {
     p.usedCards = [];
     p.passed = false;
   }
-  const n = g.players.length;
-  const once = Array.from({ length: n }, (_, i) => (g.speaker + i) % n);
-  g.pickOrder = cardsPerPlayer(n) === 2 ? [...once, ...once] : once;
-  g.pickIdx = 0;
+  // The "0" goes back to the Naalu every round, from whoever held it through Gift of Prescience.
+  const naalu = g.players.findIndex((p) => p.faction === NAALU);
+  g.zeroToken = naalu >= 0 ? naalu : null;
+  setPickOrder(g);
   log(g, `Round ${g.round} — strategy phase. ${g.players[g.speaker].name} is speaker.`, { tone: 'info' });
   fx(g, { kind: 'phase', note: 'strategy' });
 }
@@ -308,6 +315,8 @@ function finishTurn(g: GameState, at: number, how: 'end' | 'pass') {
 function startStatusPhase(g: GameState) {
   g.phase = 'status';
   g.active = null;
+  g.strategyPlay = null;
+  g.choosingCard = false;
   g.ready = g.players.map(() => false);
   g.scoringOrder = g.scoreInOrder ? initiativeOrder(g) : [];
   g.scoringIdx = 0;
@@ -358,6 +367,9 @@ function startAgendaPhase(g: GameState) {
   // Voting starts left of the speaker and ends with the speaker.
   const order = Array.from({ length: n }, (_, i) => (g.speaker + 1 + i) % n);
   g.phase = 'agenda';
+  g.active = null;
+  g.strategyPlay = null;
+  g.choosingCard = false;
   g.agenda = { n: 1, order, idx: 0 };
   log(g, 'Agenda phase — first agenda.', { tone: 'info' });
   fx(g, { kind: 'phase', note: 'agenda' });
@@ -641,7 +653,8 @@ export function reduce(state: GameState, action: Action): GameState {
       pause(g, action.at);
       // Phones whose owners have said who they are keep their seats; everything else is up for grabs.
       g.bindings = g.bindings.map((b) => (b?.startsWith('web-') ? b : null));
-      g.seating = { next: 0, resume: wasRunning };
+      // Starting over mid-claim keeps the first answer: this claim is what paused the clock.
+      g.seating = { next: 0, resume: g.seating?.resume ?? wasRunning };
       log(g, 'Seat claiming: press your button when your name is called.', { tone: 'info' });
       advanceSeating(g, action.at);
       break;
@@ -848,6 +861,8 @@ export function reduce(state: GameState, action: Action): GameState {
       if (g.speaker !== action.seat) {
         g.speaker = action.seat;
         log(g, `${g.players[action.seat].name} takes the speaker token.`, { seat: action.seat });
+        // Nobody has chosen yet (a first speaker put right): choosing starts from the new speaker.
+        if (g.phase === 'strategy' && g.pickIdx === 0) setPickOrder(g);
       }
       break;
     case 'SET_ZERO_TOKEN':
@@ -877,6 +892,7 @@ function rescore(g: GameState, seat: number, at: number, quiet = false) {
   }
   if (p.vp >= g.vpTarget && g.phase !== 'finished') {
     if (g.active != null) g.players[g.active].timeMs += clockStop(g, at);
+    g.wonFrom = { phase: g.phase, active: g.active, strategyPlay: g.strategyPlay };
     g.phase = 'finished';
     g.winner = seat;
     g.active = null;
@@ -884,6 +900,17 @@ function rescore(g: GameState, seat: number, at: number, quiet = false) {
     g.seating = null;
     log(g, `${p.name} claims the throne!`, { seat, tone: 'good' });
     fx(g, { kind: 'win', seat });
+  } else if (g.phase === 'finished' && seat === g.winner && p.vp < g.vpTarget && g.wonFrom) {
+    // The winning point was a mistake: play picks up where it stopped.
+    const from = g.wonFrom;
+    g.phase = from.phase;
+    g.active = from.active;
+    g.strategyPlay = from.strategyPlay;
+    g.winner = null;
+    g.wonFrom = null;
+    if (g.active != null) clockStart(g, at);
+    log(g, `${p.name} is back under ${g.vpTarget} — the game goes on.`, { seat, tone: 'warn' });
+    fx(g, { kind: 'phase', note: g.phase });
   }
 }
 
