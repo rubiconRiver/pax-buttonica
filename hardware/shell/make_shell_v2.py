@@ -84,6 +84,7 @@ USBC_PLUG = (22.0, 12.0, 7.0)        # length out of the Atom, width, height    
 CORNER_W = 18.0                      # width of the opening into the corner
 CORNER_TOP = 10.0                    # its ceiling: below the cap's flange, which never comes lower than 13
 WALL_HOLE = (14.0, 9.0)              # through the corner wall: wide enough for the plug itself
+WALL_HOLE_OPEN = False               # closed since 2026-09-29: in the printed prototype the cable turned inside the corner with room to spare
 CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)      # (no longer cut: the cable goes down at the corner)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
 #   The cable has a plug on each end and neither passes a hole, so it has to slip in from the side.
 # No printed springs (2026-09-28): with no bezel pressing on it, the cap resting on the Atom's own switch through
@@ -144,9 +145,15 @@ def housing():
     # through the corner wall
     corner = box(BORE_R - 6, -CORNER_W / 2, PLATFORM_Z - 1, 40, CORNER_W, CORNER_TOP + 1).rotate([0, 0, CORNER_A])
     solid -= corner ^ pocket_outline(CORNER_TOP + 2, PLATFORM_Z - 1.5)
-    solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
+    if WALL_HOLE_OPEN:
+        solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
     tabs = union(cyl(TAB_D, TAB_H, sx * C, sy * C, LID_Z, seg=32) for sx, sy in TAB_CORNERS)
-    tabs ^= pocket_outline(TAB_H + 2, LID_Z - 1)
+    # Each boss leans into its corner: printed upside down it grows out of the two walls at about 45 degrees,
+    # so nothing starts in mid-air and no supports are needed (the slicer warned of a floating cantilever).
+    for sx, sy in TAB_CORNERS:
+        tabs += Manifold.batch_hull([cyl(TAB_D, 0.2, sx * C, sy * C, LID_Z + TAB_H - 0.2, seg=32),
+                                     cyl(0.8, 0.2, sx * (IN / 2 + 0.5), sy * (IN / 2 + 0.5), PLATFORM_Z - 0.5, seg=12)])
+    tabs ^= pocket_outline(COMP_H + PLATFORM_T + 1, LID_Z - 1)
     solid += tabs
     cuts = [cyl(m.TAP_D, TAB_H + 2, sx * C, sy * C, LID_Z - 1, seg=24) for sx, sy in TAB_CORNERS]
     port_z = LID_Z + m.RIDER_USB_Z
