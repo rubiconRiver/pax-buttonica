@@ -42,37 +42,69 @@ sys.argv = _argv
 OUT = 'stl-v2'
 
 # ── the housing ─────────────────────────────────────────────────────────────
-W = 72.0                            # outside, square
+# The bought parts as they really are (2026-09-30, from the parts on Garett's desk; the first drawing was from
+# datasheets and wrong in four places). Distances along the Rider's port end are from its SWITCH edge.
+CELL_REAL = (34.5, 52.0, 9.9)        # EEMB LP963450, as listed by its maker; the lead leaves one short end, at a corner
+CELL_PLAY = 0.75                     # round the cell in its pocket: 0.5 was tight
+RIDER_REAL = (25.0, 41.0, 8.0)       # across, along, tall (the USB-A jack is the tall part)
+RIDER_JST = 6.5                      # battery socket, centre, from the switch edge          MEASURE
+RIDER_USBC = 17.5                    # USB-C, centre, from the switch edge                   MEASURE
+RIDER_USBA = 10.0                    # USB-A jack, centre, from the switch edge              MEASURE
+RIDER_SWITCH = 12.0                  # the slide switch, centre, from the USB-A end          MEASURE
+SETBACK = 6.5                        # the Rider stands this far off the port wall: the battery plugs in from that end
+USB_A_PLUG = (16.0, 20.0, 8.0)       # a straight USB-A plug's body: across, out of the jack, tall     MEASURE
+USB_A_BEND = 6.5                     # and room for the cable to turn after it
+STRAIGHT_USB_A = True                # False: a right-angle USB-A plug (about 9 mm), and the box is square again
+
+W = 72.0                            # outside, across (x)
 WALL = 2.5
 CORNER_R = 6.0                      # outside; the inside corners are CORNER_R - WALL
 IN = W - 2 * WALL                   # 67 inside: the bore (66) needs it
+# Along y the pocket has to hold, in one line: the battery plug's room, the Rider, its USB-A plug and the cable's turn.
+_run = SETBACK + RIDER_REAL[1] + 1.0 + (USB_A_PLUG[1] + USB_A_BEND if STRAIGHT_USB_A else 9.0 + 4.0)
+INY = max(IN, math.ceil(_run))      # 75 with a straight plug, 67 with a right-angle one
+D = INY + 2 * WALL                  # 80 outside, along y
 BORE_R = m.BORE_R                   # 33
 PLATFORM_T = m.FLOOR_T              # 1.6
 PLATFORM_CLEAR = 0.3                # platform to pocket, each side
-COMP_H = m.CELL[2] + m.PART_CLEARANCE + 0.4   # 10.5: the cell is the tallest thing on the lid
+COMP_H = CELL_REAL[2] + 0.9           # 10.8: the cell is the tallest thing on the lid
 LID_T = 2.5
 TOP = m.BEZEL_TOP                   # 21, the housing's top edge
 PLATFORM_Z = 0.0                    # top of the platform
 LID_Z = PLATFORM_Z - PLATFORM_T - COMP_H
 BOTTOM = LID_Z - LID_T              # the table
-C = IN / 2 - 3.5                    # 30: the corners' centres, tabs and feet
-TAB_CORNERS = ((-1, 1), (-1, -1), (1, -1))    # not (+1, +1): the Rider's USB-C is there
-ALL_CORNERS = ((-1, 1), (-1, -1), (1, -1), (1, 1))
+C = IN / 2 - 3.5                    # 30: the corners' centres in x, tabs and feet
+CY = INY / 2 - 3.5                  # and in y
+# The screws: two in the -x corners and one in the middle of the -y wall. Not the +x corners: one has the Rider's
+# sockets and the other is where its USB-A plug ends and the cable turns up to the Atom.
+TABS = ((-C, CY, -1, 1), (-C, -CY, -1, -1), (6.0, -CY, 0, -1))        # x, y, and which walls it leans on
+FEET = ((-C, CY), (-C, -CY), (6.0, -CY), (C, CY), (C, -CY))
 TAB_D, TAB_H = 8.0, 6.0
 NOTCH_R = 5.0
-PORT = (13.0, 8.0)
+PORT = (14.0, 8.5)                  # the charging window: a USB-C plug's body passes it, because the socket is SETBACK behind the wall
+SWITCH_SLOT = (11.0, 5.0)           # in the +x wall, over the Rider's switch: along y, tall
 FOOT_D = 10.5
 FENCE_T = 1.6
 FENCE_H = COMP_H - 0.3              # the platform rests on the fences, a hair below the housing's ledge
 CLR = m.PART_CLEARANCE              # 0.5 round every bought part
 
-# where things lie on the lid (x, y of their low corner)
-CELL_X0, CELL_Y0 = -IN / 2 + CLR, -m.CELL[1] / 2                       # -33, -25: along the -x wall
-RIDER_FOOT = (m.RIDER[1], m.RIDER[0])                                  # turned: 25 along x, 41 along y
-RIDER_X0 = CELL_X0 + m.CELL[0] + CLR + FENCE_T + CLR                   # 4.1: past the cell and the fence
-RIDER_Y0 = IN / 2 - CLR - RIDER_FOOT[1]                                # -8: its USB-C end 0.5 from the +y wall
-RIDER_CX = RIDER_X0 + RIDER_FOOT[0] / 2                                # 16.6, where the port is
-PLUG = (12.0, 15.0, 7.0)                                               # the USB-A plug body out of the Rider's -y end
+# where things lie on the lid. The Rider against the +x wall, switch edge to the wall (so the switch can be reached
+# through a slot), its port end toward +y. The cell along the -x wall, its lead end toward +y, beside the Rider's
+# battery socket; the lead curls up out of the socket and back over the board to the cell.
+RIDER_FOOT = (RIDER_REAL[0], RIDER_REAL[1])
+RIDER_X1 = IN / 2 - 0.7                                                # its switch edge, 0.7 from the +x wall
+RIDER_X0 = RIDER_X1 - RIDER_FOOT[0]                                    # 7.8
+RIDER_Y1 = INY / 2 - SETBACK                                           # its port end
+RIDER_Y0 = RIDER_Y1 - RIDER_FOOT[1]                                    # its USB-A end
+USBC_X = RIDER_X1 - RIDER_USBC                                         # where the charging window is
+JST_X = RIDER_X1 - RIDER_JST
+USBA_X = RIDER_X1 - RIDER_USBA
+CELL_ZONE = (CELL_REAL[0] + 2 * CELL_PLAY, CELL_REAL[1] + 2 * CELL_PLAY)   # 36 x 53.5
+CELL_ZX0 = -IN / 2                                                     # against the -x wall
+CELL_ZY1 = INY / 2 - 9.0                                               # 9 mm at the +y end for the lead and its tab
+CELL_ZY0 = CELL_ZY1 - CELL_ZONE[1]
+CELL_X0, CELL_Y0 = CELL_ZX0 + CELL_PLAY, CELL_ZY0 + CELL_PLAY
+PLUG = USB_A_PLUG if STRAIGHT_USB_A else (16.0, 9.0, 8.0)
 # The plug. A USB-C plug's body is about 20 mm long (Garett's photo, 2026-09-28: it reached the round wall with
 # nowhere for the cable to turn; the first drawing assumed 12). So the Atom is turned to point its socket into a
 # CORNER of the box, 47 mm from the middle instead of 33, the housing is opened into that corner at plug height,
@@ -129,11 +161,11 @@ def rbox_prism(w, d, r, h, z=0.0, ct=0.0, cb=0.0, cx=0.0, cy=0.0):
 
 
 def pocket_outline(h, z, grow=0.0):
-    return rbox_prism(IN + 2 * grow, IN + 2 * grow, CORNER_R - WALL + grow, h, z=z)
+    return rbox_prism(IN + 2 * grow, INY + 2 * grow, CORNER_R - WALL + grow, h, z=z)
 
 
 def housing():
-    solid = rbox_prism(W, W, CORNER_R, TOP - BOTTOM, z=BOTTOM, ct=1.5, cb=0.6)
+    solid = rbox_prism(W, D, CORNER_R, TOP - BOTTOM, z=BOTTOM, ct=1.5, cb=0.6)
     cone = BORE_R - m.BEZEL_BORE_R
     cavity = revolve([
         (0, PLATFORM_Z - 1), (BORE_R, PLATFORM_Z - 1), (BORE_R, m.SEAT_Z), (m.BEZEL_BORE_R, m.SEAT_Z + cone),
@@ -141,29 +173,30 @@ def housing():
     solid -= cavity
     solid -= pocket_outline(COMP_H + PLATFORM_T + 1, BOTTOM - 1 + LID_T)          # the pocket, open to the bottom
     solid -= pocket_outline(LID_T + 1, BOTTOM - 1, grow=0.5)                        # the lid's rebate
-    # the corner the Atom's plug points into: open at plug height, inside the square pocket's outline, with a hole
-    # through the corner wall
-    corner = box(BORE_R - 6, -CORNER_W / 2, PLATFORM_Z - 1, 40, CORNER_W, CORNER_TOP + 1).rotate([0, 0, CORNER_A])
+    # the corner the Atom's plug points into: open at plug height, inside the pocket's outline
+    corner = box(BORE_R - 6, -CORNER_W / 2, PLATFORM_Z - 1, 60, CORNER_W, CORNER_TOP + 1).rotate([0, 0, CORNER_A])
     solid -= corner ^ pocket_outline(CORNER_TOP + 2, PLATFORM_Z - 1.5)
     if WALL_HOLE_OPEN:
         solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
-    tabs = union(cyl(TAB_D, TAB_H, sx * C, sy * C, LID_Z, seg=32) for sx, sy in TAB_CORNERS)
-    # Each boss leans into its corner: printed upside down it grows out of the two walls at about 45 degrees,
-    # so nothing starts in mid-air and no supports are needed (the slicer warned of a floating cantilever).
-    for sx, sy in TAB_CORNERS:
-        tabs += Manifold.batch_hull([cyl(TAB_D, 0.2, sx * C, sy * C, LID_Z + TAB_H - 0.2, seg=32),
-                                     cyl(0.8, 0.2, sx * (IN / 2 + 0.5), sy * (IN / 2 + 0.5), PLATFORM_Z - 0.5, seg=12)])
+    tabs = union(cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS)
+    # Each boss leans into the wall or corner behind it: printed upside down it grows out of the wall at about
+    # 45 degrees, so nothing starts in mid-air and no supports are needed (the slicer warned of a floating cantilever).
+    for x, y, sx, sy in TABS:
+        ax = sx * (IN / 2 + 0.5) if sx else x
+        tabs += Manifold.batch_hull([cyl(TAB_D, 0.2, x, y, LID_Z + TAB_H - 0.2, seg=32),
+                                     cyl(0.8 if sx else TAB_D, 0.2, ax, sy * (INY / 2 + 0.5), PLATFORM_Z - 0.5, seg=12 if sx else 32)])
     tabs ^= pocket_outline(COMP_H + PLATFORM_T + 1, LID_Z - 1)
     solid += tabs
-    cuts = [cyl(m.TAP_D, TAB_H + 2, sx * C, sy * C, LID_Z - 1, seg=24) for sx, sy in TAB_CORNERS]
-    port_z = LID_Z + m.RIDER_USB_Z
-    cuts.append(cbox(RIDER_CX, W / 2, port_z - PORT[1] / 2, PORT[0], 2 * WALL + 4, PORT[1]))
+    cuts = [cyl(m.TAP_D, TAB_H + 2, x, y, LID_Z - 1, seg=24) for x, y, sx, sy in TABS]
+    # the charging window, on the real USB-C; and a slot over the Rider's switch
+    port_z = LID_Z + 1.6 + 1.7                       # the board, then half the socket
+    cuts.append(cbox(USBC_X, D / 2, port_z - PORT[1] / 2, PORT[0], 2 * WALL + 4, PORT[1]))
+    cuts.append(box(W / 2 - WALL - 2, RIDER_Y0 + RIDER_SWITCH - SWITCH_SLOT[0] / 2, LID_Z + 0.8, WALL + 4, SWITCH_SLOT[0], SWITCH_SLOT[1]))
     return solid - union(cuts)
 
 
 def platform():
-    s = IN - 2 * PLATFORM_CLEAR
-    solid = rbox_prism(s, s, CORNER_R - WALL - PLATFORM_CLEAR, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T)
+    solid = rbox_prism(IN - 2 * PLATFORM_CLEAR, INY - 2 * PLATFORM_CLEAR, CORNER_R - WALL - PLATFORM_CLEAR, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T)
     h0, g0 = m.COLLAR_H, m.COLLAR_GAPS
     m.COLLAR_H = h0 + COLLAR_RAISE          # collar() reads both
     m.COLLAR_GAPS = ((0, 1),)               # no gaps of its own: they are cut below, where the turned Atom's plugs are
@@ -179,30 +212,34 @@ def platform():
     for a in (SPRING_ANGLES if SPRINGS else ()):
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
     # the cable goes down at the corner: a slot from just past the collar to the platform's corner
-    cuts.append(box(m.COLLAR_R + 2.5, -CORNER_W / 2 + 1, -PLATFORM_T - 1, 40, CORNER_W - 2, PLATFORM_T + 2).rotate([0, 0, CORNER_A]))
-    cuts += [cyl(2 * NOTCH_R, PLATFORM_T + 2, sx * C, sy * C, -PLATFORM_T - 1, seg=32) for sx, sy in TAB_CORNERS]
+    cuts.append(box(m.COLLAR_R + 2.5, -CORNER_W / 2 + 1, -PLATFORM_T - 1, 60, CORNER_W - 2, PLATFORM_T + 2).rotate([0, 0, CORNER_A]))
+    cuts += [Manifold.batch_hull([cyl(2 * NOTCH_R, PLATFORM_T + 2, x, y, -PLATFORM_T - 1, seg=32),
+                                  cyl(2 * NOTCH_R, PLATFORM_T + 2, x + 4 * sx, y + 4 * sy, -PLATFORM_T - 1, seg=32)]) for x, y, sx, sy in TABS]
     return solid - union(cuts)
 
 
 def lid():
-    solid = rbox_prism(IN + 1.0 - 0.4, IN + 1.0 - 0.4, CORNER_R - WALL + 0.3, LID_T, z=BOTTOM, cb=0.6)
-    z, h = LID_Z, FENCE_H
-    cx1 = CELL_X0 + m.CELL[0] + CLR                # 1.5: the cell's clearance ends, the fence starts
-    ylo, yhi = CELL_Y0 - CLR, CELL_Y0 + m.CELL[1] + CLR     # -25.5, 25.5
+    solid = rbox_prism(IN + 1.0 - 0.4, INY + 1.0 - 0.4, CORNER_R - WALL + 0.3, LID_T, z=BOTTOM, cb=0.6)
+    z, h, low = LID_Z, FENCE_H, 5.0
+    zx1 = CELL_ZX0 + CELL_ZONE[0]                   # 2.5: the cell's pocket ends, the wall between the two starts
     f = []
-    f.append(box(-25, yhi, z, cx1 + 25, FENCE_T, h))                                       # +y side of the cell (stops short of the tab)
-    f.append(box(-25, ylo - FENCE_T, z, cx1 + 25, FENCE_T, h))                            # -y side
-    f.append(box(cx1, ylo - FENCE_T, z, FENCE_T, yhi - ylo + 2 * FENCE_T, h))              # between the cell and the Rider
-    rx0, rx1 = RIDER_X0 - CLR, RIDER_X0 + RIDER_FOOT[0] + CLR                              # 3.6, 29.6
-    ry0 = RIDER_Y0 - CLR                                                                    # -8.5
-    px0, px1 = RIDER_CX - PLUG[0] / 2 - 1, RIDER_CX + PLUG[0] / 2 + 1                      # leave the plug's width open
-    f.append(box(rx0, ry0 - FENCE_T, z, px0 - rx0, FENCE_T, h))                            # the Rider's -y stop, either side of the plug
-    f.append(box(px1, ry0 - FENCE_T, z, rx1 - px1, FENCE_T, h))
-    f.append(box(rx1, ry0 - FENCE_T, z, FENCE_T, IN / 2 - ry0 + FENCE_T - 0.3, h))         # its +x side
+    # the cell: a wall between it and the Rider, a stop at each end; the -x wall of the box is its fourth side.
+    # Full height: these carry the platform. The +y stop leaves the Rider's side open, for the lead.
+    f.append(box(zx1, CELL_ZY0 - FENCE_T, z, FENCE_T, CELL_ZONE[1] + FENCE_T, h))
+    f.append(box(-25, CELL_ZY0 - FENCE_T, z, zx1 + 25, FENCE_T, h))
+    f.append(box(-25, CELL_ZY1, z, 17, FENCE_T, h))
+    # the Rider: a low rail on its -x side (the +x wall of the box is the other), stops at its USB-A end beside the
+    # plug, and two low posts at its port end, one each side of the two sockets, so it cannot slide to the wall
+    rx0 = RIDER_X0 - 0.5
+    f.append(box(rx0 - FENCE_T, RIDER_Y0 - 0.5 - FENCE_T, z, FENCE_T, RIDER_FOOT[1] + FENCE_T + 1.0, low))
+    open0 = USBA_X - PLUG[0] / 2 - 1.0               # the plug's width stays open
+    f.append(box(rx0 - FENCE_T, RIDER_Y0 - 0.5 - FENCE_T, z, open0 - rx0 + FENCE_T, FENCE_T, h))
+    f.append(box(rx0 - FENCE_T, RIDER_Y1 + 0.5, z, FENCE_T + 0.6, SETBACK - 0.9, low))
+    f.append(box(JST_X + 4.6, RIDER_Y1 + 0.5, z, IN / 2 - 1.1 - (JST_X + 4.6), SETBACK - 1.8, low))      # short of the pocket's rounded corner
     solid += union(f)
-    cuts = [cyl(m.M3_CLEAR_D, LID_T + 2, sx * C, sy * C, BOTTOM - 1, seg=24) for sx, sy in TAB_CORNERS]
-    cuts += [cyl(m.M3_HEAD_D, 1.6, sx * C, sy * C, BOTTOM - 0.01, seg=32) for sx, sy in TAB_CORNERS]
-    cuts += [cyl(FOOT_D, 0.8, sx * C, sy * C, BOTTOM - 0.01) for sx, sy in ALL_CORNERS]
+    cuts = [cyl(m.M3_CLEAR_D, LID_T + 2, x, y, BOTTOM - 1, seg=24) for x, y, sx, sy in TABS]
+    cuts += [cyl(m.M3_HEAD_D, 1.6, x, y, BOTTOM - 0.01, seg=32) for x, y, sx, sy in TABS]
+    cuts += [cyl(FOOT_D, 0.8, x, y, BOTTOM - 0.01) for x, y in FEET]
     return solid - union(cuts)
 
 
@@ -211,9 +248,14 @@ def bought(pressed=False):
     # turned to point its USB-C into the corner, and drawn with a plug of the real size in it
     plug = box(-m.ATOM[0] / 2 - USBC_PLUG[0], -USBC_PLUG[1] / 2, 1.2, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])
     parts['atom'] = (parts['atom'] + plug).rotate([0, 0, ATOM_TURN])
-    parts['cell'] = box(CELL_X0, CELL_Y0, LID_Z, *m.CELL)
-    rider = box(RIDER_X0, RIDER_Y0, LID_Z, RIDER_FOOT[0], RIDER_FOOT[1], m.RIDER[2])
-    rider += cbox(RIDER_CX, RIDER_Y0 - PLUG[1] / 2, LID_Z + 1, PLUG[0], PLUG[1], PLUG[2])   # the USB-A plug out of its -y end
+    parts['cell'] = box(CELL_X0, CELL_Y0, LID_Z, *CELL_REAL)
+    # the Rider with everything that plugs into it, so the check finds a window or a wall in the way:
+    # the board and its parts; the USB-A plug out of its -y end; the battery's plug out of its port end;
+    # and the charging cable's plug coming in through the window
+    rider = box(RIDER_X0, RIDER_Y0, LID_Z, RIDER_FOOT[0], RIDER_FOOT[1], RIDER_REAL[2])
+    rider += cbox(USBA_X, RIDER_Y0 - 1.0 - PLUG[1] / 2, LID_Z + 0.6, PLUG[0], PLUG[1], PLUG[2])
+    rider += cbox(JST_X, RIDER_Y1 + 2.5, LID_Z + 1.6, 8.0, 5.0, 5.5)
+    rider += cbox(USBC_X, RIDER_Y1 + (D / 2 + 6 - RIDER_Y1) / 2, LID_Z + 0.05, 12.4, D / 2 + 6 - RIDER_Y1, 6.5)
     parts['rider'] = rider
     return parts
 
@@ -265,7 +307,7 @@ def check_and_write(printed, flipped, out_dir, label):
 
 
 if __name__ == '__main__':
-    print(f'v2 box: {W:.0f} x {W:.0f} mm, {m.CAP_TOP - BOTTOM:.1f} mm tall to the cap, housing {TOP - BOTTOM:.1f} mm, port on +y')
+    print(f'v2 box: {W:.0f} x {D:.0f} mm, {m.CAP_TOP - BOTTOM:.1f} mm tall to the cap, housing {TOP - BOTTOM:.1f} mm, port on +y, {"straight" if STRAIGHT_USB_A else "right-angle"} USB-A plug')
     check_and_write(printed_parts(), {'housing', 'cap'}, os.path.join(HERE, OUT), OUT)
     if not SPRINGS:
         # pegs to choose from: the shortest that clicks cleanly without the cap rattling is the one
