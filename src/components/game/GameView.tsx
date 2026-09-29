@@ -5,7 +5,7 @@ import { ownerOfButton } from '../../state/profiles';
 import { cardByNumber, colorById } from '../../engine/data';
 import { UNCLAIMED, clampBrightness, deriveOutputs, levelsOf, screenLevels } from '../../engine/outputs';
 import type { Action, DeviceInput, GameState } from '../../engine/types';
-import { connectHub, hubStatus, setInputHandler, syncOutputs } from '../../hardware/serial';
+import { connectHub, hubStatus, setInputHandler, syncOutputs, watchHub } from '../../hardware/serial';
 import { snapshotOf } from '../../remote/messages';
 import { previews } from '../../remote/sync';
 import { isOnHub, sendToDevice } from '../../hardware/serial';
@@ -147,9 +147,11 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
       if (!held || isVirtualDevice(held)) dispatch({ type: 'BIND', seat, dev: d.dev, at: Date.now() });
     }
   }, [hubDevices, game.bindings, game.players, profiles, demo, dispatch]);
-  // A hub this browser has been allowed before connects on its own, with no chooser.
+  // A hub this browser has been allowed before connects on its own, with no chooser: now, and whenever it's plugged back in.
   useEffect(() => {
-    if (!demo) void connectHub({ silent: true });
+    if (demo) return;
+    void connectHub({ silent: true });
+    return watchHub();
   }, [demo]);
 
   // Someone changed their entrance music mid-game: it applies from their next turn.

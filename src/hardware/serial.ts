@@ -19,6 +19,9 @@ interface SerialLike {
   requestPort(options?: { filters?: { usbVendorId: number }[] }): Promise<SerialPortLike>;
   /** Ports this site has been allowed before; they can be opened again without a chooser. */
   getPorts?(): Promise<SerialPortLike[]>;
+  /** `connect` and `disconnect` come from a port being plugged in or pulled out; the event's target is the port. */
+  addEventListener?(type: 'connect' | 'disconnect', fn: (e: Event) => void): void;
+  removeEventListener?(type: 'connect' | 'disconnect', fn: (e: Event) => void): void;
 }
 const serial = (): SerialLike | undefined => (navigator as unknown as { serial?: SerialLike }).serial;
 /** Espressif's USB vendor id: every Atom, and nothing else on the laptop, so the chooser doesn't list Bluetooth. */
@@ -45,12 +48,20 @@ export interface HubStatus {
   /** Recent traffic, newest last — for the test bench. */
   log: { id: number; dir: 'in' | 'out'; text: string }[];
   error?: string;
+  /** A hub that was connected has gone (the cable, or the port failed) and isn't back yet. */
+  dropped?: boolean;
 }
 
 export const hubStatus = createStore<HubStatus>({ connected: false, devices: [], log: [] });
 
 let port: SerialPortLike | null = null;
 let writer: WritableStreamDefaultWriter<Uint8Array> | null = null;
+/** What the read loop is reading, so a pulled cable can stop it at once. */
+let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+/** A connect under way: two at once would open and close the same port under each other. */
+let connecting: Promise<void> | null = null;
+/** The last hub's tidy-up, so its port is closed before anything tries to open it again. */
+let closing: Promise<void> = Promise.resolve();
 let onInput: ((dev: string, input: DeviceInput) => void) | null = null;
 let logSeq = 0;
 const lastFrames = new Map<string, string>();
@@ -67,6 +78,9 @@ export interface SeatPrefs {
 /** What each button was last told about its taste, so a cfg only goes out when that changes. */
 const prefs = new Map<string, SeatPrefs>();
 
+/** How a button draws "your move": its seat's taste, else the table's. */
+const lookOf = (dev: string): TurnLook => prefs.get(dev)?.look ?? settingsStore.get().turnLight;
+
 /** Everything a button is configured with: hold and blink times and light levels for the table, look and brightness for its seat. */
 function cfgFrame(dev: string): ToDevice {
   const settings = settingsStore.get();
@@ -81,7 +95,7 @@ function cfgFrame(dev: string): ToDevice {
     bright: level(turn),
     dim: level(waiting),
     fx: level(effects),
-    pulse: mine?.look ?? settings.turnLight,
+    pulse: lookOf(dev),
   };
 }
 
@@ -98,7 +112,8 @@ export function sendToDevice(msg: ToDevice) {
   if (!writer) return;
   const line = JSON.stringify(msg);
   record('out', line);
-  void writer.write(enc.encode(line + '\n'));
+  // A port that has just gone refuses writes; the read loop is the one that notices and says so.
+  writer.write(enc.encode(line + '\n')).catch(() => {});
 }
 
 /** True if this device id is a real button on the hub that can play note lists itself. */
@@ -176,34 +191,58 @@ settingsStore.subscribe(() => {
   for (const d of hubStatus.get().devices) sendToDevice(cfgFrame(d.dev));
 });
 
+/**
+ * Read lines until the hub goes. A glitch on the line (noise, an overrun) spoils one stream and the port hands out a
+ * fresh one, so reading carries on; a pulled cable leaves none. Then every lock is let go and the port is closed, or
+ * it would stay "already open" and the same hub couldn't be opened again without reloading the page.
+ */
 async function readLoop(p: SerialPortLike) {
-  const reader = p.readable!.pipeThrough(new TextDecoderStream() as unknown as ReadableWritablePair<string, Uint8Array>).getReader();
+  const dec = new TextDecoder();
   let buf = '';
-  try {
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += value;
-      let nl: number;
-      while ((nl = buf.indexOf('\n')) >= 0) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line.startsWith('{')) continue; // boot chatter from the hub
-        record('in', line);
-        try {
-          handle(JSON.parse(line) as FromDevice);
-        } catch {
-          // ignore malformed lines
+  // Three failures with nothing read between them is a port that has gone bad, not noise.
+  let errors = 0;
+  let open = true;
+  while (open && p.readable && errors < 3) {
+    const r = (reader = p.readable.getReader());
+    try {
+      for (;;) {
+        const { value, done } = await r.read();
+        if (done) {
+          open = false;
+          break;
+        }
+        errors = 0;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf('\n')) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith('{')) continue; // boot chatter from the hub
+          record('in', line);
+          try {
+            handle(JSON.parse(line) as FromDevice);
+          } catch {
+            // ignore malformed lines
+          }
         }
       }
+    } catch (e) {
+      errors++;
+      buf = '';
+      hubStatus.set((s) => ({ ...s, error: String(e) }));
+    } finally {
+      r.releaseLock();
     }
-  } catch (e) {
-    hubStatus.set((s) => ({ ...s, error: String(e) }));
-  } finally {
-    hubStatus.set((s) => ({ ...s, connected: false }));
-    port = null;
-    writer = null;
   }
+  reader = null;
+  const w = writer;
+  port = null;
+  writer = null;
+  lastFrames.clear();
+  hubStatus.set((s) => ({ ...s, connected: false, dropped: true }));
+  w?.releaseLock();
+  // A port that won't close (the device half gone) mustn't keep the next hub waiting for ever.
+  await Promise.race([p.close().catch(() => {}), new Promise((r) => setTimeout(r, 1000))]);
 }
 
 /**
@@ -250,33 +289,69 @@ async function openHub(p: SerialPortLike) {
   prefs.clear();
   hubStatus.set({ connected: true, devices: [], log: [] });
   // Anything without a "dev" makes the hub announce itself, and buttons re-announce on their heartbeat.
-  void writer.write(enc.encode('{"t":"hub?"}\n'));
-  void readLoop(p);
+  writer.write(enc.encode('{"t":"hub?"}\n')).catch(() => {});
+  closing = readLoop(p);
 }
 
 /**
  * Connect to the hub. Atoms this site has been allowed before are tried first, silently: each is asked what it is
  * and the one that says "hub" is used, so a plugged-in hub connects with no chooser at all. Only if none of them is
  * the hub does the browser's chooser appear (which needs a click), and it lists Espressif chips only.
- * `silent` never shows the chooser: for connecting on page load.
+ * `silent` never shows the chooser: for connecting on page load, or when something is plugged in.
  */
 export async function connectHub({ silent = false } = {}) {
   const api = serial();
-  if (!api || port) return;
-  try {
-    for (const p of (await api.getPorts?.()) ?? []) {
-      if ((await whatIs(p)) === 'hub') {
-        await openHub(p);
-        return;
+  if (!api) return;
+  while (connecting) await connecting;
+  if (port) return;
+  connecting = (async () => {
+    await closing;
+    try {
+      for (const p of (await api.getPorts?.()) ?? []) {
+        if ((await whatIs(p)) === 'hub') {
+          await openHub(p);
+          return;
+        }
       }
+      if (silent) return;
+      await openHub(await api.requestPort({ filters: [{ usbVendorId: ESPRESSIF }] }));
+    } catch (e) {
+      port = null;
+      writer = null;
+      if ((e as DOMException).name !== 'NotFoundError') hubStatus.set((s) => ({ ...s, error: String(e) }));
     }
-    if (silent) return;
-    await openHub(await api.requestPort({ filters: [{ usbVendorId: ESPRESSIF }] }));
-  } catch (e) {
-    port = null;
-    writer = null;
-    if ((e as DOMException).name !== 'NotFoundError') hubStatus.set((s) => ({ ...s, error: String(e) }));
-  }
+  })().finally(() => {
+    connecting = null;
+  });
+  await connecting;
+}
+
+/**
+ * While a game is up: a hub plugged back in is found and opened by itself (each button is told its settings and its
+ * light again as it checks in), and a hub pulled out stops the reading at once. Returns the way to stop watching.
+ */
+export function watchHub(): () => void {
+  const api = serial();
+  if (!api?.addEventListener) return () => {};
+  let watching = true;
+  const plugged = async () => {
+    // A hub that has only just been given power may still be starting when it's asked; ask once more a moment later.
+    for (let tries = 0; tries < 2 && watching && !port; tries++) {
+      if (tries) await new Promise((r) => setTimeout(r, 1500));
+      if (watching && !port) await connectHub({ silent: true });
+    }
+  };
+  const pulled = (e: Event) => {
+    if (port && (e.target as unknown) === port) reader?.cancel().catch(() => {});
+  };
+  const onConnect = () => void plugged();
+  api.addEventListener('connect', onConnect);
+  api.addEventListener('disconnect', pulled);
+  return () => {
+    watching = false;
+    api.removeEventListener?.('connect', onConnect);
+    api.removeEventListener?.('disconnect', pulled);
+  };
 }
 
 const DARK: DeviceOutput = { color: '#000000', mode: 'off', reason: '' };
@@ -299,11 +374,13 @@ export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[]
       sendToDevice(cfgFrame(dev));
     }
     const o = seat >= 0 ? outputs[seat] : unclaimed ?? DARK;
-    const key = `${o.color}|${o.mode}|${o.hold !== false}`;
+    // "Your move" keeps the time of its look (a heartbeat beats faster than a breath), so a new look is a new phase.
+    const look = lookOf(dev);
+    const key = `${o.color}|${o.mode}|${o.hold !== false}|${o.mode === 'pulse' ? look : ''}`;
     if (lastFrames.get(dev) === key) continue;
     lastFrames.set(dev, key);
     if (o.hold === false) toldNoHold.add(dev);
     else toldNoHold.delete(dev);
-    sendToDevice(ledFrame(dev, o, settingsStore.get().flashMs));
+    sendToDevice(ledFrame(dev, o, settingsStore.get().flashMs, look));
   }
 }

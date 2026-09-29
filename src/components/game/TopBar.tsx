@@ -37,6 +37,9 @@ export function TopBar({ game, demo, canUndo, canRedo, dispatch, onUndo, onRedo,
   const [showSettings, setShowSettings] = useState(false);
   const [showPhones, setShowPhones] = useState(false);
   const [showReferee, setShowReferee] = useState(false);
+  const live = hub.devices.filter((d) => !d.lost);
+  // Buttons the hub can't reach, by who they belong to; a spare that's switched off is nobody's business.
+  const silent = hub.devices.filter((d) => d.lost).map((d) => game.bindings.indexOf(d.dev)).filter((seat) => seat >= 0).map((seat) => game.players[seat].name);
 
   return (
     <header className="topbar">
@@ -99,9 +102,14 @@ export function TopBar({ game, demo, canUndo, canRedo, dispatch, onUndo, onRedo,
             Low battery: {hub.devices.filter((d) => d.mv != null && d.mv < 4400).map((d) => { const seat = game.bindings.indexOf(d.dev); return seat >= 0 ? game.players[seat].name : d.dev.slice(-4); }).join(', ')}
           </span>
         )}
+        {hub.connected && silent.length > 0 && (
+          <span className="chip" style={{ borderColor: 'var(--danger)', color: '#ffd9de' }} title="The hub can't reach these buttons. Check they're switched on and near the hub; each one catches up by itself when it's back.">
+            Not answering: {silent.join(', ')}
+          </span>
+        )}
         {serialSupported() && (
           <button type="button" className="btn btn--sm" aria-pressed={hub.connected} title="Connect the USB hub. An Atom you've allowed before connects by itself." onClick={() => void connectHub()}>
-            <IconUsb /> {hub.connected ? `Hub · ${hub.devices.length}` : 'Hub'}
+            <IconUsb /> {hub.connected ? `Hub · ${live.length}` : 'Hub'}
           </button>
         )}
         {!demo && (
@@ -119,6 +127,19 @@ export function TopBar({ game, demo, canUndo, canRedo, dispatch, onUndo, onRedo,
           {showSettings && <SettingsPanel onClose={() => setShowSettings(false)} onExit={onExit} onReseat={() => dispatch({ type: 'START_SEATING', at: Date.now() })} onPrimaryStage={(on) => dispatch({ type: 'SET_PRIMARY_STAGE', on })} demo={demo} />}
         </div>
       </div>
+
+      {/* Not a toast: until the hub is back, every light at the table is frozen and every press goes nowhere. */}
+      {hub.dropped && !hub.connected && (
+        <div className="hubdown" role="alert">
+          <IconUsb />
+          <p>
+            <b>Hub disconnected: check the USB cable</b>
+            <span>Lights are frozen and presses go nowhere until it's back. It reconnects by itself when it's plugged in.</span>
+            {hub.error && <small>{hub.error}</small>}
+          </p>
+          <button type="button" className="btn btn--sm" onClick={() => { sfx.click(); void connectHub(); }}>Reconnect</button>
+        </div>
+      )}
     </header>
   );
 }

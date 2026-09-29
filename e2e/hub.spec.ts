@@ -1,6 +1,6 @@
 import { Table, expect, openSettings, setSlider, setUpGame, test } from './helpers';
 import { pickCards } from './flows';
-import { feed, feedRaw, hello, installFakeHub, lastLed, press, sent, unplug } from './hub';
+import { feed, feedRaw, glitch, hello, installFakeHub, lastLed, plug, press, sent, unplug } from './hub';
 
 /**
  * Real buttons, minus the buttons. These tests speak the wire protocol in docs/BUTTON_STANDARD.md to the app's real
@@ -218,6 +218,8 @@ test('the look of "your move" and the brightness are configuration, not a differ
   await table.expectPhase('Strategy');
   // The wire still says pulse: the button decides what that looks like from its cfg.
   expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse' });
+  // The tests' clock starts at a moment that happens to sit at the same point of both cycles; move off it.
+  await page.clock.fastForward(500);
   const panel = await openSettings(page);
   await panel.getByRole('radio', { name: 'Breathe' }).click();
   await panel.getByRole('radio', { name: 'Heartbeat' }).click();
@@ -225,8 +227,12 @@ test('the look of "your move" and the brightness are configuration, not a differ
   const cfgs = (await sent(page)).filter((m) => m.t === 'cfg' && m.dev === A);
   expect(cfgs.at(-1)).toEqual({ t: 'cfg', dev: A, hold: 900, flash: 2000, ...LEVELS, bright: 70, pulse: 'heartbeat' });
   expect(cfgs.some((m) => m.pulse === 'pulse')).toBe(true);
-  // No new light was sent for it: the colour and meaning didn't change.
-  expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse' });
+  // The colour and meaning didn't change, but a heartbeat keeps its own time (1.3 s, not a breath's 1.7 s), so the
+  // light goes again with its phase on that cycle: every heartbeat at the table beats together, and a resend
+  // (each check-in, every ten seconds) lands where the beat already is instead of making it skip.
+  const now = await page.evaluate(() => Date.now());
+  expect(now % 1300, 'this moment tells the two cycles apart').not.toBe(now % 1700);
+  await expect.poll(() => lastLed(page, A)).toMatchObject({ c: RED, m: 'pulse', p: now % 1300 });
   // The screen's button follows the same choice.
   await expect(table.light('Ana')).toHaveAttribute('data-look', 'heartbeat');
 });
@@ -236,12 +242,17 @@ test('a button that drops off is left alone, and caught up when it returns', asy
   for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
   await table.expectPhase('Strategy');
   await feed(page, { t: 'lost', dev: C });
+  // The host is told whose button it is, and the hub's count is of buttons that answer.
+  await expect(page.locator('.chip', { hasText: 'Not answering' })).toHaveText('Not answering: Cleo');
+  await expect(page.getByRole('button', { name: 'Hub · 2' })).toBeVisible();
   const before = (await sent(page)).filter((m) => m.dev === C).length;
   await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
   expect((await sent(page)).filter((m) => m.dev === C).length, 'nothing is sent to a button that is not answering').toBe(before);
   // It comes back (new batteries): the first thing it hears is what it should look like now.
   await feed(page, hello(C, { btn: 3, led: 'ring', audio: 'none' }));
   await expect.poll(() => lastLed(page, C)).toMatchObject({ c: YELLOW, m: 'dim' });
+  await expect(page.locator('.chip', { hasText: 'Not answering' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hub · 3' })).toBeVisible();
 });
 
 test('low batteries are called out by player name', async ({ page }) => {
@@ -262,14 +273,56 @@ test('noise on the line is survived: boot chatter, split lines, broken JSON', as
   await expect(table.center.locator('.center__active')).toHaveText('Cleo');
 });
 
-test('unplugging the hub mid-game leaves the game playable on screen', async ({ page }) => {
+test('a hub pulled out mid-game says so, the game goes on on screen, and plugging it back in brings every light back', async ({ page }) => {
   const table = await startWithHub(page);
   for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await table.expectPhase('Strategy');
   await unplug(page);
+  const alert = page.getByRole('alert');
+  await expect(alert).toContainText('Hub disconnected: check the USB cable');
   await expect(page.getByRole('button', { name: 'Hub', exact: true })).toBeVisible();
+
+  // Reconnect with nothing plugged in: the chooser has nothing to offer, the host cancels, the banner stays.
+  await alert.getByRole('button', { name: 'Reconnect' }).click();
+  await expect(alert).toBeVisible();
+
+  // The table plays on with the screen's buttons meanwhile, and nothing is written to a hub that isn't there.
+  const out = (await sent(page)).length;
   await table.expectLights({ Ana: 'pulse' });
   await table.tap('Ana');
   await table.expectToast('Pick a card on the big screen');
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectActive('Ana');
+  expect((await sent(page)).length).toBe(out);
+
+  // Plugged back in: found and opened with no click (the same port, so the last one must have been closed properly).
+  await plug(page);
+  await expect(alert).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Hub · 0' })).toBeVisible();
+
+  // Each button checks in on its heartbeat and is told its settings and the light it should have now.
+  await feed(page, hello(A), hello(B), hello(C, { btn: 3, led: 'ring', audio: 'none' }));
+  await expect(page.getByRole('button', { name: 'Hub · 3' })).toBeVisible();
+  const since = async () => (await sent(page)).slice(out);
+  const light = async (dev: string) => (await since()).filter((m) => m.t === 'led' && m.dev === dev).at(-1);
+  await expect.poll(() => light(A)).toMatchObject({ c: RED, m: 'pulse' });
+  await expect.poll(() => light(B)).toMatchObject({ c: ORANGE, m: 'dim' });
+  await expect.poll(() => light(C)).toMatchObject({ c: YELLOW, m: 'dim' });
+  for (const dev of [A, B, C]) expect(await since()).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'solid' });
+
+  // And a press counts again.
+  await feed(page, press(A, 'hold'));
+  await table.expectActive('Ben');
+});
+
+test('noise on the USB line is ridden out without dropping the hub', async ({ page }) => {
+  const table = await startWithHub(page);
+  await glitch(page);
+  await feed(page, press(A, 'tap'));
+  await expect(table.center.locator('.center__active')).toHaveText('Ben');
+  expect(await lastLed(page, A)).toMatchObject({ c: RED, m: 'solid' });
+  await expect(page.getByRole('button', { name: 'Hub · 3' })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
 });
 
 test.describe('the test bench', () => {

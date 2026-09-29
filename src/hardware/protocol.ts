@@ -64,11 +64,12 @@ export const HEARTBEAT_MS = 1300;
 /**
  * Where in its cycle a repeating light should be right now, so every button on
  * the table breathes and blinks together no matter when it got the message.
+ * A `pulse` drawn as a heartbeat runs on the heartbeat's cycle, not the breath's.
  */
-export const phaseNow = (mode: LedMode, flashMs: number): number | undefined =>
-  mode === 'pulse' ? Date.now() % PULSE_MS : mode === 'flash' ? Date.now() % flashMs : undefined;
+export const phaseNow = (mode: LedMode, flashMs: number, look: TurnLook = 'pulse'): number | undefined =>
+  mode === 'pulse' ? Date.now() % (look === 'heartbeat' ? HEARTBEAT_MS : PULSE_MS) : mode === 'flash' ? Date.now() % flashMs : undefined;
 
-export const ledFrame = (dev: string, o: DeviceOutput, flashMs: number): ToDevice => {
-  const p = phaseNow(o.mode, flashMs);
+export const ledFrame = (dev: string, o: DeviceOutput, flashMs: number, look?: TurnLook): ToDevice => {
+  const p = phaseNow(o.mode, flashMs, look);
   return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }), ...(o.hold === false ? { h: 0 as const } : {}) };
 };

@@ -140,13 +140,13 @@ a:hover { color: var(--gold-2); }
 
 /* Chamfered frames, the house shape: top-left and bottom-right corners cut at 45°.
    clip-path removes the corner; the pseudo-elements redraw the border along the cut. */
-.panel, .btn, .scard, .playbtn, .play__banner {
+.panel, .btn, .scard, .playbtn, .play__banner, .hubdown {
   position: relative;
   border-radius: 0;
   clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c));
 }
-:is(.panel, .btn, .scard, .playbtn, .play__banner)::before,
-:is(.panel, .btn, .scard, .playbtn, .play__banner)::after {
+:is(.panel, .btn, .scard, .playbtn, .play__banner, .hubdown)::before,
+:is(.panel, .btn, .scard, .playbtn, .play__banner, .hubdown)::after {
   content: '';
   position: absolute;
   width: var(--c);
@@ -154,8 +154,8 @@ a:hover { color: var(--gold-2); }
   background: linear-gradient(135deg, var(--bc) calc(50% + 1px), transparent 0);
   pointer-events: none;
 }
-:is(.panel, .btn, .scard, .playbtn, .play__banner)::before { top: -1px; left: -1px; }
-:is(.panel, .btn, .scard, .playbtn, .play__banner)::after { bottom: -1px; right: -1px; rotate: 180deg; }
+:is(.panel, .btn, .scard, .playbtn, .play__banner, .hubdown)::before { top: -1px; left: -1px; }
+:is(.panel, .btn, .scard, .playbtn, .play__banner, .hubdown)::after { bottom: -1px; right: -1px; rotate: 180deg; }
 .panel__head {
   display: flex;
   align-items: center;
