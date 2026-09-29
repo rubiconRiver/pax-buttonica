@@ -8,3 +8,4 @@ playwright-report
 test-results
 video/out
 firmware/*/build
+firmware/soak-logs

@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.10"
+#define FW_VERSION "0.3.11"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -188,11 +188,13 @@ static void sendTo(const uint8_t *mac, const char *line) {
 
 static void sendLine(const char *line) { sendTo(hubKnown ? hubMac : EVERYONE, line); }
 
+// "up" is how long this button has been on, in seconds. It rides in the hello that is sent anyway, so a battery
+// test costs the button nothing: the laptop does the logging (firmware/soak.py). Nothing is written to flash.
 static void sendHello() {
   char line[MAX_LINE];
   snprintf(line, sizeof(line),
-           "{\"t\":\"hello\",\"dev\":\"%s\",\"fw\":\"%s\",\"caps\":{\"btn\":%d,\"led\":\"ring\",\"audio\":\"%s\"}}",
-           devId, FW_VERSION, BUTTON_COUNT,
+           "{\"t\":\"hello\",\"dev\":\"%s\",\"fw\":\"%s\",\"up\":%lu,\"caps\":{\"btn\":%d,\"led\":\"ring\",\"audio\":\"%s\"}}",
+           devId, FW_VERSION, (unsigned long)(millis() / 1000), BUTTON_COUNT,
 #if defined(AUDIO_NONE)
            "none"
 #else

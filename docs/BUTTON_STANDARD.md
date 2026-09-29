@@ -105,7 +105,7 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 {"t":"bat","dev":"A1B2C3D4E5F6","mv":4810}
 ```
 
-- `hello` — sent on power-up and whenever the hub asks. `caps.btn` is the number of buttons, `caps.led` is `rgb`, `ring` or `none`, `caps.audio` is `tones` or `none`.
+- `hello` — sent on power-up and whenever the hub asks. Optional: `up`, seconds since the device powered up. A host that logs it has a battery test for free: the last `up` it heard is how long the cell lasted. `caps.btn` is the number of buttons, `caps.led` is `rgb`, `ring` or `none`, `caps.audio` is `tones` or `none`.
 - `btn` — `b` is the button index, `e` is `tap`, `double` or `hold`. Only button 0 sends `double` and `hold`.
 - `bat` — battery millivolts, now and then. Optional.
 
