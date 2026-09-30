@@ -75,10 +75,13 @@ LID_Z = PLATFORM_Z - PLATFORM_T - COMP_H
 BOTTOM = LID_Z - LID_T              # the table
 C = IN / 2 - 3.5                    # 30: the corners' centres in x, tabs and feet
 CY = INY / 2 - 3.5                  # and in y
-# The screws: two in the -x corners and one in the middle of the -y wall. Not the +x corners: one has the Rider's
-# sockets and the other is where its USB-A plug ends and the cable turns up to the Atom.
-TABS = ((-C, CY, -1, 1), (-C, -CY, -1, -1), (6.0, -CY, 0, -1))        # x, y, and which walls it leans on
-FEET = ((-C, CY), (-C, -CY), (6.0, -CY), (C, CY), (C, -CY))
+# No screws (2026-09-30, Garett): the lid sits in its rebate and stays put on its own, and a strip of tape does
+# the rest; the bosses floated when printed and got in the way of everything inside. SCREWS = True brings back
+# two in the -x corners and one in the middle of the -y wall (not the +x corners: one has the Rider's sockets and
+# the other is where its USB-A plug ends and the cable turns up to the Atom).
+SCREWS = False
+TABS = ((-C, CY, -1, 1), (-C, -CY, -1, -1), (6.0, -CY, 0, -1)) if SCREWS else ()   # x, y, and which walls it leans on
+FEET = ((-C, CY), (-C, -CY), (C, CY), (C, -CY)) + (((6.0, -CY),) if SCREWS else ())
 TAB_D, TAB_H = 8.0, 6.0
 NOTCH_R = 5.0
 PORT = (14.0, 8.5)                  # the charging window: a USB-C plug's body passes it, because the socket is SETBACK behind the wall
@@ -178,7 +181,7 @@ def housing():
     solid -= corner ^ pocket_outline(CORNER_TOP + 2, PLATFORM_Z - 1.5)
     if WALL_HOLE_OPEN:
         solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
-    tabs = union(cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS)
+    tabs = union([cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS] or [Manifold()])
     # Each boss leans into the wall or corner behind it: printed upside down it grows out of the wall at about
     # 45 degrees, so nothing starts in mid-air and no supports are needed (the slicer warned of a floating cantilever).
     for x, y, sx, sy in TABS:
@@ -188,6 +191,7 @@ def housing():
     tabs ^= pocket_outline(COMP_H + PLATFORM_T + 1, LID_Z - 1)
     solid += tabs
     cuts = [cyl(m.TAP_D, TAB_H + 2, x, y, LID_Z - 1, seg=24) for x, y, sx, sy in TABS]
+    if not cuts: cuts = []
     # the charging window, on the real USB-C; and a slot over the Rider's switch
     port_z = LID_Z + 1.6 + 1.7                       # the board, then half the socket
     cuts.append(cbox(USBC_X, D / 2, port_z - PORT[1] / 2, PORT[0], 2 * WALL + 4, PORT[1]))
