@@ -58,7 +58,7 @@ test.describe('hold to end the turn', () => {
     await table.expectActive('Dave');
     await table.hold('Dave', 1000);
     await table.expectActive('Kyle');
-    expect((await readStorage(page, 'pb.settings.v2')).holdMs).toBe(1000);
+    expect((await readStorage(page, 'pb.settings.v3')).holdMs).toBe(1000);
     await page.reload();
     await expect(page.locator('.center__hint')).toContainText('hold 1s to end the turn');
   });
@@ -70,20 +70,39 @@ test('a laptop that saved its settings before keeps what it chose, and gets the 
   await openDemo(page);
   await expect(page.locator('.center__hint')).toContainText('hold 0.9s to end the turn');
   let panel = await openSettings(page);
-  await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.5');
+  await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.6');
   await expect(panel.getByRole('slider', { name: /Volume/ })).toHaveValue('0.3');
   await expect(panel.getByRole('radio', { name: 'Seating' })).toHaveAttribute('aria-checked', 'true');
   expect(await readStorage(page, 'pb.settings.v1')).toBeNull();
 
   // Chosen by hand, it stays.
   await page.evaluate(() => {
-    localStorage.removeItem('pb.settings.v2');
+    localStorage.removeItem('pb.settings.v3');
     localStorage.setItem('pb.settings.v1', JSON.stringify({ holdMs: 1500, brightness: 0.7 }));
   });
   await page.reload();
   await expect(page.locator('.center__hint')).toContainText('hold 1.5s to end the turn');
   panel = await openSettings(page);
   await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.7');
+
+  // A v2 laptop: 50 % and 10 % were its defaults, nobody chose them; a waiting level set by hand stays.
+  await page.evaluate(() => {
+    localStorage.removeItem('pb.settings.v3');
+    localStorage.setItem('pb.settings.v2', JSON.stringify({ brightness: 0.5, waitingBrightness: 0.1, volume: 0.3 }));
+  });
+  await page.reload();
+  panel = await openSettings(page);
+  await expect(panel.getByRole('slider', { name: /Your turn/ })).toHaveValue('0.6');
+  await expect(panel.getByRole('slider', { name: /Waiting/ })).toHaveValue('0.05');
+  await expect(panel.getByRole('slider', { name: /Volume/ })).toHaveValue('0.3');
+  expect(await readStorage(page, 'pb.settings.v2')).toBeNull();
+  await page.evaluate(() => {
+    localStorage.removeItem('pb.settings.v3');
+    localStorage.setItem('pb.settings.v2', JSON.stringify({ brightness: 0.5, waitingBrightness: 0.2 }));
+  });
+  await page.reload();
+  panel = await openSettings(page);
+  await expect(panel.getByRole('slider', { name: /Waiting/ })).toHaveValue('0.2');
 });
 
 test.describe('taps', () => {

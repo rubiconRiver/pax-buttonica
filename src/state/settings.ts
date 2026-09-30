@@ -72,23 +72,29 @@ export const DEFAULT_SETTINGS: Settings = {
   scoringCue: 'turn',
 };
 
-const KEY = 'pb.settings.v2';
+const KEY = 'pb.settings.v3';
 
 /**
  * Settings are saved whole the first time anything is touched, so a changed default never reached a laptop that had
- * saved them. v1 → v2 (2026-09-29): the hold went from 2 s to 0.9 s and brightness from 100 % to 50 %. Where a v1
- * still has the old default, nobody chose it: it moves to the new one. Anything set by hand stays.
+ * saved them. Each version moves an old default that nobody chose to the new one; anything set by hand stays.
+ * v1 → v2 (2026-09-29): the hold went from 2 s to 0.9 s and brightness from 100 % to 50 %.
+ * v2 → v3 (2026-09-30): your turn from 50 % to 60 %, waiting from 10 % to 5 %.
  */
 function migrate() {
   try {
     if (localStorage.getItem(KEY) != null) return;
-    const raw = localStorage.getItem('pb.settings.v1');
-    if (!raw) return;
-    const old = JSON.parse(raw) as Partial<Settings>;
-    if (old.holdMs === 2000) delete old.holdMs;
-    if (old.brightness === 1) delete old.brightness;
-    localStorage.setItem(KEY, JSON.stringify(old));
-    localStorage.removeItem('pb.settings.v1');
+    const steps: [string, (old: Partial<Settings>) => void][] = [
+      ['pb.settings.v1', (old) => { if (old.holdMs === 2000) delete old.holdMs; if (old.brightness === 1) delete old.brightness; }],
+      ['pb.settings.v2', (old) => { if (old.brightness === 0.5) delete old.brightness; if (old.waitingBrightness === 0.1) delete old.waitingBrightness; }],
+    ];
+    let old: Partial<Settings> | null = null;
+    for (const [key, fix] of steps) {
+      const raw = localStorage.getItem(key);
+      if (raw) old = JSON.parse(raw) as Partial<Settings>;
+      if (old) fix(old);
+      localStorage.removeItem(key);
+    }
+    if (old) localStorage.setItem(KEY, JSON.stringify(old));
   } catch {
     // Private mode or corrupt data: the defaults will do.
   }

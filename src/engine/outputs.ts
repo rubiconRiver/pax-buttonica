@@ -88,7 +88,8 @@ export interface LightLevels {
   effects: number;
 }
 
-export const DEFAULT_LEVELS: LightLevels = { turn: 0.5, waiting: 0.1, effects: 0.8 };
+/** 2026-09-30, after a real game: your turn a touch brighter, waiting as low as it goes while still being a colour. */
+export const DEFAULT_LEVELS: LightLevels = { turn: 0.6, waiting: 0.05, effects: 0.8 };
 
 /** Waiting may go lower than the others: it only has to be told apart from off. */
 export const MIN_WAITING = 0.01;
@@ -107,7 +108,8 @@ export const levelsOf = (s: { brightness?: unknown; waitingBrightness?: unknown;
  * it: `dim` is how bright waiting is, `fx` how bright effects are, each 0–1 (the defaults give the screen's usual 0.2 and 1).
  */
 export const screenLevels = (l: LightLevels): { dim: number; fx: number } => ({
-  dim: Math.min(1, l.waiting / l.turn),
+  // A screen's "waiting" stays readable however low the buttons go.
+  dim: Math.min(1, Math.max(0.12, l.waiting / l.turn)),
   fx: Math.min(1, l.effects / l.turn),
 });
 

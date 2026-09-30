@@ -15,7 +15,7 @@ const ORANGE = 'ff8a1f';
 const YELLOW = 'ffd21f';
 
 /** The table's default light levels on the wire: your turn at half, waiting at a tenth, effects at 80 %. */
-const LEVELS = { bright: 50, dim: 10, fx: 80 };
+const LEVELS = { bright: 60, dim: 5, fx: 80 };
 
 /** Buttons on `fw` (A and B; C is the old three-button device). */
 async function startWithHub(page: import('@playwright/test').Page, fw = '0.1.0') {
@@ -192,7 +192,7 @@ test('three light levels: your turn, waiting and effects, set by the host; the s
   await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
   await table.expectLights({ Ana: 'pulse', Ben: 'dim' });
   const lum = () => table.light('Ben').evaluate((el) => parseFloat(getComputedStyle(el).getPropertyValue('--lum')));
-  expect(await lum(), 'waiting at 10 % next to your turn at 50 %: a fifth, as the screen always drew it').toBeCloseTo(0.2, 3);
+  expect(await lum(), 'waiting at 5 % next to your turn at 60 %: the screen keeps it readable at its floor').toBeCloseTo(0.12, 3);
 
   const panel = await openSettings(page);
   await setSlider(panel.getByRole('slider', { name: /Your turn/ }), 0.8);
@@ -200,7 +200,7 @@ test('three light levels: your turn, waiting and effects, set by the host; the s
   await setSlider(panel.getByRole('slider', { name: /Effects/ }), 1);
   await expect(panel).toContainText('Waiting 4%');
   for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toEqual({ t: 'cfg', dev, hold: 900, flash: 2000, bright: 80, dim: 4, fx: 100, pulse: 'solid' });
-  await expect.poll(lum).toBeCloseTo(0.05, 3);
+  await expect.poll(lum).toBeCloseTo(0.12, 3);
   expect(await lastLed(page, B), 'no new light: only how bright it is').toMatchObject({ c: ORANGE, m: 'dim' });
 });
 

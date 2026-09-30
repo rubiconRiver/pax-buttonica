@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<title>Pax Buttonica Rehearsal</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #04060b; --bg-2: #0a0e18; --panel: #0d121e; --line: rgba(150, 172, 225, 0.16); --line-2: rgba(150, 172, 225, 0.32);
+    --text: #e6ebf7; --muted: #8d97af; --faint: #5b6480; --gold: #f2b84b; --gold-2: #ffdf9a; --ok: #3ce08a; --cyan: #5ad1ff; --danger: #ff5468;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 18px; }
+  h1, h2 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
+  h1 { font-size: 28px; font-weight: 700; }
+  h2 { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 72ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 16px 18px 18px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1d2437, #121727); border: 1px solid var(--line-2); padding: 9px 14px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn.primary { color: var(--bg); background: linear-gradient(#ffd47c, #e9a02b); border-color: transparent; }
+  .btn.on { color: var(--bg); background: var(--cyan); border-color: transparent; }
+  .btn.sm { padding: 6px 10px; font-size: 11px; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+  .status { font: 600 13px var(--font-d); color: var(--muted); margin-left: auto; }
+  .status b { color: var(--gold-2); }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  input[type=range] { width: 160px; accent-color: var(--gold); }
+  select { background: var(--bg-2); color: var(--text); border: 1px solid var(--line-2); font: 500 13px var(--font-b); padding: 6px 8px; }
+  .hint { color: var(--faint); font-size: 12.5px; }
+  .log { font: 12px/1.5 ui-monospace, Menlo, monospace; color: var(--muted); max-height: 200px; overflow: auto; background: var(--bg-2); padding: 10px 12px; }
+  .log .out { color: var(--gold-2); }
+  .log .btnev { color: var(--ok); font-weight: 600; }
+  .grid2 { display: grid; grid-template-columns: 1.1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+
+  /* The table: six lights, what each real button is being told, and the name of the seat. */
+  .table { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; }
+  .seat { display: grid; justify-items: center; gap: 6px; text-align: center; }
+  .seat .name { font: 600 13px var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: var(--seat); }
+  .seat .why { color: var(--muted); font-size: 12px; min-height: 2.6em; text-wrap: balance; }
+  .seat .id { font: 11px ui-monospace, Menlo, monospace; color: var(--faint); }
+  .seat .id.lost { color: var(--danger); }
+  .light { --lum: 0.02; width: 78px; height: 78px; border-radius: 50%; position: relative; background: #05070c; border: 2px solid #1a2030;
+    box-shadow: inset 0 0 26px color-mix(in srgb, var(--led) calc(var(--lum) * 90%), transparent), 0 0 calc(var(--lum) * 34px) color-mix(in srgb, var(--led) calc(var(--lum) * 75%), transparent); }
+  .light::after { content: ''; position: absolute; inset: 14%; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--led) 80%, white), var(--led) 60%); opacity: var(--lum); }
+  .light[data-m="off"] { --lum: 0.02; }
+  .light[data-m="dim"] { --lum: 0.2; }
+  .light[data-m="solid"] { --lum: 1; }
+  .light[data-m="pulse"] { animation: lum-pulse 1.7s ease-in-out infinite; }
+  .light[data-m="pulse"][data-l="ripple_in"] { animation: none; --lum: 0.6; }
+  .light[data-m="pulse"][data-l="ripple_in"]::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 5px solid color-mix(in srgb, var(--led) 60%, white); animation: ripple-in 1.4s linear infinite; }
+  .light[data-m="flash"] { animation: lum-flash 2s linear infinite; }
+  .light[data-m="rainbow"] { --lum: 1; animation: hue 2.2s linear infinite; }
+  .light[data-fx] { animation: lum-burst 0.5s ease-out; }
+  @keyframes lum-pulse { 0%, 100% { --lum: 0.34; } 50% { --lum: 1; } }
+  @keyframes lum-flash { 0%, 38% { --lum: 1; } 50%, 88% { --lum: 0.05; } 100% { --lum: 1; } }
+  @keyframes hue { to { filter: hue-rotate(360deg); } }
+  @keyframes ripple-in { from { transform: scale(1); opacity: 1; } to { transform: scale(0.1); opacity: 0; } }
+  @property --lum { syntax: '<number>'; inherits: true; initial-value: 0.02; }
+
+  .seatrow { display: grid; grid-template-columns: 30px 1fr auto auto auto; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .seatrow .id { font: 12px ui-monospace, Menlo, monospace; color: var(--gold-2); }
+  .sw { width: 22px; height: 22px; border-radius: 50%; border: 2px solid transparent; background: var(--sw); cursor: pointer; padding: 0; }
+  .sw[aria-checked="true"] { border-color: #fff; }
+  .steps { display: grid; gap: 8px; }
+  .step { display: grid; grid-template-columns: 150px 1fr; gap: 10px; align-items: center; }
+  .step .k { font: 600 12px var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .now { font: 600 14px var(--font-d); color: var(--gold-2); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · hardware</div>
+    <h1>Rehearsal</h1>
+    <p class="lede">Run the real buttons through a game's situations, with no game: whose turn, a strategy card, the status phase, scoring, the winner. The page sends exactly what the app would, the lights below show what to expect, and the buttons' own presses move things along the way they do in a game. Chrome or Edge only; close any other tab that has the hub.</p>
+  </header>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <div class="row">
+      <button class="btn primary" id="connect">Connect the hub</button>
+      <button class="btn" id="identify">Blink all</button>
+      <span class="status" id="status">Not connected</span>
+    </div>
+    <div class="row">
+      <label class="f">Your turn <input type="range" id="bright" min="10" max="100" step="5" value="60"><span id="brightv">60%</span></label>
+      <label class="f">Waiting <input type="range" id="dim" min="1" max="50" step="1" value="5"><span id="dimv">5%</span></label>
+      <label class="f">Effects <input type="range" id="fxb" min="10" max="100" step="5" value="80"><span id="fxbv">80%</span></label>
+      <label class="f">Turn effect <select id="turnfx"></select></label>
+    </div>
+    <p class="hint">Seats are the buttons the hub hears, in the order below. Give each the colour of the player who holds it, and use ▲ ▼ to put them in the order they sit round the table (the card round follows it). Blink one to find it.</p>
+    <div id="seats"></div>
+  </div></section>
+
+  <div class="grid2">
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>The table</h2>
+      <div class="now" id="now">Nothing yet</div>
+      <div class="table" id="table"></div>
+    </div></section>
+
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>Situations</h2>
+      <div class="steps">
+        <div class="step"><span class="k">Seat claiming</span><div class="row"><button class="btn" data-go="claiming">Everyone white, press to claim</button></div></div>
+        <div class="step"><span class="k">Strategy phase</span><div class="row"><button class="btn" data-go="picking">Someone is picking a card</button></div></div>
+        <div class="step"><span class="k">Action phase</span><div class="row"><button class="btn" data-go="turn">Somebody's turn</button><button class="btn" data-go="next">Next turn</button><button class="btn" data-go="pass">Active player passes</button></div></div>
+        <div class="step"><span class="k">Strategy card</span><div class="row"><select id="card"></select><button class="btn" data-go="card">Active player plays it</button><button class="btn" data-go="primary">Primary done</button><button class="btn" data-go="acked">Everyone responded</button></div></div>
+        <div class="step"><span class="k">Status phase</span><div class="row"><button class="btn" data-go="fanfare">Everyone has passed</button><button class="btn" data-go="scoring">Start scoring</button><button class="btn" data-go="scored">Scorer is done</button><button class="btn" data-go="tidy">Tidy-up</button></div></div>
+        <div class="step"><span class="k">Agenda phase</span><div class="row"><button class="btn" data-go="agenda">Voting</button><button class="btn" data-go="voted">Voter is done</button></div></div>
+        <div class="step"><span class="k">The end</span><div class="row"><button class="btn" data-go="winner">Active player wins</button></div></div>
+        <div class="step"><span class="k">In-sync test</span><div class="row"><button class="btn" data-go="allflash">All flash</button><button class="btn" data-go="allpulse">All breathe</button><button class="btn" data-go="allflash-nop">All flash, no phase</button><button class="btn" data-go="resend">Send again</button></div></div>
+      </div>
+      <p class="hint">Presses count: in the action phase a hold on the active button ends the turn; a tap by the card's player finishes the primary, a tap by anyone else responds; a scorer's tap hands scoring on; in the tidy-up a tap says ready; a voter's tap votes. A tap when it means nothing is refused (red shake on a held button, a buzz here).</p>
+    </div></section>
+  </div>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>Wire</h2>
+    <div class="log" id="log"></div>
+  </div></section>
+</div>
+
+<script>
+(() => {
+  // Canonical colours (docs/BUTTON_STANDARD.md): players and strategy cards.
+  const PLAYERS = [['Red', 'ff3b3b'], ['Orange', 'ff8a1f'], ['Yellow', 'ffd21f'], ['Green', '2fe06b'], ['Blue', '2f8cff'], ['Purple', 'a24bff'], ['Pink', 'ff5fc4'], ['White', 'e9f0ff']];
+  const CARDS = [[1, 'Leadership', 'e5484d'], [2, 'Diplomacy', 'f08c3a'], [3, 'Politics', 'f2cc45'], [4, 'Construction', '46b86c'], [5, 'Trade', '2ec4b0'], [6, 'Warfare', '3b9bf5'], [7, 'Technology', '5468f0'], [8, 'Imperial', 'a562f0']];
+  const TURN_FX = [['burst', 'Ring'], ['ripple', 'Ripple'], ['sparkle', 'Sparkles'], ['rainbow', 'Rainbow'], ['cop', 'Cop lights'], ['explosion', 'Explosion'], ['fireworks', 'Fireworks'], ['lightning', 'Lightning'], ['fire', 'Fire'], ['siren', 'Siren'], ['laser', 'Laser'], ['comet', 'Comet'], ['warp', 'Warp'], ['confetti', 'Confetti'], ['disco', 'Disco'], ['glitch', 'Glitch'], ['neon', 'Neon'], ['alarm', 'Alarm'], ['thump', 'Thump'], ['', 'None']];
+  const PULSE_MS = 1700, RIPPLE_MS = 1400, FLASH_MS = 2000, CARD_ROUND_MS = 320, FANFARE_MS = 4000;
+  const $ = (id) => document.getElementById(id);
+
+  // ── serial ────────────────────────────────────────────────────────────────
+  let port = null, writer = null;
+  const log = (dir, text, cls = '') => { const el = document.createElement('div'); el.className = dir === 'out' ? 'out' : cls; el.textContent = (dir === 'out' ? '→ ' : '← ') + text; const l = $('log'); l.appendChild(el); while (l.children.length > 200) l.removeChild(l.firstChild); l.scrollTop = l.scrollHeight; };
+  const setStatus = (html) => { $('status').innerHTML = html; };
+  async function send(msg) {
+    const line = JSON.stringify(msg);
+    if (!writer) { log('out', '(not connected) ' + line); return; }
+    log('out', line);
+    await writer.write(new TextEncoder().encode(line + '\n'));
+  }
+
+  // ── seats: the buttons the hub hears, in table order ──────────────────────
+  const seats = [];            // [{ dev, colour, fw, lost }]
+  const seatOf = (dev) => seats.findIndex((s) => s.dev === dev);
+  const cfg = (dev) => ({ t: 'cfg', dev, hold: 900, flash: FLASH_MS, bright: +$('bright').value, dim: +$('dim').value, fx: +$('fxb').value, pulse: 'solid' });
+
+  function renderSeats() {
+    const box = $('seats'); box.innerHTML = '';
+    seats.forEach((s, i) => {
+      const row = document.createElement('div'); row.className = 'seatrow';
+      row.innerHTML = `<b>${i + 1}</b><span class="id">${s.dev}${s.fw ? ' · ' + s.fw : ''}${s.lost ? ' · lost' : ''}</span><span class="row" data-sw></span><button class="btn sm" data-id>Blink</button><span><button class="btn sm" data-up>▲</button> <button class="btn sm" data-down>▼</button></span>`;
+      const sw = row.querySelector('[data-sw]');
+      for (const [name, hex] of PLAYERS) { const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(hex === s.colour)); b.style.setProperty('--sw', '#' + hex); b.onclick = () => { s.colour = hex; renderSeats(); show(); }; sw.appendChild(b); }
+      row.querySelector('[data-id]').onclick = () => send({ t: 'id', dev: s.dev });
+      row.querySelector('[data-up]').onclick = () => { if (i > 0) { [seats[i - 1], seats[i]] = [seats[i], seats[i - 1]]; renderSeats(); show(); } };
+      row.querySelector('[data-down]').onclick = () => { if (i < seats.length - 1) { [seats[i + 1], seats[i]] = [seats[i], seats[i + 1]]; renderSeats(); show(); } };
+      box.appendChild(row);
+    });
+    setStatus(`Hub <b>${port ? 'connected' : 'not connected'}</b> · <b>${seats.length}</b> button${seats.length === 1 ? '' : 's'} heard`);
+  }
+
+  function heard(msg) {
+    let i = seatOf(msg.dev);
+    if (i < 0) { seats.push({ dev: msg.dev, colour: PLAYERS[seats.length % PLAYERS.length][1], fw: msg.fw, lost: false }); i = seats.length - 1; renderSeats(); }
+    const s = seats[i];
+    if (msg.t === 'hello') { s.fw = msg.fw; s.lost = false; lastFrames.delete(s.dev); send(cfg(s.dev)); renderSeats(); show(); }
+    if (msg.t === 'lost') { s.lost = true; lastFrames.delete(s.dev); renderSeats(); }
+    if (msg.t === 'btn') { s.lost = false; }
+  }
+
+  // ── the game's situations ─────────────────────────────────────────────────
+  // Everything the lights depend on. `active` is a seat index; `passed`, `acked`, `ready` are per seat.
+  const g = { phase: 'none', active: 0, passed: [], card: null, stage: null, acked: [], scoringOrder: [], scoringIdx: 0, ready: [], voter: 0, winner: null, note: '' };
+  const n = () => seats.length;
+  const next = (from, skip = () => false) => { for (let k = 1; k <= n(); k++) { const s = (from + k) % n(); if (!skip(s)) return s; } return null; };
+  const cardOf = () => CARDS.find((c) => c[0] === +$('card').value);
+
+  // What every seat shows right now: the same rules as deriveOutputs in the app, for the situations here.
+  function outputs() {
+    const out = [];
+    for (let s = 0; s < n(); s++) {
+      const own = seats[s].colour;
+      let o;
+      switch (g.phase) {
+        case 'claiming': o = { c: 'ffffff', m: 'pulse', why: 'Unclaimed — press when your name is called' }; break;
+        case 'picking': o = s === g.active ? { c: own, m: 'pulse', why: 'Choosing a strategy card' } : { c: own, m: 'off', why: 'Waiting to choose' }; break;
+        case 'action': {
+          if (g.card) {
+            const [, name, cc] = g.card;
+            if (g.stage === 'primary') o = s === g.active ? { c: cc, m: 'flash', h: 0, why: `Doing the ${name} primary — tap when done` } : g.passed[s] ? { c: own, m: 'off', why: 'Passed' } : { c: own, m: 'dim', h: 0, why: `${name} primary in progress` };
+            else if (s === g.active) o = g.acked.every((a, k) => a || k === s) ? { c: own, m: 'pulse', why: 'Everyone responded — hold to end turn' } : { c: own, m: 'solid', h: 0, why: `Played ${name}` };
+            else o = g.acked[s] ? { c: own, m: 'dim', h: 0, why: 'Responded' } : { c: cc, m: 'flash', h: 0, why: `${name} played — tap when done` };
+          } else if (s === g.active) o = { c: own, m: 'pulse', why: 'Your turn — hold to end it' };
+          else o = g.passed[s] ? { c: own, m: 'off', h: 0, why: 'Passed' } : { c: own, m: 'dim', h: 0, why: 'Waiting' };
+          break;
+        }
+        case 'fanfare': o = { c: own, m: 'rainbow', h: 0, why: 'The round is over!' }; break;
+        case 'scoring': o = s === g.scoringOrder[g.scoringIdx] ? { c: own, m: 'pulse', l: 'ripple_in', why: 'Your turn to score — tap when done' } : { c: own, m: 'off', h: 0, why: g.scoringOrder.indexOf(s) < g.scoringIdx ? 'Scored' : 'Waiting to score' }; break;
+        case 'tidy': o = g.ready[s] ? { c: own, m: 'dim', h: 0, why: 'Ready' } : { c: own, m: 'off', why: 'Tidy up — tap when ready' }; break;
+        case 'agenda': o = s === g.voter ? { c: own, m: 'pulse', why: 'Your vote — tap when done' } : { c: own, m: 'dim', h: 0, why: 'Waiting to vote' }; break;
+        case 'finished': o = s === g.winner ? { c: own, m: 'rainbow', h: 0, why: 'Winner!' } : { c: own, m: 'dim', h: 0, why: 'Game over' }; break;
+        case 'allflash': o = { c: own, m: 'flash', why: 'Flashing, in step' }; break;
+        case 'allflash-nop': o = { c: own, m: 'flash', nop: true, why: 'Flashing, each from when it heard' }; break;
+        case 'allpulse': o = { c: own, m: 'pulse', why: 'Breathing, in step' }; break;
+        default: o = { c: own, m: 'off', why: '' };
+      }
+      out.push(o);
+    }
+    return out;
+  }
+
+  // Send only what changed, with the phase of its cycle so the table moves as one (the app's syncOutputs).
+  const lastFrames = new Map();
+  function show(force = false) {
+    const out = outputs();
+    const tb = $('table'); tb.innerHTML = '';
+    out.forEach((o, s) => {
+      const seat = seats[s];
+      const el = document.createElement('div'); el.className = 'seat'; el.style.setProperty('--seat', '#' + seat.colour);
+      el.innerHTML = `<div class="light" style="--led:#${o.c}" data-m="${o.m}"${o.l ? ` data-l="${o.l}"` : ''}></div><div class="name">${PLAYERS.find((p) => p[1] === seat.colour)?.[0] ?? seat.colour} · ${s + 1}</div><div class="why">${o.why}</div><div class="id${seat.lost ? ' lost' : ''}">${seat.dev.slice(-4)}${seat.lost ? ' lost' : ''}</div>`;
+      tb.appendChild(el);
+      if (seat.lost) return;
+      const key = `${o.c}|${o.m}|${o.l ?? ''}|${o.h ?? 1}`;
+      if (!force && lastFrames.get(seat.dev) === key) return;
+      lastFrames.set(seat.dev, key);
+      const period = o.m === 'pulse' ? (o.l === 'ripple_in' ? RIPPLE_MS : PULSE_MS) : o.m === 'flash' ? FLASH_MS : 0;
+      const p = period && !o.nop ? Date.now() % period : undefined;
+      send({ t: 'led', dev: seat.dev, c: o.c, m: o.m, ...(p == null ? {} : { p }), ...(o.h === 0 ? { h: 0 } : {}), ...(o.l ? { l: o.l } : {}) });
+    });
+    $('now').textContent = g.note || '—';
+  }
+  const fx = (s, k) => { if (k && seats[s] && !seats[s].lost) send({ t: 'fx', dev: seats[s].dev, k }); };
+  const turnFx = () => $('turnfx').value;
+  const name = (s) => `${PLAYERS.find((p) => p[1] === seats[s].colour)?.[0] ?? '?'} (${s + 1})`;
+  let buzz = null; // WebAudio for the refusal, if the page has been clicked
+  const refuse = (s) => { fx(s, 'denied'); try { buzz ??= new AudioContext(); const o = buzz.createOscillator(), gn = buzz.createGain(); o.type = 'sawtooth'; o.frequency.value = 110; gn.gain.value = 0.15; o.connect(gn).connect(buzz.destination); o.start(); o.stop(buzz.currentTime + 0.18); } catch {} };
+
+  // The moves. Each sets the state, then sends the frames and any one-shots the app would.
+  const go = {
+    claiming() { g.phase = 'claiming'; g.note = 'Seat claiming: every button breathes white'; show(); },
+    picking() { g.phase = 'picking'; g.active = g.active % n(); g.note = `Strategy phase: ${name(g.active)} is picking`; show(); },
+    turn() { g.phase = 'action'; g.card = null; g.passed = seats.map(() => false); g.note = `Action phase: ${name(g.active)}'s turn`; show(); fx(g.active, turnFx()); },
+    next() { if (g.phase !== 'action') return go.turn(); const nx = next(g.active, (s) => g.passed[s]); if (nx == null) return go.fanfare(); g.active = nx; g.card = null; g.note = `Action phase: ${name(g.active)}'s turn`; show(); fx(g.active, turnFx()); },
+    pass() { if (g.phase !== 'action') return; g.passed[g.active] = true; g.note = `${name(g.active)} passes`; go.next(); },
+    card() { if (g.phase !== 'action') go.turn(); g.card = cardOf(); g.stage = 'primary'; g.acked = seats.map((_, s) => s === g.active); g.note = `${name(g.active)} plays ${g.card[0]} ${g.card[1]}: the colour goes round the table`; show();
+      // the card round: from the player who played it, round the table, 320 ms apart
+      const c = g.card[2];
+      for (let k = 0; k < n(); k++) { const s = (g.active + k) % n(); setTimeout(() => send({ t: 'fx', dev: seats[s].dev, k: 'card', c }), k * CARD_ROUND_MS); } },
+    primary() { if (!g.card) return; g.stage = 'secondary'; g.note = `${g.card[1]} primary done: the others do their secondaries and tap`; show(); },
+    acked() { if (!g.card) return; g.acked = seats.map(() => true); g.note = `Everyone responded to ${g.card[1]}: ${name(g.active)} holds to end the turn`; show(); },
+    fanfare() { g.phase = 'fanfare'; g.note = `Everyone has passed: rainbows for ${FANFARE_MS / 1000} s, then scoring`; show(); clearTimeout(go._t); go._t = setTimeout(() => { if (g.phase === 'fanfare') go.scoring(); }, FANFARE_MS); },
+    scoring() { g.phase = 'scoring'; g.scoringOrder = seats.map((_, s) => (g.active + s) % n()); g.scoringIdx = 0; g.note = `Scoring, in order: ${g.scoringOrder.map(name).join(', ')}`; show(); fx(g.scoringOrder[0], 'warp'); },
+    scored() { if (g.phase !== 'scoring') return; const s = g.scoringOrder[g.scoringIdx]; fx(s, 'ack'); g.scoringIdx += 1; if (g.scoringIdx >= n()) return go.tidy(); g.note = `${name(s)} is done scoring; ${name(g.scoringOrder[g.scoringIdx])} scores`; show(); fx(g.scoringOrder[g.scoringIdx], 'warp'); },
+    tidy() { g.phase = 'tidy'; g.ready = seats.map(() => false); g.note = 'Scoring is done: dark until everyone taps in'; show(); },
+    agenda() { g.phase = 'agenda'; g.voter = (g.active + 1) % n(); g.note = `Agenda: ${name(g.voter)} votes first`; show(); fx(g.voter, turnFx()); },
+    voted() { if (g.phase !== 'agenda') return; fx(g.voter, 'ack'); g.voter = (g.voter + 1) % n(); g.note = `${name(g.voter)} votes`; show(); fx(g.voter, turnFx()); },
+    winner() { g.phase = 'finished'; g.winner = g.active; g.note = `${name(g.winner)} wins`; show(); },
+    allflash() { g.phase = 'allflash'; g.note = 'All flashing with a phase: they should blink as one'; show(true); },
+    'allflash-nop'() { g.phase = 'allflash-nop'; g.note = 'All flashing with no phase: each starts its cycle when the message lands'; show(true); },
+    allpulse() { g.phase = 'allpulse'; g.note = 'All breathing with a phase: they should breathe as one'; show(true); },
+    resend() { show(true); },
+  };
+  document.querySelectorAll('[data-go]').forEach((b) => { b.onclick = () => go[b.dataset.go](); });
+
+  // Presses from the buttons move things along, the way the game does.
+  function pressed(dev, e) {
+    const s = seatOf(dev); if (s < 0) return;
+    if (e !== 'tap' && e !== 'hold') return;
+    switch (g.phase) {
+      case 'claiming': g.note = `${name(s)} claimed seat ${s + 1}`; fx(s, 'ack'); return;
+      case 'picking': if (s === g.active) { fx(s, 'ack'); g.active = (g.active + 1) % n(); g.note = `${name(g.active)} is picking`; show(); } else refuse(s); return;
+      case 'action':
+        if (g.card) {
+          if (g.stage === 'primary') { if (s === g.active) { fx(s, 'ack'); go.primary(); } else refuse(s); return; }
+          if (s !== g.active) { if (!g.acked[s]) { g.acked[s] = true; fx(s, 'ack'); g.note = `${name(s)} responded`; show(); } else refuse(s); return; }
+          if (e === 'hold' && g.acked.every(Boolean)) { fx(s, 'confirm'); g.card = null; go.next(); } else refuse(s);
+          return;
+        }
+        if (s === g.active && e === 'hold') { fx(s, 'confirm'); go.next(); } else refuse(s);
+        return;
+      case 'fanfare': refuse(s); return;
+      case 'scoring': if (s === g.scoringOrder[g.scoringIdx]) go.scored(); else refuse(s); return;
+      case 'tidy': if (!g.ready[s]) { g.ready[s] = true; fx(s, 'ack'); g.note = g.ready.every(Boolean) ? 'Everyone is ready' : `${g.ready.filter(Boolean).length}/${n()} ready`; show(); } else refuse(s); return;
+      case 'agenda': if (s === g.voter) go.voted(); else refuse(s); return;
+      default: fx(s, 'ack');
+    }
+  }
+
+  function handle(line) {
+    let msg; try { msg = JSON.parse(line); } catch { log('in', line); return; }
+    const isBtn = msg.t === 'btn';
+    log('in', line, isBtn ? 'btnev' : '');
+    if (msg.dev) heard(msg);
+    if (isBtn && msg.b === 0) pressed(msg.dev, msg.e);
+  }
+
+  // Ask a port what it is (hub, button, or nothing) and close it again.
+  async function whatIs(p) {
+    let answer = null;
+    try {
+      await p.open({ baudRate: 115200 });
+      const w = p.writable.getWriter(); await w.write(new TextEncoder().encode('{"t":"hub?"}\n')); w.releaseLock();
+      const reader = p.readable.getReader(); const dec = new TextDecoder(); let buf = ''; const until = Date.now() + 1500;
+      while (!answer && Date.now() < until) {
+        const chunk = await Promise.race([reader.read(), new Promise((r) => setTimeout(() => r({ done: false }), until - Date.now()))]);
+        if (chunk.done) break; if (!chunk.value) continue;
+        buf += dec.decode(chunk.value);
+        for (const l of buf.split('\n').slice(0, -1)) { try { const m = JSON.parse(l.trim()); if (m.t === 'hub' || m.t === 'button') answer = m; } catch {} }
+        buf = buf.slice(buf.lastIndexOf('\n') + 1);
+      }
+      await reader.cancel().catch(() => {}); reader.releaseLock();
+    } catch {}
+    await p.close().catch(() => {});
+    return answer;
+  }
+  async function findHub(silent) {
+    for (const p of await (navigator.serial.getPorts?.() ?? [])) { const who = await whatIs(p); if (who?.t === 'hub') return p; }
+    if (silent) return null;
+    return navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] });
+  }
+  async function connect(silent = false) {
+    if (!navigator.serial) { setStatus('This browser has no Web Serial. Use Chrome or Edge.'); return; }
+    if (port) return;
+    try {
+      port = await findHub(silent);
+      if (!port) return;
+      await port.open({ baudRate: 115200 });
+      writer = port.writable.getWriter();
+      renderSeats();
+      $('connect').textContent = 'Connected';
+      const reader = port.readable.pipeThrough(new TextDecoderStream()).getReader();
+      let buf = '';
+      await writer.write(new TextEncoder().encode('{"t":"hub?"}\n'));
+      for (;;) { const { value, done } = await reader.read(); if (done) break; buf += value; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) handle(l); } }
+    } catch (e) { port = null; if (e.name !== 'NotFoundError') setStatus('Serial error: ' + e.message); }
+  }
+  if (navigator.serial) connect(true);
+  // For trying the page with no hub: feed it lines as if the hub had said them, e.g. {"t":"hello","dev":"A1","fw":"0.3.13"}.
+  window.rehearse = { feed: handle };
+
+  // ── controls ──────────────────────────────────────────────────────────────
+  for (const [k, label] of TURN_FX) { const o = document.createElement('option'); o.value = k; o.textContent = label; $('turnfx').appendChild(o); }
+  for (const [num, label] of CARDS) { const o = document.createElement('option'); o.value = num; o.textContent = `${num} ${label}`; $('card').appendChild(o); }
+  for (const id of ['bright', 'dim', 'fxb']) { $(id).oninput = () => { $(id + 'v').textContent = $(id).value + '%'; }; $(id).onchange = () => { for (const s of seats) send(cfg(s.dev)); }; }
+  $('connect').onclick = () => connect(false);
+  $('identify').onclick = () => { for (const s of seats) send({ t: 'id', dev: s.dev }); };
+  renderSeats();
+  show();
+})();
+</script>
+</body>
+</html>

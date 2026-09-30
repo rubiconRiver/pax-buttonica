@@ -263,7 +263,8 @@ describe('light levels', () => {
   it('fills in and clamps the host\'s levels; the screen keeps your turn at full and the others in proportion', () => {
     expect(levelsOf({})).toEqual(DEFAULT_LEVELS);
     expect(levelsOf({ brightness: 5, waitingBrightness: 0, effectsBrightness: 'bright' })).toEqual({ turn: 1, waiting: MIN_WAITING, effects: DEFAULT_LEVELS.effects });
-    expect(screenLevels(DEFAULT_LEVELS)).toEqual({ dim: 0.2, fx: 1 });
+    expect(screenLevels({ turn: 0.5, waiting: 0.1, effects: 0.5 })).toEqual({ dim: 0.2, fx: 1 });
+    expect(screenLevels(DEFAULT_LEVELS), 'the screen keeps waiting readable').toEqual({ dim: 0.12, fx: 1 });
     expect(screenLevels({ turn: 0.4, waiting: 0.2, effects: 0.2 })).toEqual({ dim: 0.5, fx: 0.5 });
   });
 });
