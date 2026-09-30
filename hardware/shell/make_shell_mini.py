@@ -69,8 +69,10 @@ DISC_GAP = 2.0           # the nub under the disc hangs this far above the butto
 NUB_D = 12.0             # the peg's head, which presses the middle of the panel, well inside the frame
 NUB_STEM = 6.0           # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
 PLATE_CLEAR = 0.2        # the cage's plate never comes closer than this to the Atom's rim, fully pressed
-FLEX_T = 1.0             # the spiral flexures' thickness
-FLEX_W = 2.2             # and width
+FLEX_T = 1.5             # the spiral flexures' thickness (1.0 until 2026-09-30: one broke on the most-used button)
+FLEX_W = 3.0             # and width
+FLEX_ROOT = 1.5          # each end of a bar is this much wider on each side, over FLEX_ROOT_L, where they crack
+FLEX_ROOT_L = 2.0
 FLEX_R = 16.0            # the flexures reach the plate at this radius
 SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
 
@@ -349,16 +351,22 @@ def cage():
         leg += box(CAGE_R0 - LEDGE, -w / 2, HEX_BOTTOM - 0.3 - 1.2, LEDGE + 0.01, w, 1.2)
         parts.append(leg.rotate([0, 0, a]))
     # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
-    # that hole on three spiral flexures, so once the dome has clicked the disc can give another millimetre
+    # that hole on three spiral flexures, so once the dome has clicked the disc can give a little more (the platform's
+    # collar stops the cap 0.3 mm after the click; the bars take that and the print's tolerance, nothing more)
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
     # the disc, with a hole in the middle for the peg's stem (see nub())
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
     flex = []
     reach = math.sqrt(FLEX_R ** 2 - SADDLE_BRIM_R ** 2)           # a tangent from the disc's edge out to the plate
     for a in (0, 120, 240):
-        # each bar leaves the disc's edge along a tangent and buries its far end in the plate
-        bar = box(-FLEX_W / 2, -0.5, PAD_BOTTOM, FLEX_W, reach + 2.5, FLEX_T).translate([SADDLE_BRIM_R, 0, 0])
-        flex.append(bar.rotate([0, 0, a]))
+        # each bar leaves the disc's edge along a tangent and buries its far end in the plate; both roots are wider,
+        # since a bar cracks where it meets what holds it
+        bar = box(-FLEX_W / 2, -0.5, PAD_BOTTOM, FLEX_W, reach + 2.5, FLEX_T)
+        bar += box(-FLEX_W / 2 - FLEX_ROOT, -0.5, PAD_BOTTOM, FLEX_W + 2 * FLEX_ROOT, FLEX_ROOT_L + 0.5, FLEX_T)
+        bar += box(-FLEX_W / 2 - FLEX_ROOT, reach - FLEX_ROOT_L, PAD_BOTTOM, FLEX_W + 2 * FLEX_ROOT, FLEX_ROOT_L + 2.5, FLEX_T)
+        flex.append(bar.translate([SADDLE_BRIM_R, 0, 0]).rotate([0, 0, a]))
+    # the wide roots must not poke past the plate's edge into the cap's bore
+    flex = [f ^ cyl(2 * (CAGE_R0 + t), PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG) for f in flex]
     parts += [plate, disc] + flex
     return union(parts)
 
