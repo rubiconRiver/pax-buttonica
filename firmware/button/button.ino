@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.14"
+#define FW_VERSION "0.3.15"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -50,7 +50,7 @@ static I2SClass i2s;
 // ── State ───────────────────────────────────────────────────────────────────
 
 enum Mode { MODE_OFF, MODE_DIM, MODE_SOLID, MODE_PULSE, MODE_FLASH, MODE_RAINBOW,
-            MODE_RIPPLE_OUT, MODE_RIPPLE_IN, MODE_RINGS, MODE_SPIN, MODE_SPARKLE, MODE_WAVE, MODE_HEARTBEAT };
+            MODE_RIPPLE_OUT, MODE_RIPPLE_IN, MODE_RINGS, MODE_SPIN, MODE_SPARKLE, MODE_WAVE, MODE_HEARTBEAT, MODE_SETTLE };
 enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE, FX_CARD,
                // the game's turn effects (TURN_EFFECTS in the app), by name; the ring is sent as "burst"
                FX_RAINBOW, FX_COP, FX_EXPLOSION, FX_FIREWORKS, FX_LIGHTNING, FX_FIRE, FX_SIREN, FX_LASER,
@@ -107,7 +107,11 @@ static Mode pulseLook = MODE_PULSE; // cfg "pulse": how "your move" is drawn (pu
 static Mode ledLook = MODE_OFF;     // led "l": how the game wants this "your move" drawn (ripple_in to score); MODE_OFF = the player's way
 // "pulse" means "your move"; the host says how each button draws it, and the game can ask for a look of its own.
 // A macro: a function here breaks the Arduino prototype generator, as DIM_LEVEL found.
-#define DRAWN_MODE (mode == MODE_PULSE ? (ledLook != MODE_OFF ? ledLook : pulseLook) : mode)
+// "settle" is a look of its own: the breath for SETTLE_MS from the light's start, then solid. 2.5 breaths from the
+// cycle's start, so it ends on a swell and the solid that follows is no jump.
+#define SETTLE_MS (2UL * 1700 + 850)
+#define LOOK_NOW(look) ((look) == MODE_SETTLE ? ((millis() - modeSince) < SETTLE_MS ? MODE_PULSE : MODE_SOLID) : (look))
+#define DRAWN_MODE (mode == MODE_PULSE ? LOOK_NOW(ledLook != MODE_OFF ? ledLook : pulseLook) : mode)
 static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
 static bool radioSave = RADIO_SAVE; // radio sleeps between listening windows
 static bool radioHeld = false;      // radio forced awake while we wait for an answer
@@ -948,6 +952,7 @@ static Mode parseMode(const char *m) {
   if (!strcmp(m, "sparkle")) return MODE_SPARKLE;
   if (!strcmp(m, "wave")) return MODE_WAVE;
   if (!strcmp(m, "heartbeat")) return MODE_HEARTBEAT;
+  if (!strcmp(m, "settle")) return MODE_SETTLE;
   return MODE_OFF;
 }
 
@@ -1032,7 +1037,7 @@ static void handle(const Packet &p) {
     if (doc["fx"].is<int>()) fxScale = constrain((int)doc["fx"], 5, 100) / 100.0f;
     if (doc["pulse"].is<const char*>()) {
       const Mode look = parseMode(doc["pulse"]);
-      pulseLook = (look == MODE_SOLID || look == MODE_HEARTBEAT) ? look : MODE_PULSE;
+      pulseLook = (look == MODE_SOLID || look == MODE_HEARTBEAT || look == MODE_SETTLE) ? look : MODE_PULSE;
     }
     if (doc["ps"].is<int>()) {
       radioSave = doc["ps"].as<int>() != 0;

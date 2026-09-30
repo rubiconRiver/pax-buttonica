@@ -28,8 +28,10 @@
 .dev[data-mode='dim'] { --lum: var(--dim-lum, 0.2); }
 .dev[data-mode='solid'] { --lum: 1; }
 .dev[data-mode='pulse'] { animation: dev-pulse 1.7s ease-in-out infinite; }
-/* "Your move", drawn to taste: steady, or two quick beats then a rest (the firmware's heartbeat, 1.3 s). */
+/* "Your move", drawn to taste: steady, or two quick beats then a rest (the firmware's heartbeat, 1.3 s), or the default:
+   two and a half breaths, ending on the swell, then steady. */
 .dev[data-mode='pulse'][data-look='solid'] { animation: none; --lum: 1; }
+.dev[data-mode='pulse'][data-look='settle'] { animation: dev-pulse 1.7s ease-in-out 2.5 forwards; }
 .dev[data-mode='pulse'][data-look='heartbeat'] { animation: dev-heartbeat 1.3s linear infinite; }
 /* Your turn to score: a ring of light runs from the rim to the centre, over and over (the firmware's ripple_in, 1.4 s). */
 .dev[data-mode='pulse'][data-look='ripple_in'] { animation: none; --lum: 0.55; }
@@ -555,7 +557,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dev[data-mode='pulse'] { animation-duration: 3.4s; }
-  .dev[data-mode='pulse'][data-look='heartbeat'] { animation: none; --lum: 1; }
+  .dev[data-mode='pulse'][data-look='heartbeat'], .dev[data-mode='pulse'][data-look='settle'] { animation: none; --lum: 1; }
   .dev[data-react='denied'] { animation: none; }
   .dev__shock, .dev__fx { display: none; }
 }

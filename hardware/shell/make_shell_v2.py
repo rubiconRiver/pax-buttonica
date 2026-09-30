@@ -9,7 +9,7 @@ top of the other. The Atom still sits on a platform above them, under the cap.
   platform  a square plate the size of the pocket: the Atom's fence, the collar, the spring pockets, a hole for
             the power cable near the -y edge, notches round the three tabs. It rests on the lid's fences.
   lid       flat plate with fences the full height of the compartment: a U round the cell, a stop and a side
-            wall for the Rider, standing up to the platform so it can't rock. Three countersunk screws, four feet.
+            wall for the Rider, standing up to the platform so it can't rock. No screws, no feet: the lid sits flat.
   cap, cage   as make_shell_mini.py, unchanged. No springs: the cap rests on the Atom's switch through the peg.
   nub       the peg, 3.5 mm head (nub-3.0 and nub-4.0 to choose from): taller than the mini's, to take up the 2 mm
             the springs used to hold the cap up by.
@@ -23,7 +23,7 @@ round from the mini, and the springs are mirrored to suit, so no spring stands b
 
 Assembly (housing upside down): cage with hex and peg into the cap; cap into the housing, flange up;
 Atom into the platform's fence, hex cable in; platform in, notches over the tabs, the cable in its slot; lid: cell in its U, Rider between its walls with the USB-C at the window, cable up through the
-platform's hole into the Atom; lid on, three screws, four feet.
+platform's hole into the Atom; lid on, a strip of tape.
 """
 import importlib.util
 import math
@@ -81,7 +81,7 @@ CY = INY / 2 - 3.5                  # and in y
 # the other is where its USB-A plug ends and the cable turns up to the Atom).
 SCREWS = False
 TABS = ((-C, CY, -1, 1), (-C, -CY, -1, -1), (6.0, -CY, 0, -1)) if SCREWS else ()   # x, y, and which walls it leans on
-FEET = ((-C, CY), (-C, -CY), (C, CY), (C, -CY)) + (((6.0, -CY),) if SCREWS else ())
+FEET = ()                            # no foot recesses since 2026-09-30: it sits flat fine, Garett says; four corners with SCREWS' extra were ((-C, CY), (-C, -CY), (C, CY), (C, -CY))
 TAB_D, TAB_H = 8.0, 6.0
 NOTCH_R = 5.0
 PORT = (14.0, 8.5)                  # the charging window: a USB-C plug's body passes it, because the socket is SETBACK behind the wall

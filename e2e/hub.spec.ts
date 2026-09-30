@@ -33,7 +33,7 @@ test('connecting asks the hub to announce itself and configures every button tha
   expect(out[0]).toEqual({ t: 'hub?' });
   // Settings for the table: hold and blink times, the three light levels, and how to draw "your move" (solid, unless
   // the host or the player says otherwise).
-  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'solid' });
+  for (const dev of [A, B, C]) expect(out).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'settle' });
   // A later hello may be a heartbeat, or the same button back from a battery swap with its memory wiped.
   // Either way it is told its settings and its light again.
   const leds = (await sent(page)).filter((m) => m.t === 'led' && m.dev === A).length;
@@ -131,8 +131,8 @@ test('the start of a turn reaches a real button as its player\'s effect', async 
   await table.expectActive('Ana');
   // Only the turn effects, not the acks every button got for claiming its seat.
   const effects = async (dev: string) => (await sent(page)).filter((m) => m.t === 'fx' && m.dev === dev && m.k !== 'ack' && m.k !== 'denied');
-  // The table's default is the ring, which every button draws as its burst.
-  expect(await effects(A)).toEqual([{ t: 'fx', dev: A, k: 'burst' }]);
+  // The table's default is no effect at all: the light itself breathes, then holds.
+  expect(await effects(A)).toEqual([]);
   expect(await effects(B)).toEqual([]);
 
   const panel = await openSettings(page);
@@ -184,7 +184,7 @@ test('settings reach the buttons live', async ({ page }) => {
   const panel = await openSettings(page);
   await setSlider(panel.locator('input[type=range]').first(), 1500);
   await setSlider(panel.locator('input[type=range]').nth(1), 3000);
-  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000, ...LEVELS, pulse: 'solid' });
+  for (const dev of [A, B, C]) expect(await sent(page)).toContainEqual({ t: 'cfg', dev, hold: 1500, flash: 3000, ...LEVELS, pulse: 'settle' });
 });
 
 test('three light levels: your turn, waiting and effects, set by the host; the screen follows the last two in proportion', async ({ page }) => {
@@ -200,7 +200,7 @@ test('three light levels: your turn, waiting and effects, set by the host; the s
   await setSlider(panel.getByRole('slider', { name: /Waiting/ }), 0.04);
   await setSlider(panel.getByRole('slider', { name: /Effects/ }), 1);
   await expect(panel).toContainText('Waiting 4%');
-  for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toEqual({ t: 'cfg', dev, hold: 900, flash: 2000, bright: 80, dim: 4, fx: 100, pulse: 'solid' });
+  for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toEqual({ t: 'cfg', dev, hold: 900, flash: 2000, bright: 80, dim: 4, fx: 100, pulse: 'settle' });
   // All the way down: only the active player lit. The screen keeps waiting at its floor so the host can still see it.
   await setSlider(panel.getByRole('slider', { name: /Waiting/ }), 0);
   await expect(panel).toContainText('Waiting off');
@@ -243,7 +243,7 @@ test('the look of "your move" and the brightness are configuration, not a differ
   // The tests' clock starts at a moment that happens to sit at the same point of both cycles; move off it.
   await page.clock.fastForward(500);
   const panel = await openSettings(page);
-  await panel.getByRole('radio', { name: 'Breathe' }).click();
+  await panel.getByRole('radio', { name: 'Breathe', exact: true }).click();
   await panel.getByRole('radio', { name: 'Heartbeat' }).click();
   await setSlider(panel.getByRole('slider', { name: /Your turn/ }), 0.7);
   const cfgs = (await sent(page)).filter((m) => m.t === 'cfg' && m.dev === A);
@@ -330,7 +330,7 @@ test('a hub pulled out mid-game says so, the game goes on on screen, and pluggin
   await expect.poll(() => light(A)).toMatchObject({ c: RED, m: 'pulse' });
   await expect.poll(() => light(B)).toMatchObject({ c: ORANGE, m: 'dim' });
   await expect.poll(() => light(C)).toMatchObject({ c: YELLOW, m: 'dim' });
-  for (const dev of [A, B, C]) expect(await since()).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'solid' });
+  for (const dev of [A, B, C]) expect(await since()).toContainEqual({ t: 'cfg', dev, hold: 900, flash: 2000, ...LEVELS, pulse: 'settle' });
 
   // And a press counts again.
   await feed(page, press(A, 'hold'));

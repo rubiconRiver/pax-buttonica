@@ -117,3 +117,7 @@ Button 0.3.12 drew `fx` `card` with a colour `c`: fill from the rim inward, hold
 ## Rehearsal page and light levels (2026-09-30)
 
 `/rehearse.html` runs the six real buttons through a game's situations with no game: seat claiming, the strategy pick, a turn (with the turn effect), a strategy card (the card round, the primary, the secondaries), the status phase (rainbows, scoring in order with the inward ripple, the dark tidy-up), the agenda, the winner, and an in-sync test (all flash with a phase, all flash without). The page shows what each button should be doing and the buttons' own presses move it along the way the game does. `window.rehearse.feed(line)` feeds it a hub line for trying it without a hub. The app's light levels now default to 60 / 5 / 80 (settings v3 migrates a laptop that still had 50 / 10); the screen keeps "waiting" at no less than 12 % of "your turn" so it stays readable.
+
+## Your move: breathe, then steady; no ring; waiting can be off; no feet (2026-09-30)
+
+Garett, after a round with six buttons: the white ring at the start of a turn was jarring, and a table of six buttons at three brightnesses was a puzzle. Now: the turn effect defaults to none; "your move" defaults to a new look, `settle` (button 0.3.15, cfg `pulse:"settle"`): two and a half breaths from the light's start, ending on the swell, then solid; the Waiting level goes to 0 (`dim:0`), so only the active player is lit and the screen keeps who has passed. Settings v4 moves a laptop still on solid/ring. The lid has no foot recesses.

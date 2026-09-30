@@ -10,18 +10,19 @@ export type LedMode = 'off' | 'dim' | 'solid' | 'pulse' | 'flash' | 'rainbow';
 
 /**
  * How a button draws `pulse` ("your move"). The meaning on the wire never changes; this is taste, chosen by the
- * host for the table and by each player for their own light. Solid is the default: a breathing light all
- * evening turned out to be a lot.
+ * host for the table and by each player for their own light. The default breathes for a few seconds and then holds:
+ * a breathing light all evening turned out to be a lot, and a light that just comes on is easy to miss.
  */
-export type TurnLook = 'solid' | 'pulse' | 'heartbeat';
+export type TurnLook = 'settle' | 'solid' | 'pulse' | 'heartbeat';
 
 export const TURN_LOOKS: { id: TurnLook; name: string; hint: string }[] = [
+  { id: 'settle', name: 'Breathe, then steady', hint: 'A few breaths to catch your eye, then steady' },
   { id: 'solid', name: 'Solid', hint: 'Steady, full brightness' },
   { id: 'pulse', name: 'Breathe', hint: 'Slowly swells and fades' },
   { id: 'heartbeat', name: 'Heartbeat', hint: 'Two quick beats, then a rest' },
 ];
 
-export const isTurnLook = (x: unknown): x is TurnLook => x === 'solid' || x === 'pulse' || x === 'heartbeat';
+export const isTurnLook = (x: unknown): x is TurnLook => TURN_LOOKS.some((l) => l.id === x);
 
 /**
  * What a button does the moment it becomes your turn (and, if the table likes, your turn to score): a one-shot on top

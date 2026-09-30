@@ -162,11 +162,11 @@ test('the cog on the phone: how your own light shows "your move", saved with you
   await pickCards(table, SIX);
   await tick([page, phone.page]);
   await phone.expectLight('pulse');
-  await expect(phone.light, "the table's default: solid").toHaveAttribute('data-look', 'solid');
+  await expect(phone.light, "the table's default: breathe, then steady").toHaveAttribute('data-look', 'settle');
 
   await phone.page.getByRole('button', { name: 'Your light' }).click();
   const sheet = phone.page.getByRole('dialog', { name: 'Your light' });
-  await sheet.getByRole('radio', { name: 'Breathe' }).click();
+  await sheet.getByRole('radio', { name: 'Breathe', exact: true }).click();
   await expect(phone.light).not.toHaveAttribute('data-look');
   await sheet.getByRole('radio', { name: 'Heartbeat' }).click();
   await expect(phone.light).toHaveAttribute('data-look', 'heartbeat');
@@ -176,7 +176,7 @@ test('the cog on the phone: how your own light shows "your move", saved with you
   expect(api.named('Ana')).toMatchObject({ light: 'heartbeat', brightness: 0.5 });
   // Back to the table's choice.
   await sheet.getByRole('radio', { name: "Table's" }).first().click();
-  await expect(phone.light).toHaveAttribute('data-look', 'solid');
+  await expect(phone.light).toHaveAttribute('data-look', 'settle');
 
   // The start of her turn is hers to choose too. Picking one plays it on her phone at once…
   const starts = sheet.getByRole('radiogroup', { name: 'When your turn starts' });

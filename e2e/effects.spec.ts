@@ -5,16 +5,32 @@ import { DEMO, DEMO_ORDER, expect, openDemo, openSettings, test } from './helper
  * their phone (phones.spec.ts covers that side, and the preview that shows on the big screen).
  */
 
-test('the table\'s start-of-turn effect: the ring by default, then whatever the host picks', async ({ page }) => {
+test('the table\'s start-of-turn effect: none by default, then whatever the host picks', async ({ page }) => {
   const table = await openDemo(page);
-  const [dave, kyle, mike, sarah, steph] = DEMO_ORDER;
+  const [dave, kyle, mike, sarah, steph, jen] = DEMO_ORDER;
   await table.hold(dave);
   await table.expectActive(kyle);
-  await expect(table.light(kyle), 'the ring: the burst every button has always done').toHaveAttribute('data-react', 'burst');
-  await expect(table.light(kyle).locator('.dev__shock')).toHaveCount(1);
+  await expect(table.light(kyle), 'no effect: the light itself does the work').not.toHaveAttribute('data-react');
 
-  const panel = await openSettings(page);
-  await expect(panel.getByRole('radio', { name: 'Ring', exact: true })).toHaveAttribute('aria-checked', 'true');
+  let panel = await openSettings(page);
+  await expect(panel.getByRole('radio', { name: 'None', exact: true })).toHaveAttribute('aria-checked', 'true');
+  await panel.getByRole('radio', { name: 'Ring', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await table.hold(kyle);
+  await table.expectActive(mike);
+  await expect(table.light(mike), 'the ring: the burst every button has always done').toHaveAttribute('data-react', 'burst');
+  await expect(table.light(mike).locator('.dev__shock')).toHaveCount(1);
+  await table.hold(mike);
+  await table.expectActive(sarah);
+  await table.hold(sarah);
+  await table.expectActive(steph);
+  await table.hold(steph);
+  await table.expectActive(jen);
+  await table.hold(jen);
+  await table.expectActive(dave);
+  await table.hold(dave);
+  await table.expectActive(kyle);
+  panel = await openSettings(page);
   await panel.getByRole('radio', { name: 'Sparkles' }).click();
   await page.keyboard.press('Escape');
   await table.hold(kyle);

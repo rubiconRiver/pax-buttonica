@@ -61,8 +61,8 @@ export const DEFAULT_SETTINGS: Settings = {
   explainLights: true,
   primaryStage: true,
   autoScoreboard: true,
-  turnLight: 'solid',
-  turnFx: 'ring',
+  turnLight: 'settle',
+  turnFx: 'none',
   brightness: DEFAULT_LEVELS.turn,
   waitingBrightness: DEFAULT_LEVELS.waiting,
   effectsBrightness: DEFAULT_LEVELS.effects,
@@ -72,13 +72,14 @@ export const DEFAULT_SETTINGS: Settings = {
   scoringCue: 'turn',
 };
 
-const KEY = 'pb.settings.v3';
+const KEY = 'pb.settings.v4';
 
 /**
  * Settings are saved whole the first time anything is touched, so a changed default never reached a laptop that had
  * saved them. Each version moves an old default that nobody chose to the new one; anything set by hand stays.
  * v1 → v2 (2026-09-29): the hold went from 2 s to 0.9 s and brightness from 100 % to 50 %.
  * v2 → v3 (2026-09-30): your turn from 50 % to 60 %, waiting from 10 % to 5 %.
+ * v3 → v4 (2026-09-30): your move breathes then holds instead of solid, and starts with no effect instead of the ring.
  */
 function migrate() {
   try {
@@ -86,6 +87,7 @@ function migrate() {
     const steps: [string, (old: Partial<Settings>) => void][] = [
       ['pb.settings.v1', (old) => { if (old.holdMs === 2000) delete old.holdMs; if (old.brightness === 1) delete old.brightness; }],
       ['pb.settings.v2', (old) => { if (old.brightness === 0.5) delete old.brightness; if (old.waitingBrightness === 0.1) delete old.waitingBrightness; }],
+      ['pb.settings.v3', (old) => { if (old.turnLight === 'solid') delete old.turnLight; if (old.turnFx === 'ring') delete old.turnFx; }],
     ];
     let old: Partial<Settings> | null = null;
     for (const [key, fix] of steps) {

@@ -163,12 +163,12 @@ test('the demo never touches a real game in progress', async ({ page }) => {
   await new Table(page).expectActive('Dave');
 });
 
-test('"your move" is drawn solid by default; breathing and heartbeat are a setting that sticks', async ({ page }) => {
+test('"your move" breathes then holds by default; solid, breathing and heartbeat are a setting that sticks', async ({ page }) => {
   const table = await openDemo(page);
   await table.expectLights({ Dave: 'pulse' });
-  await expect(table.light('Dave')).toHaveAttribute('data-look', 'solid');
+  await expect(table.light('Dave')).toHaveAttribute('data-look', 'settle');
   const panel = await openSettings(page);
-  await panel.getByRole('radio', { name: 'Breathe' }).click();
+  await panel.getByRole('radio', { name: 'Breathe', exact: true }).click();
   await expect(table.light('Dave')).not.toHaveAttribute('data-look');
   await panel.getByRole('radio', { name: 'Heartbeat' }).click();
   await expect(table.light('Dave')).toHaveAttribute('data-look', 'heartbeat');

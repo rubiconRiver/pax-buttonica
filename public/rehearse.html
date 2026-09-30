@@ -59,7 +59,7 @@
   .light[data-m="off"] { --lum: 0.02; }
   .light[data-m="dim"] { --lum: 0.2; }
   .light[data-m="solid"] { --lum: 1; }
-  .light[data-m="pulse"] { animation: lum-pulse 1.7s ease-in-out infinite; }
+  .light[data-m="pulse"] { animation: lum-pulse 1.7s ease-in-out 2.5 forwards; }
   .light[data-m="pulse"][data-l="ripple_in"] { animation: none; --lum: 0.6; }
   .light[data-m="pulse"][data-l="ripple_in"]::before { content: ''; position: absolute; inset: 0; border-radius: 50%; border: 5px solid color-mix(in srgb, var(--led) 60%, white); animation: ripple-in 1.4s linear infinite; }
   .light[data-m="flash"] { animation: lum-flash 2s linear infinite; }
@@ -158,7 +158,7 @@
   // ── seats: the buttons the hub hears, in table order ──────────────────────
   const seats = [];            // [{ dev, colour, fw, lost }]
   const seatOf = (dev) => seats.findIndex((s) => s.dev === dev);
-  const cfg = (dev) => ({ t: 'cfg', dev, hold: 900, flash: FLASH_MS, bright: +$('bright').value, dim: +$('dim').value, fx: +$('fxb').value, pulse: 'solid' });
+  const cfg = (dev) => ({ t: 'cfg', dev, hold: 900, flash: FLASH_MS, bright: +$('bright').value, dim: +$('dim').value, fx: +$('fxb').value, pulse: 'settle' });
 
   function renderSeats() {
     const box = $('seats'); box.innerHTML = '';
