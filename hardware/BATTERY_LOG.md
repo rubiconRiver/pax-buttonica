@@ -24,7 +24,7 @@ is a capacity.
 | C1C0 | part (on battery since 13:31) | 13:38 | ~13:47 | 0.15 — was nearly empty; on the charger now |
 | 2B30 | — | — | — | switched off 13:42: Garett's own button, runs from a wall charger, no cell |
 | 04F8 | part (on battery since 12:17) | 13:38 | | |
-| F4EC | part (on battery since 12:19) | 13:38 | | |
+| F4EC | part; the cell in use since ~08:30 at the game's low draw | 13:38 | 14:56 | 1.3 — about 470 mAh at white, after ~5 h of dim/idle before it |
 | C5A8 | part (on battery since 12:30) | 13:38 | | |
 | 58F0 | **full** (charged 2026-09-30) | 13:45 | | |
 
