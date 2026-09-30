@@ -216,8 +216,9 @@ def platform():
     cuts = []
     for a in (SPRING_ANGLES if SPRINGS else ()):
         cuts.append(box(m.SPRING_R0 - 0.3, -m.SPRING_D / 2 - 0.3, -1.2, m.SPRING_W + 0.6, m.SPRING_D + 0.6, 1.21).rotate([0, 0, a]))
-    # the cable goes down at the corner: a slot from just past the collar to the platform's corner
-    cuts.append(box(m.COLLAR_R + 2.5, -CORNER_W / 2 + 1, -PLATFORM_T - 1, 60, CORNER_W - 2, PLATFORM_T + 2).rotate([0, 0, CORNER_A]))
+    # The cable goes down at the +x, -y corner, and it needs the whole corner: the platform there is cut back to a
+    # quarter circle round the collar (2026-09-30, Garett: a slot into the corner was nowhere near enough).
+    cuts.append(box(0, -60, -PLATFORM_T - 1, 60, 60, PLATFORM_T + 2) - cyl(2 * (m.COLLAR_R + 2.5), PLATFORM_T + 4, z=-PLATFORM_T - 2, seg=96))
     cuts += [Manifold.batch_hull([cyl(2 * NOTCH_R, PLATFORM_T + 2, x, y, -PLATFORM_T - 1, seg=32),
                                   cyl(2 * NOTCH_R, PLATFORM_T + 2, x + 4 * sx, y + 4 * sy, -PLATFORM_T - 1, seg=32)]) for x, y, sx, sy in TABS]
     return solid - union(cuts)
