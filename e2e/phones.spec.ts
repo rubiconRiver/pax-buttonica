@@ -530,7 +530,7 @@ test('a phone celebrates the end of the round with everyone, then waits for its 
   // The host keeps time; the phone follows the record.
   await page.clock.fastForward(FANFARE_MS + 100);
   await tick(both);
-  await phone.expectLight('dim');
+  await phone.expectLight('off');
   await expect(phone.why).toHaveText('Waiting to score');
   await expect(table.center.locator('.center__active')).toHaveText('Ana');
   await table.tap('Ana');
@@ -540,7 +540,7 @@ test('a phone celebrates the end of the round with everyone, then waits for its 
   await phone.tap();
   await tick(both);
   await expect(table.center.locator('.center__active')).toHaveText('Cleo');
-  await phone.expectLight('dim');
+  await phone.expectLight('off');
   await expect(phone.why).toHaveText('Scored');
   await expect(table.log).toContainText('Ben is done scoring.');
 });

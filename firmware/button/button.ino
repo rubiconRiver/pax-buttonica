@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.12"
+#define FW_VERSION "0.3.13"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -103,6 +103,10 @@ static float levelScale = 0.5f;    // whichever of them applies to what is being
 #undef DIM_LEVEL
 #define DIM_LEVEL (min(1.0f, dimScale / max(levelScale, 0.01f)))
 static Mode pulseLook = MODE_PULSE; // cfg "pulse": how "your move" is drawn (pulse, solid or heartbeat)
+static Mode ledLook = MODE_OFF;     // led "l": how the game wants this "your move" drawn (ripple_in to score); MODE_OFF = the player's way
+// "pulse" means "your move"; the host says how each button draws it, and the game can ask for a look of its own.
+// A macro: a function here breaks the Arduino prototype generator, as DIM_LEVEL found.
+#define DRAWN_MODE (mode == MODE_PULSE ? (ledLook != MODE_OFF ? ledLook : pulseLook) : mode)
 static uint32_t periodMs = 0;      // the animated modes' cycle; 0 = each mode's own default
 static bool radioSave = RADIO_SAVE; // radio sleeps between listening windows
 static bool radioHeld = false;      // radio forced awake while we wait for an answer
@@ -372,9 +376,7 @@ static float smooth(float p) { return 0.5f - 0.5f * cosf(p * 2.0f * PI); }   // 
 // How bright the whole button is right now, 0..1, for the uniform modes. Mirrors the simulator's CSS.
 static float luminance(uint32_t now) {
   const uint32_t t = now - modeSince;
-  // "pulse" means "your move"; the host says how each button should draw it
-  const Mode drawn = mode == MODE_PULSE ? pulseLook : mode;
-  switch (drawn) {
+  switch (DRAWN_MODE) {
     case MODE_OFF: return 0;
     case MODE_DIM: return DIM_LEVEL;
     case MODE_SOLID: return 1;   // per pixel: see pixelLuminance
@@ -408,8 +410,9 @@ static float pixelLuminance(int i, uint32_t now) {
   const uint32_t t = now - modeSince;
   const int r = ringOf[i];
   // "solid", whether asked for or as the look of "your move": a full rim and a softer centre.
-  if (mode == MODE_SOLID || (mode == MODE_PULSE && pulseLook == MODE_SOLID)) return r == RINGS - 1 ? 1.0f : SOLID_CORE;
-  switch (mode) {
+  const Mode drawn = DRAWN_MODE;
+  if (drawn == MODE_SOLID) return r == RINGS - 1 ? 1.0f : SOLID_CORE;
+  switch (drawn) {
     case MODE_RIPPLE_OUT:
     case MODE_RIPPLE_IN: {
       // a bright front travels through the rings and leaves a fading tail behind it
@@ -965,6 +968,9 @@ static void handle(const Packet &p) {
   if (!strcmp(type, "led")) {
     const uint32_t rgb = strtoul(doc["c"] | "ffffff", nullptr, 16);
     const Mode next = parseMode(doc["m"]);
+    // "l": a look for this "your move" over the player's own (an extra mode, or solid); anything else means theirs
+    const Mode look = doc["l"].is<const char*>() ? parseMode(doc["l"]) : MODE_OFF;
+    ledLook = (look == MODE_PULSE || look == MODE_FLASH || look == MODE_RAINBOW || look == MODE_DIM) ? MODE_OFF : look;
     ledR = (rgb >> 16) & 0xFF;
     ledG = (rgb >> 8) & 0xFF;
     ledB = rgb & 0xFF;

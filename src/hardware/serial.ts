@@ -376,7 +376,7 @@ export function syncOutputs(bindings: (string | null)[], outputs: DeviceOutput[]
     const o = seat >= 0 ? outputs[seat] : unclaimed ?? DARK;
     // "Your move" keeps the time of its look (a heartbeat beats faster than a breath), so a new look is a new phase.
     const look = lookOf(dev);
-    const key = `${o.color}|${o.mode}|${o.hold !== false}|${o.mode === 'pulse' ? look : ''}`;
+    const key = `${o.color}|${o.mode}|${o.hold !== false}|${o.mode === 'pulse' ? o.look ?? look : ''}`;
     if (lastFrames.get(dev) === key) continue;
     lastFrames.set(dev, key);
     if (o.hold === false) toldNoHold.add(dev);

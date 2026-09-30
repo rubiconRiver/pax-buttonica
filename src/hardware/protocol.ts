@@ -5,7 +5,7 @@
  * Transport: newline-delimited JSON over USB serial (115200 baud) between the
  * browser and the hub. The hub relays each message to/from buttons over ESP-NOW.
  */
-import type { DeviceOutput, LedMode, TurnEffect, TurnLook } from '../engine/outputs';
+import type { DeviceOutput, LedMode, PulseLook, TurnEffect, TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import type { Note, Wave } from '../audio/jingles';
 
@@ -33,7 +33,8 @@ export type FromDevice =
 
 export type ToDevice =
   /** `h: 0`: a hold means nothing right now, so the button can refuse it while it is held (absent: it might). */
-  | { t: 'led'; dev: string; c: string; m: LedMode; p?: number; h?: 0 }
+  /** `l`: how the game wants `pulse` drawn here (`ripple_in` for your turn to score); a device that can't ignores it. */
+  | { t: 'led'; dev: string; c: string; m: LedMode; p?: number; h?: 0; l?: PulseLook }
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
   /** `ack`, `denied` and `confirm` every button renders; the rest are turn effects a multi-pixel button may draw and any button may ignore. */
   | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | Exclude<TurnEffect, 'ring' | 'none'> }
@@ -60,6 +61,8 @@ export function inputFor(b: number, e: Gesture): DeviceInput | null {
 }
 
 export const PULSE_MS = 1700;
+/** The inward ripple's cycle (the firmware's `ripple_in` default). */
+export const RIPPLE_MS = 1400;
 /** The heartbeat look's cycle: two beats, then a rest. */
 export const HEARTBEAT_MS = 1300;
 
@@ -68,10 +71,10 @@ export const HEARTBEAT_MS = 1300;
  * the table breathes and blinks together no matter when it got the message.
  * A `pulse` drawn as a heartbeat runs on the heartbeat's cycle, not the breath's.
  */
-export const phaseNow = (mode: LedMode, flashMs: number, look: TurnLook = 'pulse'): number | undefined =>
-  mode === 'pulse' ? Date.now() % (look === 'heartbeat' ? HEARTBEAT_MS : PULSE_MS) : mode === 'flash' ? Date.now() % flashMs : undefined;
+export const phaseNow = (mode: LedMode, flashMs: number, look: TurnLook | PulseLook = 'pulse'): number | undefined =>
+  mode === 'pulse' ? Date.now() % (look === 'ripple_in' ? RIPPLE_MS : look === 'heartbeat' ? HEARTBEAT_MS : PULSE_MS) : mode === 'flash' ? Date.now() % flashMs : undefined;
 
 export const ledFrame = (dev: string, o: DeviceOutput, flashMs: number, look?: TurnLook): ToDevice => {
-  const p = phaseNow(o.mode, flashMs, look);
-  return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }), ...(o.hold === false ? { h: 0 as const } : {}) };
+  const p = phaseNow(o.mode, flashMs, o.look ?? look);
+  return { t: 'led', dev, c: o.color.replace('#', ''), m: o.mode, ...(p == null ? {} : { p }), ...(o.hold === false ? { h: 0 as const } : {}), ...(o.look ? { l: o.look } : {}) };
 };

@@ -120,11 +120,11 @@ export async function statusFanfare(table: Table, names: string[]) {
   await table.page.clock.fastForward(FANFARE_MS + 100);
 }
 
-/** Scoring goes round in initiative order: each scorer breathes in their own colour and taps when done. */
+/** Scoring goes round in initiative order: each scorer's light ripples inward in their own colour, everyone else is dark, and they tap when done. */
 export async function everyoneScores(table: Table, order: string[]) {
   for (const [i, name] of order.entries()) {
     await expect(table.center.locator('.center__active')).toHaveText(name);
-    await table.expectLights({ [name]: 'pulse', ...(i > 0 ? { [order[i - 1]]: 'dim' as const } : {}) });
+    await table.expectLights({ [name]: 'pulse', ...(i > 0 ? { [order[i - 1]]: 'off' as const } : {}) });
     await table.tap(name);
   }
 }

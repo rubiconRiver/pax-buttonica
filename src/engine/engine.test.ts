@@ -357,8 +357,8 @@ describe('status and agenda', () => {
     expect(g.scoringOrder).toEqual([5, 4, 3, 2, 1, 0]);
     expect(currentScorer(g)).toBe(5);
     expect(g.fx.at(-1)).toMatchObject({ kind: 'score', seat: 5 });
-    expect(deriveOutputs(g)[5]).toMatchObject({ mode: 'pulse', color: expect.any(String) });
-    expect(deriveOutputs(g)[4].mode).toBe('dim');
+    expect(deriveOutputs(g)[5]).toMatchObject({ mode: 'pulse', look: 'ripple_in', color: expect.any(String) });
+    expect(deriveOutputs(g)[4].mode).toBe('off');
     expect(g.log.at(-1)?.text).toBe('Scoring, in initiative order: P5, P4, P3, P2, P1, P0.');
 
     // Only the scorer's tap counts.

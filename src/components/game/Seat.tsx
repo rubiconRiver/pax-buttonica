@@ -46,7 +46,7 @@ export const Seat = forwardRef<DeviceHandle, Props>(function Seat(
         ref={ref}
         color={output.color}
         mode={output.mode}
-        look={look}
+        look={output.look ?? look}
         size={size}
         holdMs={holdMs}
         holdOk={output.hold !== false}

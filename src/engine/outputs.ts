@@ -111,9 +111,16 @@ export const screenLevels = (l: LightLevels): { dim: number; fx: number } => ({
   fx: Math.min(1, l.effects / l.turn),
 });
 
+/**
+ * How the game itself wants `pulse` drawn, over the player's own taste: the inward ripple for your turn to score.
+ * A device that can't draw it draws `pulse` its usual way; the meaning on the wire is unchanged.
+ */
+export type PulseLook = 'ripple_in';
+
 export interface DeviceOutput {
   color: string;
   mode: LedMode;
+  look?: PulseLook;
   /** Why the light looks like this — shown in the simulator, ignored by hardware. */
   reason: string;
   /** Whether a hold would do anything right now. False: the button can show the refusal while it is still held. Absent means yes. */
@@ -170,10 +177,11 @@ function light(g: GameState, seat: number): DeviceOutput {
     case 'status': {
       if (g.statusStep === 'fanfare') return { color: own, mode: 'rainbow', reason: 'The round is over!' };
       if (g.statusStep === 'scoring') {
-        if (seat === currentScorer(g)) return { color: own, mode: 'pulse', reason: 'Your turn to score — tap when done' };
+        // The scorer's light ripples inward, on its own: everyone else is dark.
+        if (seat === currentScorer(g)) return { color: own, mode: 'pulse', look: 'ripple_in', reason: 'Your turn to score — tap when done' };
         return g.scoringOrder.indexOf(seat) < g.scoringIdx
-          ? { color: own, mode: 'dim', reason: 'Scored' }
-          : { color: own, mode: 'dim', reason: 'Waiting to score' };
+          ? { color: own, mode: 'off', reason: 'Scored' }
+          : { color: own, mode: 'off', reason: 'Waiting to score' };
       }
       // The tidy-up is dark: scoring was the show. A tap still says you're ready.
       return g.ready[seat]

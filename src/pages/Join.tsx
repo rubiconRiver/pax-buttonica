@@ -303,7 +303,7 @@ function PhoneButton({ code }: { code: string }) {
       <Device
         color={live ? output.color : '#ffffff'}
         mode={live ? output.mode : 'off'}
-        look={look}
+        look={output.look ?? look}
         size={size}
         holdMs={record?.settings.holdMs}
         holdOk={!live || output.hold !== false}

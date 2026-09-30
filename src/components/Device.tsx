@@ -1,9 +1,9 @@
 import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
-import { turnEffectSpec, type LedMode, type TurnLook } from '../engine/outputs';
+import { turnEffectSpec, type LedMode, type PulseLook, type TurnLook } from '../engine/outputs';
 import type { ReactionKind } from './game/useReactions';
 import type { DeviceInput } from '../engine/types';
 import { sfx, startCharge, unlockAudio } from '../audio/synth';
-import { HEARTBEAT_MS, PULSE_MS } from '../hardware/protocol';
+import { HEARTBEAT_MS, PULSE_MS, RIPPLE_MS } from '../hardware/protocol';
 import { DEFAULT_SETTINGS } from '../state/settings';
 import '../styles/device.css';
 
@@ -25,8 +25,8 @@ export interface DeviceHandle {
 interface Props {
   color: string;
   mode: LedMode;
-  /** How `pulse` is drawn: the player's or the table's taste. Defaults to breathing. */
-  look?: TurnLook;
+  /** How `pulse` is drawn: the player's or the table's taste, or what the game asks for (the inward ripple to score). Defaults to breathing. */
+  look?: TurnLook | PulseLook;
   size?: number;
   holdMs?: number;
   /** False when a hold would do nothing right now: the ring goes red while held and the hold ends refused, not confirmed. */
@@ -66,7 +66,7 @@ export const Device = forwardRef<DeviceHandle, Props>(function Device(
   useLayoutEffect(() => {
     const el = root.current;
     if (!el) return;
-    const period = mode === 'pulse' ? (look === 'heartbeat' ? HEARTBEAT_MS : look === 'solid' ? 0 : PULSE_MS) : mode === 'flash' ? parseFloat(getComputedStyle(el).getPropertyValue('--flash-ms')) || 2000 : 0;
+    const period = mode === 'pulse' ? (look === 'ripple_in' ? RIPPLE_MS : look === 'heartbeat' ? HEARTBEAT_MS : look === 'solid' ? 0 : PULSE_MS) : mode === 'flash' ? parseFloat(getComputedStyle(el).getPropertyValue('--flash-ms')) || 2000 : 0;
     el.style.animationDelay = period ? `-${Date.now() % period}ms` : '';
   }, [mode, look]);
 
