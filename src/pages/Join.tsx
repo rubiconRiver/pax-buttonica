@@ -6,13 +6,18 @@ import { playSound, unlockAudio, type Playing } from '../audio/synth';
 import { Device } from '../components/Device';
 import { Scoreboard } from '../components/game/Scoreboard';
 import { reactionFor, useReactions, type Reaction } from '../components/game/useReactions';
-import { IconClose, IconGear, IconPlay, IconUpload } from '../components/Icons';
+import { IconClose, IconGear, IconPlay, IconRedo, IconUndo, IconUpload, IconWhistle } from '../components/Icons';
 import { useWakeLock } from '../components/useWakeLock';
 import { PLAYER_COLORS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode, seatOfDevice } from '../engine/engine';
 import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, levelsOf, screenLevels, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
-import type { GameState, SoundRef } from '../engine/types';
+import type { Action, GameState, SoundRef } from '../engine/types';
 import type { GameRecord } from '../remote/sync';
+import type { PhoneRequest } from '../remote/relay';
+import { isPhoneAdmin } from '../state/settings';
+import { RefereePanel } from '../components/game/RefereePanel';
+import { ShipsLog } from '../components/game/ShipsLog';
+import { currentScorer, endTurnBlocker, pendingAcks } from '../engine/engine';
 import { snapshotOf } from '../remote/messages';
 import { useStore } from '../state/createStore';
 import { createProfile, patchProfile, profilesStore, type Profile } from '../state/profiles';
@@ -43,7 +48,7 @@ const HELLO_MS = 15_000;
 const MISSES_BEFORE_LOST = 5;
 
 type Link = 'connecting' | 'connected' | 'lost' | 'nogame';
-type Outbound = { type: 'input'; input: 'tap' | 'double' | 'hold' } | { type: 'identify'; profileId: string | null } | { type: 'hello' } | { type: 'preview'; fx: TurnEffect };
+type Outbound = { type: 'input'; input: 'tap' | 'double' | 'hold' } | { type: 'identify'; profileId: string | null } | { type: 'hello' } | { type: 'preview'; fx: TurnEffect } | PhoneRequest;
 
 function useGame(code: string) {
   const [link, setLink] = useState<Link>('connecting');
@@ -152,7 +157,8 @@ function PhoneButton({ code }: { code: string }) {
   // Arriving from the tag on a real button: the page already knows who this is.
   const [params, setParams] = useSearchParams();
   const arriveAs = params.get('as');
-  const [view, setView] = useState<'button' | 'table'>('button');
+  const [view, setView] = useState<'button' | 'table' | 'log'>('button');
+  const [referee, setReferee] = useState(false);
   const [editing, setEditing] = useState(false);
   const [tuning, setTuning] = useState(false);
   const [oops, setOops] = useState<string | null>(null);
@@ -197,6 +203,10 @@ function PhoneButton({ code }: { code: string }) {
     return () => window.clearTimeout(t);
   }, [tried]);
   const table = useMemo(() => (game ? snapshotOf(game) : null), [game]);
+  // Running the table from here: only the phone of whoever the host named for it. The host checks as well.
+  const myName = seat >= 0 ? game?.players[seat].name : me?.name;
+  const runsTable = !!record && isPhoneAdmin(myName, record.settings.phoneAdmin ?? '');
+  const relay = useCallback((a: Action) => say({ type: 'action', action: a }), [say]);
 
   // The question is asked once per game: the first time this phone shows up in a game that doesn't know it.
   useEffect(() => {
@@ -261,16 +271,48 @@ function PhoneButton({ code }: { code: string }) {
   }
 
   const tabs = (
-    <nav className="join__tabs">
+    <nav className="join__tabs" data-tabs={runsTable ? 3 : 2}>
       <button type="button" aria-pressed={view === 'button'} onClick={() => setView('button')}>My button</button>
       <button type="button" aria-pressed={view === 'table'} onClick={() => setView('table')}>The table</button>
+      {runsTable && <button type="button" aria-pressed={view === 'log'} onClick={() => setView('log')}>Log</button>}
     </nav>
   );
 
   if (view === 'table') {
     return (
       <div className="join join--table">
-        {table ? <Scoreboard table={table} /> : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game…</p>}
+        {table ? <Scoreboard table={table} dispatch={runsTable ? relay : undefined} /> : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game…</p>}
+        {tabs}
+      </div>
+    );
+  }
+
+  if (view === 'log' && runsTable) {
+    return (
+      <div className="join join--table join--log">
+        {game ? (
+          <>
+            <div className="join__controls">
+              <button type="button" className="btn btn--sm" disabled={!record?.history?.undo} onClick={() => say({ type: 'undo' })}><IconUndo /> Undo</button>
+              {record?.history?.redo && <button type="button" className="btn btn--sm btn--icon" aria-label="Redo" onClick={() => say({ type: 'redo' })}><IconRedo /></button>}
+              <button type="button" className="btn btn--sm" onClick={() => setReferee(true)}><IconWhistle /> Referee</button>
+              <button type="button" className="btn btn--sm btn--ghost" onClick={() => relay({ type: game.paused ? 'RESUME' : 'PAUSE', at: Date.now() })}>{game.paused ? 'Resume' : 'Pause'}</button>
+            </div>
+            <PhoneControls game={game} dispatch={relay} />
+            <section className="panel join__log">
+              <div className="panel__head"><span>Ship's log</span><span>Round {game.round}</span></div>
+              <ShipsLog game={game} onRewind={(index) => say({ type: 'rewind', index })} />
+            </section>
+            {referee && (
+              <div className="sheet" onPointerDown={(e) => e.target === e.currentTarget && setReferee(false)}>
+                <div className="sheet__card panel join__referee">
+                  <RefereePanel game={game} dispatch={relay} onClose={() => setReferee(false)} />
+                  <div className="sheet__foot"><span /><button type="button" className="btn btn--gold" onClick={() => setReferee(false)}>Done</button></div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : <p className="muted" style={{ marginTop: 40 }}>Waiting for the game…</p>}
         {tabs}
       </div>
     );
@@ -357,6 +399,40 @@ function PhoneButton({ code }: { code: string }) {
 }
 
 const EMPTY = { players: [], fx: [] } as unknown as GameState;
+
+/** The big screen's phase buttons, for the phone that runs the table: whatever the moment calls for. */
+function PhoneControls({ game, dispatch }: { game: GameState; dispatch(a: Action): void }) {
+  const at = () => Date.now();
+  const buttons: { label: string; action: Action; ghost?: boolean }[] = [];
+  const sp = game.strategyPlay;
+  if (game.seating) return null;
+  if (game.phase === 'action' && game.active != null) {
+    if (sp?.stage === 'primary') buttons.push({ label: 'Primary done', action: { type: 'PRIMARY_DONE', at: at() } });
+    else if (sp && pendingAcks(game).length) buttons.push({ label: "Everyone's done", action: { type: 'ACK_ALL', at: at() } });
+    else if (!game.choosingCard) {
+      if (!endTurnBlocker(game)) buttons.push({ label: `End ${game.players[game.active].name}'s turn`, action: { type: 'END_TURN', at: at() } });
+      buttons.push({ label: `${game.players[game.active].name} passes`, action: { type: 'PASS', at: at() }, ghost: true });
+    }
+  } else if (game.phase === 'status') {
+    const scorer = currentScorer(game);
+    if (game.statusStep === 'fanfare') buttons.push({ label: 'Get on with it', action: { type: 'FANFARE_DONE', at: at() } });
+    else if (scorer != null) {
+      buttons.push({ label: `${game.players[scorer].name} is done`, action: { type: 'SCORED', seat: scorer, at: at() } });
+      buttons.push({ label: 'Skip to the tidy-up', action: { type: 'SKIP_SCORING', at: at() }, ghost: true });
+    } else buttons.push({ label: "Everyone's ready", action: { type: 'READY_ALL', at: at() } });
+  } else if (game.phase === 'agenda') {
+    buttons.push({ label: 'Vote done', action: { type: 'VOTE_DONE', at: at() } });
+    buttons.push({ label: 'Skip to next round', action: { type: 'ADVANCE', at: at() }, ghost: true });
+  }
+  buttons.push({ label: game.custodiansRemoved ? 'Custodians: gone' : 'Custodians: on Rex', action: { type: 'SET_CUSTODIANS', removed: !game.custodiansRemoved }, ghost: true });
+  return (
+    <div className="join__controls" aria-label="Table controls">
+      {buttons.map((b) => (
+        <button key={b.label} type="button" className={`btn btn--sm${b.ghost ? ' btn--ghost' : ''}`} onClick={() => dispatch(b.action)}>{b.label}</button>
+      ))}
+    </div>
+  );
+}
 
 export function WhoAreYou({ profiles, first = [], onPick, onCreate, onSkip, eyebrow = 'Connected' }: { profiles: Profile[]; first?: string[]; onPick(id: string): void; onCreate(name: string): void; onSkip?(): void; eyebrow?: string }) {
   const [name, setName] = useState('');

@@ -76,3 +76,12 @@
 .me__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; width: 100%; }
 .me__list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 10px; border: 1px solid var(--line-2); }
 .me__list code { font-size: 13px; letter-spacing: 0.08em; color: var(--text); }
+
+/* The phone that runs the table: a third tab, controls, the log with its rewind marks always showing (no hover on a phone). */
+.join__tabs[data-tabs='3'] { grid-template-columns: 1fr 1fr 1fr; }
+.join__controls { display: flex; flex-wrap: wrap; gap: 8px; }
+.join__log { display: flex; flex-direction: column; flex: 1; min-height: 240px; overflow: hidden; }
+.join__log .log { overflow-y: auto; }
+.join--log .log__rewind { opacity: 0.75; }
+.join__referee { gap: 10px; }
+.join__referee .popover--referee { position: static; width: auto; padding: 0; background: none; animation: none; box-shadow: none; }

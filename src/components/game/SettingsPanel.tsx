@@ -119,6 +119,10 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <input type="checkbox" checked={s.autoScoreboard} onChange={(e) => set({ autoScoreboard: e.target.checked })} />
         <span>Show the scoreboard during the status phase</span>
       </label>
+      <label className="field" title="Their phone gets the table's controls: scoring, objectives, the referee's levers, undo and rewind. Everyone else's phone is just their button. Matched by the name they gave, whatever the case.">
+        <span>Runs the table from their phone</span>
+        <input type="text" className="input" value={s.phoneAdmin} maxLength={14} placeholder="Nobody" onChange={(e) => set({ phoneAdmin: e.target.value })} />
+      </label>
       <div className="settings__h">This game</div>
       <label className="toggle">
         <input type="checkbox" checked={s.explainLights} onChange={(e) => set({ explainLights: e.target.checked })} />

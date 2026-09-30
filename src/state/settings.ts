@@ -50,6 +50,8 @@ export interface Settings {
   scoreInOrder: boolean;
   /** …and what the player whose turn it is to score gets, besides their light. */
   scoringCue: ScoringCue;
+  /** Whose phone may run the table (scoring, the referee's levers, undo and rewind): a player's name, matched loosely. Empty: nobody's. */
+  phoneAdmin: string;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -70,7 +72,11 @@ export const DEFAULT_SETTINGS: Settings = {
   fanfareMs: DEFAULT_FANFARE_MS,
   scoreInOrder: true,
   scoringCue: 'turn',
+  phoneAdmin: 'Garett',
 };
+
+/** Whether a name is the one the host lets run the table from a phone: case and spaces don't matter. */
+export const isPhoneAdmin = (name: string | undefined, admin: string) => !!name && !!admin.trim() && name.trim().toLowerCase() === admin.trim().toLowerCase();
 
 const KEY = 'pb.settings.v4';
 

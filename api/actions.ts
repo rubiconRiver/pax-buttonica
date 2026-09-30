@@ -3,6 +3,7 @@
  * through its rules engine; the result comes back to the phone in the next copy of the game.
  *
  *   POST /api/actions?code=ABCD            { dev, type: 'input', input } | { dev, type: 'identify', profileId } | { dev, type: 'hello' } | { dev, type: 'preview', fx }
+ *                                          | { dev, type: 'action', action } | { dev, type: 'undo' | 'redo' } | { dev, type: 'rewind', index }
  *   GET  /api/actions?code=ABCD&key=…&after=N   → { actions: [{ seq, data, at }], now }      host only; `at` and `now` on the site's clock
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node';
@@ -33,6 +34,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       else if (m.type === 'identify' && (m.profileId === null || (typeof m.profileId === 'string' && /^[A-Za-z0-9-]{8,40}$/.test(m.profileId)))) data = { dev: m.dev, type: 'identify', profileId: m.profileId };
       else if (m.type === 'hello') data = { dev: m.dev, type: 'hello' };
       else if (m.type === 'preview' && typeof m.fx === 'string' && TURN_FX.has(m.fx)) data = { dev: m.dev, type: 'preview', fx: m.fx };
+      // The table's controls from a phone: shaped like an action; the host decides which it will take (src/remote/relay.ts).
+      else if (m.type === 'action' && m.action && typeof m.action === 'object' && typeof (m.action as { type?: unknown }).type === 'string' && /^[A-Z_]{2,32}$/.test((m.action as { type: string }).type)) data = { dev: m.dev, type: 'action', action: m.action };
+      else if (m.type === 'undo' || m.type === 'redo') data = { dev: m.dev, type: m.type };
+      else if (m.type === 'rewind' && Number.isInteger(m.index) && (m.index as number) >= 0 && (m.index as number) < 1_000_000) data = { dev: m.dev, type: 'rewind', index: m.index };
       else return res.status(400).json({ error: 'Bad action.' });
       const [game] = await sql`select updated_at from game_states where code = ${code}`;
       if (!game) return res.status(404).json({ error: 'No game with that code.' });

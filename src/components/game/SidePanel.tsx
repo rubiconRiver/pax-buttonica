@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import type { CSSProperties } from 'react';
 import { sfx } from '../../audio/synth';
 import { cardByNumber, colorById } from '../../engine/data';
 import { initiativeOrder } from '../../engine/engine';
 import type { Action, GameState } from '../../engine/types';
-import { IconGavel, IconUndo } from '../Icons';
+import { IconGavel } from '../Icons';
+import { ShipsLog } from './ShipsLog';
 
 interface Props {
   game: GameState;
@@ -13,15 +14,8 @@ interface Props {
 }
 
 export function SidePanel({ game, dispatch, onRewind }: Props) {
-  // Rewinding takes two clicks on the same line: one to arm, one to mean it.
-  const [armed, setArmed] = useState<number | null>(null);
   const byInitiative = game.phase === 'action';
   const order = byInitiative ? initiativeOrder(game) : game.players.map((_, i) => i);
-  const logRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    logRef.current?.scrollTo({ top: 0 });
-  }, [game.logSeq]);
 
   return (
     <aside className="side">
@@ -83,31 +77,7 @@ export function SidePanel({ game, dispatch, onRewind }: Props) {
 
       <section className="panel side__log">
         <div className="panel__head"><span>Ship's log</span><span>Round {game.round}</span></div>
-        <div className="log scroll" ref={logRef}>
-          {[...game.log].reverse().map((e) => (
-            <div key={e.id} className="log__row" data-tone={e.tone} data-armed={armed === e.event || undefined} style={{ '--pc': e.seat != null ? colorById(game.players[e.seat].color).led : 'transparent' } as CSSProperties}>
-              <span className="log__round mono-num">R{e.round}</span>
-              <span>{e.text}</span>
-              {onRewind && e.event != null && ((ev: number) => (
-                <button
-                  type="button"
-                  className="log__rewind"
-                  title="Rewind the game to just before this"
-                  aria-label={armed === ev ? `Rewind to before: ${e.text}` : `Rewind to before "${e.text}"`}
-                  onBlur={() => setArmed(null)}
-                  onClick={() => {
-                    if (armed === ev) {
-                      setArmed(null);
-                      onRewind(ev);
-                    } else setArmed(ev);
-                  }}
-                >
-                  <IconUndo /> {armed === ev ? 'Rewind to here?' : ''}
-                </button>
-              ))(e.event)}
-            </div>
-          ))}
-        </div>
+        <ShipsLog game={game} onRewind={onRewind} />
       </section>
     </aside>
   );

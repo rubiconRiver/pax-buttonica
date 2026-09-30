@@ -544,3 +544,107 @@ test('a phone celebrates the end of the round with everyone, then waits for its 
   await expect(phone.why).toHaveText('Scored');
   await expect(table.log).toContainText('Ben is done scoring.');
 });
+
+/** The scoreboard as a phone shows it. */
+class PhoneBoard extends Board {
+  override get root() {
+    return this.page.locator('.join--table .board');
+  }
+  /** As Board.reveal, but the objective only shows once the host has done it and the phone has looked again. */
+  async ask(stage: 1 | 2, name: string) {
+    const col = this.root.locator(`.board__col[data-stage="${stage}"]`);
+    await col.getByRole('button', { name: /\+ Reveal a Stage/ }).click();
+    await col.getByPlaceholder(/Search Stage/).fill(name.slice(0, 8));
+    await col.locator('.reveal__item').filter({ hasText: name }).click();
+  }
+}
+
+test('the named player runs the table from their phone: scoring, objectives, the referee, the phase, undo and rewind', async ({ page, context }) => {
+  test.setTimeout(120_000);
+  // Garett, however he typed his name, is the one the host lets do this by default.
+  const { code, table } = await hostWithSite(page, context, ['garett', 'Ben', 'Cleo']);
+  const phone = await openPhone(context, code);
+  const both = [page, phone.page];
+  await phone.iAm('garett');
+  await tick(both);
+  await table.tapKey('2');
+  await table.tapKey('3');
+  await pickCards(table, SIX.map(([n, c]) => [n === 'Ana' ? 'garett' : n, c] as [string, number]));
+  await table.expectActive('garett');
+  await tick(both);
+
+  // The table tab is editable for him: an objective revealed and scored from the phone lands on the big screen.
+  await expect(phone.page.getByRole('button', { name: 'Log' })).toBeVisible();
+  await phone.page.getByRole('button', { name: 'The table' }).click();
+  const board = new PhoneBoard(phone.page);
+  await expect(board.root).toHaveAttribute('data-edit', 'true');
+  await board.ask(1, 'Expand Borders');
+  await tick(both);
+  await expect(board.objective('Expand Borders')).toBeVisible();
+  await expect(new Board(page).root.locator('.obj__head b', { hasText: 'Expand Borders' }).or(page.locator('.side'))).toBeVisible();
+  await board.score('Expand Borders', 'Ben');
+  await tick(both);
+  await table.expectVp('Ben', 1);
+  await expect(table.log).toContainText('Ben scores Expand Borders.');
+
+  // The log tab: undo takes it back, the referee hands the turn over, the phase button ends a turn.
+  await phone.page.getByRole('button', { name: 'Log' }).click();
+  await phone.page.getByRole('button', { name: 'Undo' }).click();
+  await tick(both);
+  await table.expectVp('Ben', 0);
+  await phone.page.getByRole('button', { name: 'Referee' }).click();
+  const ref = phone.page.getByRole('dialog', { name: 'Referee' });
+  await ref.getByLabel('Give the turn to').selectOption('Cleo');
+  await ref.getByRole('button', { name: 'Give them the turn' }).click();
+  await phone.page.getByRole('button', { name: 'Done' }).click();
+  await tick(both);
+  await table.expectActive('Cleo');
+  await expect(phone.page.locator('.log__row').first()).toContainText('Referee: the turn goes to Cleo.');
+
+  // Rewind from the phone's log: two taps on the line, and the referee's call never happened.
+  const row = phone.page.locator('.log__row', { hasText: 'Referee: the turn goes to Cleo.' });
+  await row.getByRole('button', { name: /^Rewind to before "/ }).click();
+  await row.getByRole('button', { name: /^Rewind to before:/ }).click();
+  await tick(both);
+  await table.expectActive('garett');
+  await expect(table.log).not.toContainText('Referee: the turn goes to Cleo.');
+  await expect(phone.page.getByRole('button', { name: 'Redo' })).toBeVisible();
+
+  await phone.page.getByRole('button', { name: "End garett's turn" }).click();
+  await tick(both);
+  await table.expectActive('Ben');
+  await phone.page.getByRole('button', { name: 'Pause' }).click();
+  await tick(both);
+  await expect(page.getByTitle('Resume the turn clock')).toBeVisible();
+});
+
+test('everyone else\'s phone is just a button: no controls, and the host ignores what it might send anyway', async ({ page, context }) => {
+  const { api, code, table } = await hostWithSite(page, context);
+  const phone = await openPhone(context, code);
+  const both = [page, phone.page];
+  await phone.iAm('Ben');
+  await tick(both);
+  await table.tapKey('2');
+  await table.tapKey('3');
+  await pickCards(table, SIX);
+  await table.expectActive('Ana');
+  await tick(both);
+  await expect(phone.page.getByRole('button', { name: 'Log' })).toHaveCount(0);
+  await phone.page.getByRole('button', { name: 'The table' }).click();
+  await expect(new PhoneBoard(phone.page).root).not.toHaveAttribute('data-edit', 'true');
+  // A forged request straight into the inbox, from Ben's phone: dropped by the host.
+  const dev = (await phone.page.evaluate(() => sessionStorage.getItem('pb.phone.dev')))!;
+  api.actions.push({ seq: 9000, code, data: { dev, type: 'action', action: { type: 'VP', seat: 1, delta: 5, at: Date.now() } }, at: Date.now() });
+  api.actions.push({ seq: 9001, code, data: { dev, type: 'undo' }, at: Date.now() });
+  await tick(both);
+  await table.expectVp('Ben', 0);
+  await table.expectActive('Ana');
+
+  // The host can name someone else, and their phone gets the controls at the next look.
+  const panel = await openSettings(page);
+  await panel.getByLabel('Runs the table from their phone').fill('ben');
+  await page.keyboard.press('Escape');
+  await table.hold('Ana');
+  await tick(both);
+  await expect(phone.page.getByRole('button', { name: 'Log' })).toBeVisible();
+});

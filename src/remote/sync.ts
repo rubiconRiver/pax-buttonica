@@ -8,7 +8,10 @@
 import { syncProfiles } from '../state/profileSync';
 import { profilesStore } from '../state/profiles';
 import { createStore } from '../state/createStore';
-import { liveGame } from '../state/game';
+import { phoneAction } from './relay';
+import { seatOfDevice } from '../engine/engine';
+import { isPhoneAdmin } from '../state/settings';
+import { liveGame, lastUndoable } from '../state/game';
 import { settingsStore } from '../state/settings';
 import { isTurnEffect, type TurnEffect, type TurnLook } from '../engine/outputs';
 import type { GameState } from '../engine/types';
@@ -18,11 +21,15 @@ import { apiJson, hostKey } from './key';
 /** What goes to the site: the whole state, plus the settings a phone needs to behave like a button. */
 export interface GameRecord {
   state: GameState;
+  /** Whether the host has anything to undo or redo, so a phone can offer the buttons. */
+  history?: { undo: boolean; redo: boolean };
   settings: {
     holdMs: number;
     flashMs: number;
     turnLight?: TurnLook;
     turnFx?: TurnEffect;
+    /** Whose phone may run the table (a name, matched loosely), so that phone shows the controls. The host checks too. */
+    phoneAdmin?: string;
     /** The light levels (see `levelsOf`): phones draw waiting and effects in proportion, as the big screen does. */
     brightness?: number;
     waitingBrightness?: number;
@@ -83,8 +90,9 @@ let started = false;
 let unsubscribe: (() => void)[] = [];
 
 const recordOf = (game: GameState): GameRecord => {
-  const { holdMs, flashMs, turnLight, turnFx, brightness, waitingBrightness, effectsBrightness } = settingsStore.get();
-  return { state: game, settings: { holdMs, flashMs, turnLight, turnFx, brightness, waitingBrightness, effectsBrightness } };
+  const { holdMs, flashMs, turnLight, turnFx, brightness, waitingBrightness, effectsBrightness, phoneAdmin } = settingsStore.get();
+  const { events, future } = liveGame.get();
+  return { state: game, history: { undo: lastUndoable(events) >= 0, redo: future.length > 0 }, settings: { holdMs, flashMs, turnLight, turnFx, phoneAdmin, brightness, waitingBrightness, effectsBrightness } };
 };
 
 function listPhones() {
@@ -141,11 +149,14 @@ async function write() {
 
 interface Inbound {
   dev: string;
-  type: 'input' | 'identify' | 'hello' | 'preview';
+  type: 'input' | 'identify' | 'hello' | 'preview' | 'action' | 'undo' | 'redo' | 'rewind';
   input?: 'tap' | 'double' | 'hold';
   profileId?: string | null;
   fx?: string;
+  action?: unknown;
+  index?: number;
 }
+const REQUESTS = new Set<Inbound['type']>(['action', 'undo', 'redo', 'rewind']);
 
 /** A phone trying out a turn effect: the host shows it on that player's seat and real button. Not part of the game. */
 export interface Preview {
@@ -208,8 +219,23 @@ async function read() {
         continue;
       }
       seen.set(dev, Date.now());
-      if ((data.type === 'input' || data.type === 'preview') && at < now - STALE_PRESS_MS) continue;
+      if ((data.type === 'input' || data.type === 'preview' || REQUESTS.has(data.type)) && at < now - STALE_PRESS_MS) continue;
       if (data.type === 'input' && data.input) liveGame.dispatch({ type: 'DEVICE_INPUT', dev, input: data.input, at: Date.now() });
+      else if (REQUESTS.has(data.type)) {
+        // The table's own controls: only from the phone of whoever the host named for it (by the name they gave).
+        const g = liveGame.get().game;
+        if (!g || !(dev in g.devices)) continue;
+        const who = g.devices[dev];
+        const seat = seatOfDevice(g, dev);
+        const name = (who ? profilesStore.get().find((p) => p.id === who)?.name : undefined) ?? (seat >= 0 ? g.players[seat].name : undefined);
+        if (!isPhoneAdmin(name, settingsStore.get().phoneAdmin)) continue;
+        if (data.type === 'action') {
+          const a = phoneAction(data.action);
+          if (a) liveGame.dispatch(a);
+        } else if (data.type === 'undo') liveGame.undo();
+        else if (data.type === 'redo') liveGame.redo();
+        else if (Number.isInteger(data.index)) liveGame.rewind(data.index!);
+      }
       else if (data.type === 'identify') {
         const profileId = typeof data.profileId === 'string' ? data.profileId : null;
         if (profileId && !profilesStore.get().some((p) => p.id === profileId)) unknownProfile = true;
