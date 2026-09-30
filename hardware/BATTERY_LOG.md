@@ -28,4 +28,8 @@ is a capacity.
 | C5A8 | part (on battery since 12:30) | 13:38 | | |
 | 58F0 | **full** (charged 2026-09-30) | 13:45 | | |
 
+14:00: the hub went quiet with USB still up (every button stopped being heard the same second; a USB reset over the
+port brought it back at 14:11). The buttons kept their own count, so the times above are unaffected; check-ins
+from 14:11 are in `soak-20260930-1411.csv`. Hub 0.2.6 has a watchdog and a status light for this.
+
 Still to run: the two cells now charging (C1C0's and one of the revived ones), from full.

@@ -37,8 +37,9 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <esp_wifi.h>
+#include <esp_task_wdt.h>
 
-#define FW_VERSION "0.2.5"
+#define FW_VERSION "0.2.6"
 #define PROTOCOL_VERSION 0
 #define ESPNOW_CHANNEL 1
 #define MAX_LINE 250      // one ESP-NOW packet
@@ -47,6 +48,10 @@
 #define OUTBOX_SLOTS 6        // per button: a burst of cfg + led + fx while it sleeps
 #define RETRY_GAP_MS 12       // between attempts; a button listens 30 ms in every 200
 #define RETRY_FOR_MS 600      // give up on one message after this (three listening windows)
+#define HEARD_MS 35000        // a button is "here" if it has said anything this recently (they check in every 10 s)
+#define LED_PIN 35            // the AtomS3 Lite's onboard pixel: the hub's one light, see showState()
+#define LED_LEVEL 28          // out of 255: it sits in a room, not a lamp
+#define WDT_S 10              // a loop that stalls this long reboots the hub (seen wedged with USB alive, 2026-09-30)
 
 struct Packet {
   uint8_t mac[6];
@@ -74,6 +79,7 @@ struct Known {
   uint8_t mac[6];
   uint8_t fails;
   bool reportedLost;
+  uint32_t lastHeard;       // millis() of its last packet, for the light
   uint32_t lastRssiReport;
   Outgoing outbox[OUTBOX_SLOTS];
   uint8_t head, count;      // ring buffer: outbox[head] is being sent
@@ -92,6 +98,7 @@ static Known *lookup(const uint8_t *mac, bool create) {
   memcpy(k->mac, mac, 6);
   k->fails = 0;
   k->reportedLost = false;
+  k->lastHeard = millis();
   k->lastRssiReport = 0;
   k->head = k->count = 0;
   k->inFlight = false;
@@ -119,6 +126,30 @@ static bool hexToMac(const char *hex, uint8_t *mac) {
 
 static volatile bool searching[20];   // a button said hello: answer it by name, from the loop
 static char hubId[13];
+static volatile uint32_t pressAt = 0;  // the last press relayed, for a blink on the light
+
+// The hub's light, the Atom's onboard pixel. What it means, at a glance across the table:
+//   amber, breathing   nobody is listening: no page or script has the USB port open
+//   blue               a page or script has the port, no button has been heard for 35 s
+//   green              the port is open and every button that has been here is still answering; a blink on each press
+//   red                a button that was here has stopped answering (the hub told the app "lost")
+static void showState() {
+  const uint32_t now = millis();
+  const bool listening = (bool)Serial;          // the host's DTR: a page or script has the port open
+  int here = 0, gone = 0;
+  for (int i = 0; i < knownCount; i++) {
+    if (known[i].reportedLost) gone++;
+    else if (now - known[i].lastHeard < HEARD_MS) here++;
+  }
+  uint8_t r = 0, g = 0, b = 0;
+  float level = 1;
+  if (!listening) { r = 255; g = 120; level = 0.35f + 0.65f * (0.5f - 0.5f * cosf((now % 2400) / 2400.0f * 2 * PI)); }
+  else if (gone) r = 255;
+  else if (!here) b = 255;
+  else { g = 255; if (now - pressAt < 120) level = 0.15f; }
+  const float k = LED_LEVEL / 255.0f * level;
+  rgbLedWrite(LED_PIN, (uint8_t)(r * k), (uint8_t)(g * k), (uint8_t)(b * k));
+}
 
 static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int len) {
   if (len <= 0 || len > MAX_LINE) return;
@@ -126,6 +157,8 @@ static void onReceive(const esp_now_recv_info_t *info, const uint8_t *data, int 
   if (k) {
     k->fails = 0;
     k->reportedLost = false;
+    k->lastHeard = millis();
+    if (len > 10 && memmem(data, len, "\"t\":\"btn\"", 9)) pressAt = millis();
     if (info->des_addr[0] == 0xFF || (len > 12 && memmem(data, len, "\"t\":\"hello\"", 11))) searching[k - known] = true;
   }
   Packet p;
@@ -234,6 +267,11 @@ void setup() {
   Serial.setTxTimeoutMs(0);
   Serial.begin(115200);
   inbox = xQueueCreate(QUEUE_SLOTS, sizeof(Packet));
+  showState();
+  // A stalled loop reboots the hub. The core may have set the watchdog up already; then it is reconfigured.
+  esp_task_wdt_config_t wdt = { .timeout_ms = WDT_S * 1000, .idle_core_mask = 0, .trigger_panic = true };
+  if (esp_task_wdt_init(&wdt) != ESP_OK) esp_task_wdt_reconfigure(&wdt);
+  esp_task_wdt_add(NULL);
 
   WiFi.mode(WIFI_STA);
   WiFi.disconnect();
@@ -260,6 +298,10 @@ void setup() {
 }
 
 void loop() {
+  esp_task_wdt_reset();
+  static uint32_t lastShown = 0;
+  if (millis() - lastShown >= 40) { lastShown = millis(); showState(); }
+
   // Serial → radio
   static char line[MAX_LINE + 1];
   static size_t n = 0;

@@ -121,3 +121,7 @@ Button 0.3.12 drew `fx` `card` with a colour `c`: fill from the rim inward, hold
 ## Your move: breathe, then steady; no ring; waiting can be off; no feet (2026-09-30)
 
 Garett, after a round with six buttons: the white ring at the start of a turn was jarring, and a table of six buttons at three brightnesses was a puzzle. Now: the turn effect defaults to none; "your move" defaults to a new look, `settle` (button 0.3.15, cfg `pulse:"settle"`): two and a half breaths from the light's start, ending on the swell, then solid; the Waiting level goes to 0 (`dim:0`), so only the active player is lit and the screen keeps who has passed. Settings v4 moves a laptop still on solid/ring. The lid has no foot recesses.
+
+## The hub's light and watchdog (2026-09-30)
+
+Hub 0.2.6 lights its Atom pixel: amber breathing = nobody has the port open, blue = port open but no button heard for 35 s, green = port open and every known button answering (blink per press), red = a known button lost. It also reboots itself if the loop stalls 10 s (esp_task_wdt). Cause: during the battery drain at 14:00 the hub went silent on serial with USB still enumerated; a DTR/RTS reset over the port (`s.rts = True` then False, as esptool does) brought it back. Not understood yet; a wedge in the USB-serial path after the bus reset when two Riders were plugged in to charge is the suspicion.
