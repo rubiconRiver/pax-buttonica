@@ -141,7 +141,7 @@
   const PLAYERS = [['Red', 'ff3b3b'], ['Orange', 'ff8a1f'], ['Yellow', 'ffd21f'], ['Green', '2fe06b'], ['Blue', '2f8cff'], ['Purple', 'a24bff'], ['Pink', 'ff5fc4'], ['White', 'e9f0ff']];
   const CARDS = [[1, 'Leadership', 'e5484d'], [2, 'Diplomacy', 'f08c3a'], [3, 'Politics', 'f2cc45'], [4, 'Construction', '46b86c'], [5, 'Trade', '2ec4b0'], [6, 'Warfare', '3b9bf5'], [7, 'Technology', '5468f0'], [8, 'Imperial', 'a562f0']];
   const TURN_FX = [['burst', 'Ring'], ['ripple', 'Ripple'], ['sparkle', 'Sparkles'], ['rainbow', 'Rainbow'], ['cop', 'Cop lights'], ['explosion', 'Explosion'], ['fireworks', 'Fireworks'], ['lightning', 'Lightning'], ['fire', 'Fire'], ['siren', 'Siren'], ['laser', 'Laser'], ['comet', 'Comet'], ['warp', 'Warp'], ['confetti', 'Confetti'], ['disco', 'Disco'], ['glitch', 'Glitch'], ['neon', 'Neon'], ['alarm', 'Alarm'], ['thump', 'Thump'], ['', 'None']];
-  const PULSE_MS = 1700, RIPPLE_MS = 1400, FLASH_MS = 2000, CARD_ROUND_MS = 320, FANFARE_MS = 4000;
+  const PULSE_MS = 1700, RIPPLE_MS = 1400, FLASH_MS = 2000, CARD_ROUND_MS = 320, CARD_HOLD_MS = 500, FANFARE_MS = 4000;
   const $ = (id) => document.getElementById(id);
 
   // ── serial ────────────────────────────────────────────────────────────────
@@ -260,8 +260,8 @@
     pass() { if (g.phase !== 'action') return; g.passed[g.active] = true; g.note = `${name(g.active)} passes`; go.next(); },
     card() { if (g.phase !== 'action') go.turn(); g.card = cardOf(); g.stage = 'primary'; g.acked = seats.map((_, s) => s === g.active); g.note = `${name(g.active)} plays ${g.card[0]} ${g.card[1]}: the colour goes round the table`; show();
       // the card round: from the player who played it, round the table, 320 ms apart
-      const c = g.card[2];
-      for (let k = 0; k < n(); k++) { const s = (g.active + k) % n(); setTimeout(() => send({ t: 'fx', dev: seats[s].dev, k: 'card', c }), k * CARD_ROUND_MS); } },
+      const c = g.card[2], N = n();
+      for (let k = 0; k < N; k++) { const s = (g.active + k) % N; setTimeout(() => send({ t: 'fx', dev: seats[s].dev, k: 'card', c, d: (N - 1 - k) * CARD_ROUND_MS + CARD_HOLD_MS }), k * CARD_ROUND_MS); } },
     primary() { if (!g.card) return; g.stage = 'secondary'; g.note = `${g.card[1]} primary done: the others do their secondaries and tap`; show(); },
     acked() { if (!g.card) return; g.acked = seats.map(() => true); g.note = `Everyone responded to ${g.card[1]}: ${name(g.active)} holds to end the turn`; show(); },
     fanfare() { g.phase = 'fanfare'; g.note = `Everyone has passed: rainbows for ${FANFARE_MS / 1000} s, then scoring`; show(); clearTimeout(go._t); go._t = setTimeout(() => { if (g.phase === 'fanfare') go.scoring(); }, FANFARE_MS); },

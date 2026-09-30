@@ -1,8 +1,8 @@
 {
   "name": "Pax Buttonica button",
-  "version": "0.3.13",
-  "size": 902144,
-  "md5": "a2b1ea3b955d8b461d3f81458b396a38",
+  "version": "0.3.14",
+  "size": 902464,
+  "md5": "b271a4f6a6aa63e31ea57a4d24e6b7ab",
   "new_install_prompt_erase": false,
   "builds": [
     {

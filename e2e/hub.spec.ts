@@ -157,12 +157,13 @@ test('a strategy card goes round the table', async ({ page }) => {
   const cards = async () => (await sent(page)).filter((m) => m.t === 'fx' && m.k === 'card');
   await feed(page, press(A, 'double'));
   await table.center.getByRole('button', { name: '1 Leadership' }).click();
-  // Ana's button first, then the rest round the table, each 320 ms after the last, all in Leadership's red.
+  // Ana's button first, then the rest round the table, each 320 ms after the last, all in Leadership's red; each holds
+  // until 500 ms after the last one is in, so the table fades out together.
   await page.clock.fastForward(1000);
   expect(await cards()).toEqual([
-    { t: 'fx', dev: A, k: 'card', c: 'e5484d' },
-    { t: 'fx', dev: B, k: 'card', c: 'e5484d' },
-    { t: 'fx', dev: C, k: 'card', c: 'e5484d' },
+    { t: 'fx', dev: A, k: 'card', c: 'e5484d', d: 1140 },
+    { t: 'fx', dev: B, k: 'card', c: 'e5484d', d: 820 },
+    { t: 'fx', dev: C, k: 'card', c: 'e5484d', d: 500 },
   ]);
 });
 

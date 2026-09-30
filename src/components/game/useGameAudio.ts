@@ -15,6 +15,8 @@ export const hubEffect = (fx: TurnEffect): 'burst' | Exclude<TurnEffect, 'ring' 
 
 /** A strategy card comes out: each real button in turn, round the table from the player who played it, this far apart. */
 export const CARD_ROUND_MS = 320;
+/** How long the last button holds the card's colour before the whole table fades out together. */
+export const CARD_HOLD_MS = 500;
 
 /**
  * Turns the engine's one-shot effects into sound, and into the odd frame for a real button. `effects`, per seat,
@@ -53,7 +55,8 @@ export function useGameAudio(game: GameState | null, enabled = true, effects: (T
         if (f.kind === 'score') sendToDevice({ t: 'fx', dev, k: 'warp' });
       }
       // A strategy card comes out: round the table from the player who played it, every real button fills in the
-      // card's colour and blinks once, one after another.
+      // card's colour, one after another; each holds it until the last is in, then the table fades out as one and the
+      // player's button starts its blink.
       if (f.kind === 'card' && f.card != null && f.seat != null) {
         const c = cardByNumber(f.card).color.replace('#', '');
         const from = spots[f.seat];
@@ -62,8 +65,9 @@ export function useGameAudio(game: GameState | null, enabled = true, effects: (T
           .filter((seat) => spots[seat] >= 0)
           .sort((a, b) => ((spots[a] - from + n) % n) - ((spots[b] - from + n) % n));
         round.forEach((seat, i) => {
-          const d = game.bindings[seat];
-          if (d && isOnHub(d)) window.setTimeout(() => sendToDevice({ t: 'fx', dev: d, k: 'card', c }), i * CARD_ROUND_MS);
+          const dev = game.bindings[seat];
+          const d = (round.length - 1 - i) * CARD_ROUND_MS + CARD_HOLD_MS;
+          if (dev && isOnHub(dev)) window.setTimeout(() => sendToDevice({ t: 'fx', dev, k: 'card', c, d }), i * CARD_ROUND_MS);
         });
       }
       switch (f.kind) {

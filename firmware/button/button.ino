@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.13"
+#define FW_VERSION "0.3.14"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -84,6 +84,7 @@ static const uint8_t EVERYONE[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 static uint8_t ledR = 255, ledG = 255, ledB = 255;
 static uint8_t cardR = 255, cardG = 255, cardB = 255;   // the colour of the strategy card that just came out
+static uint32_t cardHold = 600;                          // fx "card" "d": ms from its start until it fades, so a table fades as one
 static Mode mode = MODE_OFF;
 static uint32_t modeSince = 0;
 static uint32_t holdMs = 2000;
@@ -465,6 +466,15 @@ static uint32_t scaled(uint8_t r, uint8_t g, uint8_t b, float level) {
   return ring.Color((uint8_t)(ring.gamma8(r) * level), (uint8_t)(ring.gamma8(g) * level), (uint8_t)(ring.gamma8(b) * level));
 }
 
+// Between two packed colours: 0 is all a, 1 is all b.
+static uint32_t mixColor(uint32_t a, uint32_t b, float f) {
+  f = constrain(f, 0.0f, 1.0f);
+  const uint8_t r = ((a >> 16) & 0xFF) * (1 - f) + ((b >> 16) & 0xFF) * f;
+  const uint8_t g = ((a >> 8) & 0xFF) * (1 - f) + ((b >> 8) & 0xFF) * f;
+  const uint8_t bl = (a & 0xFF) * (1 - f) + (b & 0xFF) * f;
+  return ring.Color(r, g, bl);
+}
+
 // A pixel in a hue (16-bit, round the wheel) at a level, gamma-corrected like everything else.
 static void hsvPixel(int i, uint16_t hue, float level) {
   level = constrain(level, 0.0f, 1.0f) * MAX_BRIGHTNESS * levelScale;
@@ -836,13 +846,16 @@ static void render() {
         break;
       }
       case FX_CARD: {
-        // a strategy card comes out: fill from the rim inward in the card's colour, hold it, blink once
-        if (t >= 1300) { overlay = FX_NONE; break; }
-        if (t >= 850 && t < 970) { fillAll(0, 0, 0, 0); break; }
-        const float head = t < 300 ? t / 300.0f * (RINGS + 1) : RINGS + 1;
+        // a strategy card comes out: fill from the rim inward in the card's colour, hold it until "d", then fade
+        // back to the light underneath; the host staggers the starts and sets each "d" so the whole table fades as one
+        const uint32_t fadeAt = max(cardHold, 250UL), end = fadeAt + 400;
+        if (t >= end) { overlay = FX_NONE; modeSince = millis(); break; }   // the light underneath starts its cycle fresh
+        const float head = t < 250 ? t / 250.0f * (RINGS + 1) : RINGS + 1;
+        const float fade = t >= fadeAt ? (t - fadeAt) / 400.0f : 0;
+        const uint32_t card = scaled(cardR, cardG, cardB, 1);
         for (int i = 0; i < LED_COUNT; i++) {
           const float d = head - (RINGS - 1 - ringOf[i]);
-          if (d >= 0) ring.setPixelColor(i, scaled(cardR, cardG, cardB, d < 1 ? d : 1));
+          if (d >= 0) ring.setPixelColor(i, mixColor(ring.getPixelColor(i), card, (d < 1 ? d : 1) * (1 - fade)));
         }
         break;
       }
@@ -1007,6 +1020,7 @@ static void handle(const Packet &p) {
       cardR = (rgb >> 16) & 0xFF;
       cardG = (rgb >> 8) & 0xFF;
       cardB = rgb & 0xFF;
+      cardHold = constrain((uint32_t)(doc["d"] | 600), 250UL, 10000UL);
       setOverlay(FX_CARD);
     }
     else for (const auto &e : TURN_FX) if (!strcmp(kind, e.kind)) setOverlay(e.fx);

@@ -186,24 +186,24 @@
         if (p < 0.78) return mix(own, WHITE, 1 - (p - 0.7) / 0.08 * 0.3);
         return scale(own, 0.35 + 0.65 * smooth(frac((p - 0.78) / 0.22)));
       } },
-    // ── a strategy card comes out. After the announcement the active player breathes in the card's colour and the
-    // rest sit dim in their own, which is what the button standard says a primary looks like.
+    // ── a strategy card comes out. After the announcement the active player's button flashes in the card's colour
+    // (on, fade, dark, fade: the standard's `flash`, "do the primary, then tap") and the rest sit dim in their own.
     ...(() => {
+      const flashLevel = (t) => { const q = frac(t / 2000); return q < 0.38 ? 1 : q < 0.5 ? 1 - (q - 0.38) / 0.12 * 0.95 : q < 0.88 ? 0.05 : 0.05 + (q - 0.88) / 0.12 * 0.95; };
       const settle = (i, px, t, own, ctx) => i === ctx.origin
-        ? scale(ctx.card, 0.34 + 0.66 * smooth(frac(t / 1700)))
+        ? scale(ctx.card, flashLevel(t))
         : scale(own, 0.08);
       const blink = (t0, t, T, len, base) => { const q = (t - t0) / len; return q >= 0 && q < 1 ? mix(base, WHITE, q < 0.4 ? 1 : 1 - (q - 0.4) / 0.6) : base; };
       return [
-        { k: 'card_round', card: true, name: 'Round the table', when: 'Garett\'s version',
-          about: 'Starting with the player who flipped it, each button in turn lights up in the card\'s colour and stays lit. When the last one is in, the whole table blinks once, then the active player breathes in the card colour and everyone else dims.',
+        { k: 'card_round', card: true, name: 'Round the table', when: 'What the buttons do (firmware 0.3.14)',
+          about: 'Starting with the player who played it, each button in turn fills with the card\'s colour and stays lit. When the last one is in, the whole table fades out together, then the active player\'s button starts blinking in the card colour and everyone else sits dim.',
           draw: (i, n, px, t, T, own, ctx) => {
             const p = t / T;
             if (p >= 1) return settle(i, px, t - T, own, ctx);
             const d = ((i - ctx.origin) % n + n) % n, per = 0.62 / n, start = d * per;
             const fill = clamp((p - start) / per, 0, 1) * (RINGS + 0.5);
             let c = scale(ctx.card, 0.06 + 0.94 * clamp(fill - px.ring, 0, 1));
-            if (p >= 0.68) c = blink(0.68, p, T, 0.16, ctx.card);
-            if (p >= 0.84) c = mix(blink(0.68, 0.84, T, 0.16, ctx.card), settle(i, px, 0, own, ctx), (p - 0.84) / 0.16);
+            if (p >= 0.8) c = mix(ctx.card, settle(i, px, 0, own, ctx), (p - 0.8) / 0.2);
             return c;
           } },
         { k: 'card_deal', card: true, name: 'Deal it', when: 'Alternative',
@@ -338,7 +338,7 @@
     const s = SHOWS[idx];
     (s.card ? $('cardshows') : $('shows')).children[SHOWS.filter((x, j) => j < idx && !!x.card === !!s.card).length].setAttribute('aria-pressed', 'true');
     $('cards').hidden = !s.card;
-    $('about').innerHTML = `<div class="when">${s.when}</div><div><b>${s.name}.</b> ${s.about}</div><div>${s.card ? 'One-shot, then the primary look: the active player breathes in the card colour, the rest dim. The flipping player is the origin: click a button to change it, and pick a card below.' : s.once ? 'One-shot: plays once and holds.' : 'Loops until the next light message.'} Sent as <code>k: "${s.k}"</code>.</div>`;
+    $('about').innerHTML = `<div class="when">${s.when}</div><div><b>${s.name}.</b> ${s.about}</div><div>${s.card ? 'One-shot, then the primary look: the active player's button flashes in the card colour, the rest dim. The flipping player is the origin: click a button to change it, and pick a card below.' : s.once ? 'One-shot: plays once and holds.' : 'Loops until the next light message.'} Sent as <code>k: "${s.k}"</code>.</div>`;
   }
   SHOWS.forEach((s, k) => { const b = document.createElement('button'); b.className = 'btn'; b.textContent = s.name; b.onclick = () => pick(k); (s.card ? $('cardshows') : $('shows')).appendChild(b); });
   CARDS.forEach(([name, col], k) => {
