@@ -37,6 +37,8 @@ export type ToDevice =
   | { t: 'snd'; dev: string; w: Wave; n: Note[] }
   /** `ack`, `denied` and `confirm` every button renders; the rest are turn effects a multi-pixel button may draw and any button may ignore. */
   | { t: 'fx'; dev: string; k: 'ack' | 'denied' | 'confirm' | 'burst' | Exclude<TurnEffect, 'ring' | 'none'> }
+  /** A strategy card comes out: the button fills in the card's colour `c` and blinks once. The host sends it round the table. */
+  | { t: 'fx'; dev: string; k: 'card'; c: string }
   /**
    * Light levels, each 0–100, a share of the button's full output: `bright` your move and every steady light, `dim`
    * waiting, `fx` the one-shots (a brightness, not a turn effect). `pulse`: how to draw "your move" (default: breathe).

@@ -663,8 +663,10 @@ export function reduce(state: GameState, action: Action): GameState {
       break;
     case 'DEVICE_INPUT': {
       if (g.seating) {
-        // A device the game already knows the owner of (a phone alongside a real button) never claims a seat for someone else.
-        if ((action.input === 'tap' || action.input === 'hold') && seatOfDevice(g, action.dev) < 0) claim(g, action.dev, action.at);
+        // A press claims the seat being called. A phone the game knows the owner of (one alongside a real button) never
+        // claims a seat for someone else; a real button always does, whoever it belonged to before the re-seat.
+        const known = isVirtualDevice(action.dev) && seatOfDevice(g, action.dev) >= 0;
+        if ((action.input === 'tap' || action.input === 'hold') && !known) claim(g, action.dev, action.at);
         break;
       }
       const seat = seatOfDevice(g, action.dev);

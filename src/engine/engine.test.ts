@@ -288,6 +288,21 @@ describe('a phone alongside a real button', () => {
     expect(g.log.at(-1)?.text).toBe("P1's phone joins alongside their button.");
   });
 
+  it('a real button whose owner is known still claims the seat being called at a re-seat', () => {
+    let g = createGame(withProfiles(), { vpTarget: 10, speaker: 0 }, 0);
+    g = run(g, { type: 'START_SEATING', at: 0 }, { type: 'DEVICE_INPUT', dev: REAL, input: 'tap', at: 0 });
+    expect(g.bindings[0]).toBe(REAL);
+    expect(g.devices[REAL]).toBe('profile-0-00000000');
+    // Re-seating: the same button is pressed for seat 1 this time (the players swapped buttons) and gets it.
+    g = run(g, { type: 'SKIP_SEATING', devices: [REAL, 'B', 'C'], at: 0 }, { type: 'START_SEATING', at: 0 });
+    g = run(g, { type: 'DEVICE_INPUT', dev: 'B', input: 'tap', at: 0 }, { type: 'DEVICE_INPUT', dev: REAL, input: 'tap', at: 0 });
+    expect(g.bindings.slice(0, 2)).toEqual(['B', REAL]);
+    expect(g.devices[REAL]).toBe('profile-1-00000000');
+    // A phone with an owner still never claims for someone else.
+    g = run(g, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-0-00000000', at: 0 }, { type: 'DEVICE_INPUT', dev: PHONE, input: 'tap', at: 0 });
+    expect(g.bindings[2]).toBeNull();
+  });
+
   it('presses on the phone count for its owner\'s seat', () => {
     let g = createGame(withProfiles(), { vpTarget: 10, speaker: 0 }, 0);
     g = run(g, { type: 'BIND', seat: 0, dev: REAL, at: 0 }, { type: 'IDENTIFY', dev: PHONE, profileId: 'profile-0-00000000', at: 0 });
@@ -359,7 +374,10 @@ describe('status and agenda', () => {
     for (const seat of [2, 1, 0]) g = reduce(g, { type: 'SCORED', seat, at: 4600 });
     expect(g.statusStep).toBe('tidy');
     expect(g.phase).toBe('status');
-    expect(deriveOutputs(g).every((o) => o.mode === 'pulse' && o.color === '#ffffff')).toBe(true);
+    // The tidy-up is dark; a tap still says "ready" and shows as dim.
+    expect(deriveOutputs(g).every((o) => o.mode === 'off')).toBe(true);
+    g = reduce(g, { type: 'INPUT', seat: 0, input: 'tap', at: 4900 });
+    expect(deriveOutputs(g)[0].mode).toBe('dim');
     // Now the taps are "ready".
     for (let s = 0; s < 6; s++) g = reduce(g, { type: 'INPUT', seat: s, input: 'tap', at: 5000 });
     expect(g.phase).toBe('strategy');

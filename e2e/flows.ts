@@ -129,11 +129,11 @@ export async function everyoneScores(table: Table, order: string[]) {
   }
 }
 
-/** Status phase: everyone breathes white until they tap in. */
+/** Status phase: the tidy-up is dark until they tap in. */
 export async function everyoneReady(table: Table, names: string[]) {
   await table.expectPhase('Status');
   for (const [i, name] of names.entries()) {
-    await table.expectLights({ [name]: 'pulse' });
+    await table.expectLights({ [name]: 'off' });
     await table.tap(name);
     if (i < names.length - 1) await table.expectLights({ [name]: 'dim' });
   }

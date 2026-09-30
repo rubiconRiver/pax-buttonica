@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { jingleById } from '../../audio/jingles';
 import { sfx, turnLane } from '../../audio/synth';
+import { cardByNumber } from '../../engine/data';
 import { seatSpots } from '../../engine/engine';
 import type { TurnEffect } from '../../engine/outputs';
 import type { GameState, SoundRef } from '../../engine/types';
@@ -11,6 +12,9 @@ import { seatPosition } from './geometry';
 /** Turns the engine's one-shot effects into sound. Each effect plays exactly once. */
 /** What a real button is told to draw for each turn effect; the ring is the burst every button knows. */
 export const hubEffect = (fx: TurnEffect): 'burst' | Exclude<TurnEffect, 'ring' | 'none'> | null => (fx === 'ring' ? 'burst' : fx === 'none' ? null : fx);
+
+/** A strategy card comes out: each real button in turn, round the table from the player who played it, this far apart. */
+export const CARD_ROUND_MS = 320;
 
 /**
  * Turns the engine's one-shot effects into sound, and into the odd frame for a real button. `effects`, per seat,
@@ -41,10 +45,26 @@ export function useGameAudio(game: GameState | null, enabled = true, effects: (T
       if (dev && isOnHub(dev)) {
         if (f.kind === 'denied' && !(f.input === 'hold' && refusedHoldItself(dev))) sendToDevice({ t: 'fx', dev, k: 'denied' });
         if (f.kind === 'ack' || f.kind === 'ready' || f.kind === 'claim') sendToDevice({ t: 'fx', dev, k: 'ack' });
-        if (f.kind === 'turnStart' || f.kind === 'score') {
+        if (f.kind === 'turnStart') {
           const k = f.seat != null ? hubEffect(effects[f.seat] ?? 'ring') : null;
           if (k) sendToDevice({ t: 'fx', dev, k });
         }
+        // Your turn to score: rings fall inward, whoever you are.
+        if (f.kind === 'score') sendToDevice({ t: 'fx', dev, k: 'warp' });
+      }
+      // A strategy card comes out: round the table from the player who played it, every real button fills in the
+      // card's colour and blinks once, one after another.
+      if (f.kind === 'card' && f.card != null && f.seat != null) {
+        const c = cardByNumber(f.card).color.replace('#', '');
+        const from = spots[f.seat];
+        const round = game.players
+          .map((_, seat) => seat)
+          .filter((seat) => spots[seat] >= 0)
+          .sort((a, b) => ((spots[a] - from + n) % n) - ((spots[b] - from + n) % n));
+        round.forEach((seat, i) => {
+          const d = game.bindings[seat];
+          if (d && isOnHub(d)) window.setTimeout(() => sendToDevice({ t: 'fx', dev: d, k: 'card', c }), i * CARD_ROUND_MS);
+        });
       }
       switch (f.kind) {
         case 'claim': sfx.ack(pan); if (p) turnSound(p.intro); break;

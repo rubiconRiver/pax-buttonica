@@ -149,6 +149,23 @@ test('the start of a turn reaches a real button as its player\'s effect', async 
   expect(await effects(C)).toEqual([]);
 });
 
+test('a strategy card goes round the table', async ({ page }) => {
+  const table = await startWithHub(page);
+  for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectActive('Ana');
+  const cards = async () => (await sent(page)).filter((m) => m.t === 'fx' && m.k === 'card');
+  await feed(page, press(A, 'double'));
+  await table.center.getByRole('button', { name: '1 Leadership' }).click();
+  // Ana's button first, then the rest round the table, each 320 ms after the last, all in Leadership's red.
+  await page.clock.fastForward(1000);
+  expect(await cards()).toEqual([
+    { t: 'fx', dev: A, k: 'card', c: 'e5484d' },
+    { t: 'fx', dev: B, k: 'card', c: 'e5484d' },
+    { t: 'fx', dev: C, k: 'card', c: 'e5484d' },
+  ]);
+});
+
 test('only changes go down the wire', async ({ page }) => {
   const table = await startWithHub(page);
   for (const dev of [A, B, C]) await feed(page, press(dev, 'tap'));

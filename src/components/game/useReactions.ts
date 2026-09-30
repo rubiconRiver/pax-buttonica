@@ -14,7 +14,8 @@ const REACTIONS: Partial<Record<Fx['kind'], ReactionKind>> = {
   ready: 'ack',
   pick: 'ack',
   turnStart: 'burst',
-  score: 'burst',
+  /** Your turn to score: rings fall inward, whoever you are. */
+  score: 'warp',
   allAcked: 'burst',
 };
 
@@ -22,7 +23,7 @@ const REACTIONS: Partial<Record<Fx['kind'], ReactionKind>> = {
 export const reactionFor = (effect: TurnEffect): ReactionKind | null => (effect === 'ring' ? 'burst' : effect === 'none' ? null : effect);
 
 /** The engine's one-shots are the same for everyone; the start of a turn is drawn to each seat's taste. */
-const TURN_FX = new Set<Fx['kind']>(['turnStart', 'score']);
+const TURN_FX = new Set<Fx['kind']>(['turnStart']);
 
 /**
  * The latest one-shot visual reaction for each seat's button. `effects`, per seat, is how that player likes the

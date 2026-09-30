@@ -175,9 +175,10 @@ function light(g: GameState, seat: number): DeviceOutput {
           ? { color: own, mode: 'dim', reason: 'Scored' }
           : { color: own, mode: 'dim', reason: 'Waiting to score' };
       }
+      // The tidy-up is dark: scoring was the show. A tap still says you're ready.
       return g.ready[seat]
         ? { color: own, mode: 'dim', reason: 'Ready' }
-        : { color: '#ffffff', mode: 'pulse', reason: 'Status phase — tap when ready' };
+        : { color: own, mode: 'off', reason: 'Tidy up — tap when ready' };
     }
     case 'agenda':
       return seat === currentVoter(g)

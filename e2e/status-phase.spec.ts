@@ -31,6 +31,7 @@ test('the round ends in rainbows, then scoring goes round in initiative order', 
   await expect(board.locator('.stand[data-active] .stand__name')).toHaveText('Dave');
   await expect(table.log).toContainText('Scoring, in initiative order: Dave, Kyle, Mike, Sarah, Steph, Jen.');
   await table.expectLights({ Dave: 'pulse', Kyle: 'dim', Jen: 'dim' });
+  await expect(table.light('Dave'), 'your turn to score: rings fall inward').toHaveAttribute('data-react', 'warp');
   await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Your turn to score — tap when done');
   await expect(table.seat('Kyle').locator('.plate__why')).toHaveText('Waiting to score');
 
@@ -40,6 +41,7 @@ test('the round ends in rainbows, then scoring goes round in initiative order', 
   await table.tap('Dave');
   await expect(board.locator('.board__scoring')).toContainText('Scoring: Kyle');
   await table.expectLights({ Dave: 'dim', Kyle: 'pulse' });
+  await expect(table.light('Kyle')).toHaveAttribute('data-react', 'warp');
   await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Scored');
   await expect(table.log).toContainText('Dave is done scoring.');
   // The host can move things along from the scoreboard, and from the table.
@@ -57,10 +59,10 @@ test('the round ends in rainbows, then scoring goes round in initiative order', 
   await expect(table.center.locator('.center__active')).toHaveText('Steph');
   await table.center.getByRole('button', { name: 'Skip to the tidy-up' }).click();
 
-  // The tidy-up, as before: white breathing until everyone has tapped in.
+  // The tidy-up is dark until everyone has tapped in; a tap shows as dim.
   await expect(table.center).toContainText('0/6 ready');
-  await table.expectLights({ Steph: 'pulse', Dave: 'pulse' });
-  await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Status phase — tap when ready');
+  await table.expectLights({ Steph: 'off', Dave: 'off' });
+  await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Tidy up — tap when ready');
   for (const name of DEMO) await table.tap(name);
   await table.expectPhase('Strategy');
   await expect(page.locator('.phases__round')).toHaveText('R2');
@@ -101,7 +103,7 @@ test('every step is the table\'s choice: shorter rainbows, no rainbows, everyone
   await table.expectLights({ Dave: 'rainbow' });
   await page.clock.fastForward(2100);
   await expect(table.center, 'straight to the tidy-up').toContainText('0/6 ready');
-  await table.expectLights({ Dave: 'pulse', Jen: 'pulse' });
+  await table.expectLights({ Dave: 'off', Jen: 'off' });
   await expect(table.log).not.toContainText('Scoring, in initiative order');
 
   await page.keyboard.press('Escape'); // the scoreboard came up for the tidy-up
@@ -112,7 +114,7 @@ test('every step is the table\'s choice: shorter rainbows, no rainbows, everyone
   await lab(page, 'Everyone has passed').click();
   await table.expectPhase('Status');
   await expect(table.center).toContainText('0/6 ready');
-  await table.expectLights({ Dave: 'pulse' });
+  await table.expectLights({ Dave: 'off' });
   await expect(table.banner).toBeVisible();
   await page.clock.fastForward(1600);
   await expect(table.banner, 'a plain phase banner, gone in a moment and a half').toBeHidden();

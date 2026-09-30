@@ -102,7 +102,7 @@ test('scenario lab: passing, the status phase, agenda and victory', async ({ pag
   await expect(table.center).toContainText('0/6 ready');
   await lab(page, 'One player ready').click();
   await expect(table.center).toContainText('1/6 ready');
-  await table.expectLights({ Mike: 'dim', Sarah: 'pulse' });
+  await table.expectLights({ Mike: 'dim', Sarah: 'off' });
 
   await lab(page, 'Agenda phase').click();
   await table.expectPhase('Agenda');

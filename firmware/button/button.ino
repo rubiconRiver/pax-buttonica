@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.11"
+#define FW_VERSION "0.3.12"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -51,7 +51,7 @@ static I2SClass i2s;
 
 enum Mode { MODE_OFF, MODE_DIM, MODE_SOLID, MODE_PULSE, MODE_FLASH, MODE_RAINBOW,
             MODE_RIPPLE_OUT, MODE_RIPPLE_IN, MODE_RINGS, MODE_SPIN, MODE_SPARKLE, MODE_WAVE, MODE_HEARTBEAT };
-enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE,
+enum Overlay { FX_NONE, FX_ACK, FX_DENIED, FX_CONFIRM, FX_IDENTIFY, FX_RIPPLE, FX_BURST, FX_SPARKLE, FX_CARD,
                // the game's turn effects (TURN_EFFECTS in the app), by name; the ring is sent as "burst"
                FX_RAINBOW, FX_COP, FX_EXPLOSION, FX_FIREWORKS, FX_LIGHTNING, FX_FIRE, FX_SIREN, FX_LASER,
                FX_COMET, FX_WARP, FX_CONFETTI, FX_DISCO, FX_GLITCH, FX_NEON, FX_ALARM, FX_THUMP };
@@ -83,6 +83,7 @@ static volatile uint32_t lastContact = 0;  // last time the hub demonstrably exi
 static const uint8_t EVERYONE[6] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 
 static uint8_t ledR = 255, ledG = 255, ledB = 255;
+static uint8_t cardR = 255, cardG = 255, cardB = 255;   // the colour of the strategy card that just came out
 static Mode mode = MODE_OFF;
 static uint32_t modeSince = 0;
 static uint32_t holdMs = 2000;
@@ -831,6 +832,17 @@ static void render() {
         }
         break;
       }
+      case FX_CARD: {
+        // a strategy card comes out: fill from the rim inward in the card's colour, hold it, blink once
+        if (t >= 1300) { overlay = FX_NONE; break; }
+        if (t >= 850 && t < 970) { fillAll(0, 0, 0, 0); break; }
+        const float head = t < 300 ? t / 300.0f * (RINGS + 1) : RINGS + 1;
+        for (int i = 0; i < LED_COUNT; i++) {
+          const float d = head - (RINGS - 1 - ringOf[i]);
+          if (d >= 0) ring.setPixelColor(i, scaled(cardR, cardG, cardB, d < 1 ? d : 1));
+        }
+        break;
+      }
       case FX_SPARKLE: {
         if (t >= 700) { overlay = FX_NONE; break; }
         const float env = 1 - t / 700.0f;
@@ -984,6 +996,13 @@ static void handle(const Packet &p) {
     else if (!strcmp(kind, "ripple")) setOverlay(FX_RIPPLE);
     else if (!strcmp(kind, "burst")) setOverlay(FX_BURST);
     else if (!strcmp(kind, "sparkle")) setOverlay(FX_SPARKLE);
+    else if (!strcmp(kind, "card")) {
+      const uint32_t rgb = strtoul(doc["c"] | "ffffff", nullptr, 16);
+      cardR = (rgb >> 16) & 0xFF;
+      cardG = (rgb >> 8) & 0xFF;
+      cardB = rgb & 0xFF;
+      setOverlay(FX_CARD);
+    }
     else for (const auto &e : TURN_FX) if (!strcmp(kind, e.kind)) setOverlay(e.fx);
   } else if (!strcmp(type, "cfg")) {
     holdMs = constrain((uint32_t)(doc["hold"] | (int)holdMs), 300UL, 10000UL);
