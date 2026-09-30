@@ -69,7 +69,7 @@ DISC_GAP = 2.0           # the nub under the disc hangs this far above the butto
 NUB_D = 12.0             # the peg's head, which presses the middle of the panel, well inside the frame
 NUB_STEM = 6.0           # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
 PLATE_CLEAR = 0.2        # the cage's plate never comes closer than this to the Atom's rim, fully pressed
-FLEX_T = 1.5             # the spiral flexures' thickness (1.0 until 2026-09-30: one broke on the most-used button)
+FLEX_T = 1.4             # the spiral flexures' thickness (1.0 until 2026-09-30: one broke on the most-used button; sized for a 0.5 mm stop)
 FLEX_W = 3.0             # and width
 FLEX_ROOT = 1.5          # each end of a bar is this much wider on each side, over FLEX_ROOT_L, where they crack
 FLEX_ROOT_L = 2.0
@@ -352,7 +352,7 @@ def cage():
         parts.append(leg.rotate([0, 0, a]))
     # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
     # that hole on three spiral flexures, so once the dome has clicked the disc can give a little more (the platform's
-    # collar stops the cap 0.3 mm after the click; the bars take that and the print's tolerance, nothing more)
+    # collar stops the cap 0.5 mm after the click; the bars take that and the print's tolerance, nothing more)
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
     # the disc, with a hole in the middle for the peg's stem (see nub())
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)

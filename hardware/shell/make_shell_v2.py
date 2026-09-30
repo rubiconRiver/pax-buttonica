@@ -130,10 +130,10 @@ REST_PLAY = 0.5                      # how far the cap sits below the lip at res
 PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.5 without springs, 2.0 with
 # The stop. Sprung, the cap travelled 2.8 mm and the cage's plate landed on the Atom's rim. Unsprung it rests on
 # the switch, so a press is the switch's 0.3 mm and then the peg's flexures, which give about a millimetre and
-# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 0.3 mm
+# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 0.5 mm
 # after the click: a slap goes cap -> collar -> platform -> fences -> lid -> table, and the flexures never bend more.
-STOP_AFTER_CLICK = 0.3               # 0.5 until 2026-09-30: a flexure broke on the most-used button, so they bend less
-PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 0.3: how far the cap moves from rest to the stop
+STOP_AFTER_CLICK = 0.5               # six platforms are printed to this (2026-09-30); the cage's bars are sized for it
+PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 0.5: how far the cap moves from rest to the stop
 
 
 def _cap_meets_collar():
