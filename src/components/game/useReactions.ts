@@ -14,8 +14,7 @@ const REACTIONS: Partial<Record<Fx['kind'], ReactionKind>> = {
   ready: 'ack',
   pick: 'ack',
   turnStart: 'burst',
-  /** Your turn to score: rings fall inward, whoever you are. */
-  score: 'warp',
+  // Your turn to score has no one-shot: the light itself ripples inward (deriveOutputs asks for that look).
   allAcked: 'burst',
 };
 

@@ -51,8 +51,6 @@ export function useGameAudio(game: GameState | null, enabled = true, effects: (T
           const k = f.seat != null ? hubEffect(effects[f.seat] ?? 'ring') : null;
           if (k) sendToDevice({ t: 'fx', dev, k });
         }
-        // Your turn to score: rings fall inward, whoever you are.
-        if (f.kind === 'score') sendToDevice({ t: 'fx', dev, k: 'warp' });
       }
       // A strategy card comes out: round the table from the player who played it, every real button fills in the
       // card's colour, one after another; each holds it until the last is in, then the table fades out as one and the

@@ -31,8 +31,8 @@ test('the round ends in rainbows, then scoring goes round in initiative order', 
   await expect(board.locator('.stand[data-active] .stand__name')).toHaveText('Dave');
   await expect(table.log).toContainText('Scoring, in initiative order: Dave, Kyle, Mike, Sarah, Steph, Jen.');
   await table.expectLights({ Dave: 'pulse', Kyle: 'off', Jen: 'off' });
-  await expect(table.light('Dave'), 'your turn to score: rings fall inward, then the light keeps rippling inward').toHaveAttribute('data-react', 'warp');
-  await expect(table.light('Dave')).toHaveAttribute('data-look', 'ripple_in');
+  await expect(table.light('Dave'), 'your turn to score: the light itself ripples inward, no flash first').toHaveAttribute('data-look', 'ripple_in');
+  await expect(table.light('Dave')).not.toHaveAttribute('data-react');
   await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Your turn to score — tap when done');
   await expect(table.seat('Kyle').locator('.plate__why')).toHaveText('Waiting to score');
 
@@ -42,7 +42,7 @@ test('the round ends in rainbows, then scoring goes round in initiative order', 
   await table.tap('Dave');
   await expect(board.locator('.board__scoring')).toContainText('Scoring: Kyle');
   await table.expectLights({ Dave: 'off', Kyle: 'pulse' });
-  await expect(table.light('Kyle')).toHaveAttribute('data-react', 'warp');
+  await expect(table.light('Kyle')).toHaveAttribute('data-look', 'ripple_in');
   await expect(table.seat('Dave').locator('.plate__why')).toHaveText('Scored');
   await expect(table.log).toContainText('Dave is done scoring.');
   // The host can move things along from the scoreboard, and from the table.
