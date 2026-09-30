@@ -116,8 +116,8 @@ PLUG = USB_A_PLUG if STRAIGHT_USB_A else (16.0, 9.0, 8.0)
 CORNER_A = -45.0                     # which corner: +x, -y, the one nearest the Rider's USB-A plug
 ATOM_TURN = 135.0                    # the mini draws the Atom's USB-C toward -x (180); this points it at CORNER_A
 USBC_PLUG = (22.0, 12.0, 7.0)        # length out of the Atom, width, height                         MEASURE
-CORNER_W = 18.0                      # width of the opening into the corner
-CORNER_TOP = 10.0                    # its ceiling: below the cap's flange, which never comes lower than 13
+CORNER_W = 18.0                      # width of the platform's slot into the corner
+CORNER_TOP = 10.0                    # how high the inside stays rectangular: below the cap's flange, which never comes lower than 13
 WALL_HOLE = (14.0, 9.0)              # through the corner wall: wide enough for the plug itself
 WALL_HOLE_OPEN = False               # closed since 2026-09-29: in the printed prototype the cable turned inside the corner with room to spare
 CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)      # (no longer cut: the cable goes down at the corner)                                  # x0, y0, sx, sy: a SLOT open to the platform's -y edge, just past the Rider's plug.
@@ -176,9 +176,10 @@ def housing():
     solid -= cavity
     solid -= pocket_outline(COMP_H + PLATFORM_T + 1, BOTTOM - 1 + LID_T)          # the pocket, open to the bottom
     solid -= pocket_outline(LID_T + 1, BOTTOM - 1, grow=0.5)                        # the lid's rebate
-    # the corner the Atom's plug points into: open at plug height, inside the pocket's outline
-    corner = box(BORE_R - 6, -CORNER_W / 2, PLATFORM_Z - 1, 60, CORNER_W, CORNER_TOP + 1).rotate([0, 0, CORNER_A])
-    solid -= corner ^ pocket_outline(CORNER_TOP + 2, PLATFORM_Z - 1.5)
+    # Below the cap's flange the inside is the whole rectangle, not the round bore: the Atom's cable is stiff and
+    # wants a loop round the collar, and a loop needs corners to lie in (2026-09-30; the first cut opened one
+    # corner, and the cable still fought it). The platform is located by the lid's fences, not by a ledge here.
+    solid -= pocket_outline(CORNER_TOP + 1, PLATFORM_Z - 1)
     if WALL_HOLE_OPEN:
         solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
     tabs = union([cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS] or [Manifold()])
