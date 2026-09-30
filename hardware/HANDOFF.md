@@ -125,3 +125,7 @@ Garett, after a round with six buttons: the white ring at the start of a turn wa
 ## The hub's light and watchdog (2026-09-30)
 
 Hub 0.2.6 lights its Atom pixel: amber breathing = nobody has the port open, blue = port open but no button heard for 35 s, green = port open and every known button answering (blink per press), red = a known button lost. It also reboots itself if the loop stalls 10 s (esp_task_wdt). Cause: during the battery drain at 14:00 the hub went silent on serial with USB still enumerated; a DTR/RTS reset over the port (`s.rts = True` then False, as esptool does) brought it back. Not understood yet; a wedge in the USB-serial path after the bus reset when two Riders were plugged in to charge is the suspicion.
+
+## Cells (2026-09-30, afternoon)
+
+All seven EEMB cells are alive: the last two "dead" ones woke on a proper charge (Rider powered first, then the cell). Return cancelled; two more arrive 2026-10-04, so there are spares. `hardware/BATTERY_LOG.md` keeps every run-down.

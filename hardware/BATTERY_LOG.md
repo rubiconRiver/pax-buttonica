@@ -10,9 +10,10 @@ averages about 55 mA, so game hours ≈ 6.5 × white hours.
 
 ## Cells
 
-EEMB LP963450, seven bought 2026-09-25 (two replacements on order, due 2026-10-04). Three arrived locked out
-(0 V at the plug, protection tripped); one woke on the Rider at once, two more woke on a proper charge on
-2026-09-30. None arrived full.
+EEMB LP963450, seven bought 2026-09-25 (two more on order, due 2026-10-04: nine in all). Three arrived locked out
+(0 V at the plug, protection tripped); one woke on the Rider at once, and the other two woke on a proper charge on
+2026-09-30, so all seven are alive and the return was cancelled. None arrived full. The way to wake one: power the
+Rider from USB-C first, then plug the cell in.
 
 ## Run 1 — 2026-09-30, white drain, log `soak-20260930-1338.csv`
 
