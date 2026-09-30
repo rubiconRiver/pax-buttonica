@@ -86,14 +86,14 @@ function cfgFrame(dev: string): ToDevice {
   const settings = settingsStore.get();
   const { turn, waiting, effects } = levelsOf(settings);
   const mine = prefs.get(dev);
-  const level = (x: number) => Math.max(1, Math.round(x * (mine?.bright ?? 1) * 100));
+  const level = (x: number, min = 1) => Math.max(min, Math.round(x * (mine?.bright ?? 1) * 100));
   return {
     t: 'cfg',
     dev,
     hold: settings.holdMs,
     flash: settings.flashMs,
     bright: level(turn),
-    dim: level(waiting),
+    dim: level(waiting, 0),
     fx: level(effects),
     pulse: lookOf(dev),
   };

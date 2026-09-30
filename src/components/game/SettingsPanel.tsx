@@ -82,7 +82,7 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
         <input type="range" min={MIN_BRIGHTNESS} max={1} step={0.05} value={s.brightness} onChange={(e) => set({ brightness: +e.target.value })} />
       </label>
       <label className="field" title="Everyone who is waiting, and the low point of a breathing or blinking light">
-        <span>Waiting <b className="mono-num">{pct(s.waitingBrightness)}</b></span>
+        <span>Waiting <b className="mono-num">{s.waitingBrightness > 0 ? pct(s.waitingBrightness) : 'off'}</b></span>
         <input type="range" min={MIN_WAITING} max={0.5} step={0.01} value={s.waitingBrightness} onChange={(e) => set({ waitingBrightness: +e.target.value })} />
       </label>
       <label className="field" title="Turn effects, and the press and the hold">

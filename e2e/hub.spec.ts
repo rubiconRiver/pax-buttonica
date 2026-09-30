@@ -201,6 +201,10 @@ test('three light levels: your turn, waiting and effects, set by the host; the s
   await setSlider(panel.getByRole('slider', { name: /Effects/ }), 1);
   await expect(panel).toContainText('Waiting 4%');
   for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toEqual({ t: 'cfg', dev, hold: 900, flash: 2000, bright: 80, dim: 4, fx: 100, pulse: 'solid' });
+  // All the way down: only the active player lit. The screen keeps waiting at its floor so the host can still see it.
+  await setSlider(panel.getByRole('slider', { name: /Waiting/ }), 0);
+  await expect(panel).toContainText('Waiting off');
+  for (const dev of [A, B, C]) expect((await sent(page)).filter((m) => m.t === 'cfg' && m.dev === dev).at(-1)).toMatchObject({ dim: 0 });
   await expect.poll(lum).toBeCloseTo(0.12, 3);
   expect(await lastLed(page, B), 'no new light: only how bright it is').toMatchObject({ c: ORANGE, m: 'dim' });
 });

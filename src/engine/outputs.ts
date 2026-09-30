@@ -91,8 +91,8 @@ export interface LightLevels {
 /** 2026-09-30, after a real game: your turn a touch brighter, waiting as low as it goes while still being a colour. */
 export const DEFAULT_LEVELS: LightLevels = { turn: 0.6, waiting: 0.05, effects: 0.8 };
 
-/** Waiting may go lower than the others: it only has to be told apart from off. */
-export const MIN_WAITING = 0.01;
+/** Waiting may go all the way to off: a table that wants only the active player lit sets it to 0. */
+export const MIN_WAITING = 0;
 
 const share = (x: unknown, fallback: number, min: number) => (typeof x === 'number' && Number.isFinite(x) ? Math.min(1, Math.max(min, x)) : fallback);
 
