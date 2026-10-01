@@ -67,6 +67,8 @@ D = INY + 2 * WALL                  # 80 outside, along y
 BORE_R = m.BORE_R                   # 33
 PLATFORM_T = m.FLOOR_T              # 1.6
 PLATFORM_CLEAR = 0.3                # platform to pocket, each side
+PLATFORM_LEDGE_GAP = 0.3            # the guides above the platform stand this far off its top when it sits on the fences
+LEDGE_IN = 2.0                      # how far they reach in over its edge
 COMP_H = CELL_REAL[2] + 0.9           # 10.8: the cell is the tallest thing on the lid
 LID_T = 2.5
 TOP = m.BEZEL_TOP                   # 21, the housing's top edge
@@ -180,6 +182,20 @@ def housing():
     # wants a loop round the collar, and a loop needs corners to lie in (2026-09-30; the first cut opened one
     # corner, and the cable still fought it). The platform is located by the lid's fences, not by a ledge here.
     solid -= pocket_outline(CORNER_TOP + 1, PLATFORM_Z - 1)
+    # Guides for the platform (2026-09-30, Garett: it wanders while the cables are being plugged): short ledges on the
+    # three walls away from the cable corner, a hair above the platform's top. Upside down for assembly the platform
+    # rests on them in exactly its game position; right way up it sits on the lid's fences, captive under them.
+    # Each has a 45-degree back so that, printed upside down, it grows out of the wall with no support.
+    z0 = PLATFORM_Z + PLATFORM_LEDGE_GAP
+    def ledge(x0, y0, x1, y1, nx, ny):
+        # a wedge from the wall (x0,y0)-(x1,y1) inward by (nx,ny): 1 mm thick at the lip, sloping back to 3 mm at the wall
+        wall = box(min(x0, x1) - 0.5 * abs(nx), min(y0, y1) - 0.5 * abs(ny), z0, abs(x1 - x0) + abs(nx) * 0.01, abs(y1 - y0) + abs(ny) * 0.01, 3.0)
+        lip = wall.translate([nx * LEDGE_IN, ny * LEDGE_IN, 0]) ^ box(-100, -100, z0, 200, 200, 1.0)
+        return Manifold.batch_hull([wall, lip])
+    e = CORNER_R + 4                  # keep clear of the rounded corners
+    solid += ledge(-IN / 2, -INY / 2 + e, -IN / 2, INY / 2 - e, 1, 0)       # the -x wall, the cell's side
+    solid += ledge(-IN / 2 + e, INY / 2, 0, INY / 2, 0, -1)                   # the +y wall, -x half
+    solid += ledge(-IN / 2 + e, -INY / 2, 0, -INY / 2, 0, 1)                  # the -y wall, -x half
     if WALL_HOLE_OPEN:
         solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
     tabs = union([cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS] or [Manifold()])
