@@ -132,4 +132,4 @@ All seven EEMB cells are alive: the last two "dead" ones woke on a proper charge
 
 ## Battery benchmark (2026-09-30 evening)
 
-A full EEMB cell ran a button at white, solid, 100 % (the firmware's cap) for **4 h 22** before the Rider cut it off: 20–25 hours of game at the game's rhythm. Three part-charged cells gave 1–2 hours at white the same afternoon; none looks weak. Details in `hardware/BATTERY_LOG.md`. The white draw was estimated (≈360 mA) and never measured; the hours are measured.
+A full EEMB cell ran a button at white, solid, 100 % (the firmware's cap) for **4 h 22** before the Rider cut it off, and overnight five more from full gave 4:11, 4:23, 4:25, 4:31 and 4:40 (the first cell again: 4:25, repeatable): **20–28 hours of game** at the game's rhythm, no weak cell in the set. Details in `hardware/BATTERY_LOG.md`. The white draw was estimated (≈360 mA) and never measured; the hours are measured.

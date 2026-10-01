@@ -38,4 +38,22 @@ hours are the measurement.)
 port brought it back at 14:11). The buttons kept their own count, so the times above are unaffected; check-ins
 from 14:11 are in `soak-20260930-1411.csv`. Hub 0.2.6 has a watchdog and a status light for this.
 
-Still to run: the two cells now charging (C1C0's and one of the revived ones), from full.
+## Run 2 — overnight 2026-09-30/10-01, white drain from full, log `soak-20260930-2202.csv`
+
+From 2026-09-30 the cells live in their buttons, so a button's id is its cell's. All five charged full, switched on
+21:59, white from 22:02, left until each died.
+
+| Button / cell | Went silent | White hours |
+|---|---|---|
+| 04F8 | 02:13 | 4.20 (4:11) |
+| C1C0 | 02:25 | 4.40 (4:23) |
+| 58F0 | 02:27 | 4.42 (4:25) — 4.37 the day before: the same cell twice, within five minutes |
+| F4EC | 02:33 | 4.53 (4:31) |
+| 2B30 | 02:42 | 4.67 (4:40) — Garett's own |
+
+**Every full cell gives 4.2–4.7 hours at the button's brightest: 20–28 hours of game.** The spread is 11 %, so no
+cell in the set is weak. Not yet run from full in its button: C5A8, and the two cells arriving 2026-10-04.
+
+What this means for a game night: the levels (60 / 5 / 80) could double and the cells would still last the evening;
+a cell that has done one game night still has most of a second in it; and a button that drops off during a game
+is a radio or hub problem, not a battery one, unless it was never charged.
