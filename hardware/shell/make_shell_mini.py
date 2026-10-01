@@ -66,14 +66,34 @@ M3_HEAD_D = 7.0 + HOLE_SHRINK   # a pan head or the brass standoff's hex
 TRAVEL = 2.8             # cap travel to the hard stop: DISC_GAP of free travel, the dome's ~0.3, then the flexures take the rest
 PRELOAD = 0.0            # (the disc floats: see DISC_GAP)
 DISC_GAP = 2.0           # the nub under the disc hangs this far above the button's top at rest
-NUB_D = 12.0             # the peg's head, which presses the middle of the panel, well inside the frame
-NUB_STEM = 6.0           # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
 PLATE_CLEAR = 0.2        # the cage's plate never comes closer than this to the Atom's rim, fully pressed
-FLEX_T = 1.4             # the spiral flexures' thickness (1.0 until 2026-09-30: one broke on the most-used button; sized for a 0.5 mm stop)
+FLEX_R = 16.0            # the sprung middle of the plate ends here; the ring outside it carries the legs
+# What gives after the click. The cap travels on after the Atom's switch has bottomed, and something between them has
+# to bend that far, every press, for the life of the button. A bar whose bend is set by a stop is stressed in
+# proportion to its thickness times the bend over its length squared (3 E t d / L^2), so a thicker bar is MORE
+# stressed, not less, and the only real cure is length. FLEX_STYLE picks:
+#   'spiral' (2026-10-01): three slots cut 300 degrees round the middle of the plate leave three arms of 180 degrees,
+#            about 33 mm long against the bars' 10 to 12. A beam model of the arms (flex_model.py) gives about 6 N/mm
+#            and 16 MPa per mm of bend: the dome still clicks after a third of a millimetre of give, the switch sees
+#            3.5 to 5 N at the stop instead of 40 to 90, and the plastic works at a fifth of what printed PLA breaks at.
+#            The sprung middle is thinner than the plate and flush with its underside, so the disc has room to rise.
+#   'bars'   (2026-09-26 to 2026-09-30): three straight bars, 1.4 x 3.0 with wide roots. About 40 to 90 N/mm and 85 to
+#            135 MPa per mm of bend; at a 1.0 mm stop that is past what PLA takes. Two snapped with no stop (2026-09-28),
+#            the thinner 1.0 x 2.2 ones cracked at a 0.5 mm stop (2026-09-30). Kept to compare.
+FLEX_STYLE = os.environ.get('PAX_FLEX', 'spiral')     # PAX_FLEX=bars .venv/bin/python make_shell_v2.py draws the old one
+SPIRAL_T = 1.8           # the sprung middle's thickness (the plate is PAD_T): flush with the plate's underside
+SPIRAL_DISC_R = 4.5      # the disc the peg's stem goes through
+SPIRAL_SWEEP = 300       # each slot's sweep in degrees; the arm between two slots sweeps SPIRAL_SWEEP - 120
+SPIRAL_SLOT = 1.0        # slot width: wide enough that the first layer doesn't close it
+SPIRAL_END_D = 1.8       # a round hole at each end of each slot, so the arms' roots are rounded, not notched
+SPIRAL_PHASE = 30        # turns the pattern so the slots' outer ends fall between the cage's legs
+FLEX_T = 1.4             # 'bars': thickness
 FLEX_W = 3.0             # and width
 FLEX_ROOT = 1.5          # each end of a bar is this much wider on each side, over FLEX_ROOT_L, where they crack
 FLEX_ROOT_L = 2.0
-FLEX_R = 16.0            # the flexures reach the plate at this radius
+DISC_T = SPIRAL_T if FLEX_STYLE == 'spiral' else 2.5   # the disc's thickness: the peg's stem stops flush with its top
+NUB_D = 8.0 if FLEX_STYLE == 'spiral' else 12.0         # the peg's head: inside the disc, so it never pushes up on the arms
+NUB_STEM = 4.5 if FLEX_STYLE == 'spiral' else 6.0       # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
 SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
 
 # ── the bought parts (M5Stack drawings; MEASURE = not on a drawing) ──────────
@@ -351,9 +371,12 @@ def cage():
         leg += box(CAGE_R0 - LEDGE, -w / 2, HEX_BOTTOM - 0.3 - 1.2, LEDGE + 0.01, w, 1.2)
         parts.append(leg.rotate([0, 0, a]))
     # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
-    # that hole on three spiral flexures, so once the dome has clicked the disc can give a little more (the platform's
-    # collar stops the cap 1.0 mm after the click; the bars take that and the print's tolerance, nothing more)
+    # that hole on flexures, so once the dome has clicked the disc can give a little more (see FLEX_STYLE)
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
+    if FLEX_STYLE == 'spiral':
+        middle = cyl(2 * (FLEX_R + 0.5), SPIRAL_T, z=PAD_BOTTOM, seg=SEG)       # overlaps the ring by half a millimetre
+        cuts = spiral_slots(PAD_BOTTOM - 1, PAD_T + 2) + cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
+        return union(parts + [plate, middle]) - cuts
     # the disc, with a hole in the middle for the peg's stem (see nub())
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
     flex = []
@@ -371,11 +394,39 @@ def cage():
     return union(parts)
 
 
+def spiral_slots(z0, h):
+    """Three slots of constant width, each winding SPIRAL_SWEEP degrees outward from the disc to the ring, with a
+    round hole at each end. What is left between two neighbouring slots is an arm from the disc to the ring."""
+    ra, rb, g = SPIRAL_DISC_R + SPIRAL_SLOT / 2, FLEX_R - SPIRAL_SLOT / 2, SPIRAL_SLOT
+    out = []
+    for k in range(3):
+        a0 = SPIRAL_PHASE + 120 * k
+        th = np.linspace(0, SPIRAL_SWEEP, 181)
+        r = ra + (rb - ra) * th / SPIRAL_SWEEP
+        a = np.radians(a0 + th)
+        outer = np.stack([(r + g / 2) * np.cos(a), (r + g / 2) * np.sin(a)], 1)
+        inner = np.stack([(r - g / 2) * np.cos(a), (r - g / 2) * np.sin(a)], 1)[::-1]
+        pts = np.concatenate([outer, inner])
+        area = 0.5 * np.sum(pts[:, 0] * np.roll(pts[:, 1], -1) - np.roll(pts[:, 0], -1) * pts[:, 1])
+        out.append(CrossSection([pts if area > 0 else pts[::-1]]).extrude(h).translate([0, 0, z0]))
+        for rr, aa in ((ra, a[0]), (rb, a[-1])):
+            out.append(cyl(SPIRAL_END_D, h, rr * math.cos(aa), rr * math.sin(aa), z0, seg=24))
+    return union(out)
+
+
+def cage_parts():
+    """The cage split where it bends: the frame (legs, ring) moves with the cap; the middle (disc and its flexures)
+    stops when the peg meets the switch. For the clash check, which otherwise draws the cage rigid."""
+    c = cage()
+    middle = c ^ cyl(2 * FLEX_R, PAD_T + 1, z=PAD_BOTTOM - 1, seg=SEG)     # the plate's height only: the hex's ledges reach in above it
+    return c - middle, middle
+
+
 def nub(h=None):
     """The peg that presses the Atom's panel: a head under the disc and a stem through it. Prints head-down.
     h is the head's height; shorter pegs click later. The default is what the drawing says; print a few."""
     h = NUB_H if h is None else h
-    return cyl(NUB_D, h, z=PAD_BOTTOM - h, seg=48) + cyl(NUB_STEM, h + PAD_T - 0.01, z=PAD_BOTTOM - h, seg=32)
+    return cyl(NUB_D, h, z=PAD_BOTTOM - h, seg=48) + cyl(NUB_STEM, h + DISC_T - 0.01, z=PAD_BOTTOM - h, seg=32)
 
 
 # ── deck: the tray under the turret, with the card rail on its back ────────

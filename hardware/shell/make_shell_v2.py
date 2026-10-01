@@ -10,9 +10,10 @@ top of the other. The Atom still sits on a platform above them, under the cap.
             the power cable near the -y edge, notches round the three tabs. It rests on the lid's fences.
   lid       flat plate with fences the full height of the compartment: a U round the cell, a stop and a side
             wall for the Rider, standing up to the platform so it can't rock. No screws, no feet: the lid sits flat.
-  cap, cage   as make_shell_mini.py, unchanged. No springs: the cap rests on the Atom's switch through the peg.
-  nub       the peg, 3.5 mm head (nub-3.0 and nub-4.0 to choose from): taller than the mini's, to take up the 2 mm
-            the springs used to hold the cap up by.
+  cap, cage   as make_shell_mini.py (the cage's middle is a disc on three spiral arms since 2026-10-01). No springs:
+            the cap rests on the Atom's switch through the peg.
+  nub       the peg: a head under the disc, a stem through it. nub-2.0 to nub-3.5 in quarter millimetres to choose from;
+            the drawn one is 3.1. Each button takes the one that clicks with a little give left before the stop.
 
   .venv/bin/python make_shell_v2.py    ->  stl-v2/
 
@@ -129,16 +130,22 @@ CABLE_HOLE = (6.0, -36.0, 14.0, 14.0)      # (no longer cut: the cable goes down
 # the peg returns by itself, and Garett's test of exactly that felt better than the sprung one. The peg is taller
 # to take up the 2 mm the springs used to hold the cap up by, less REST_PLAY so it can never hold the switch down.
 SPRINGS = False
-REST_PLAY = 0.5                      # how far the cap sits below the lip at rest, resting on the switch
-PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.5 without springs, 2.0 with
 # The stop. Sprung, the cap travelled 2.8 mm and the cage's plate landed on the Atom's rim. Unsprung it rests on
-# the switch, so a press is the switch's 0.3 mm and then the peg's flexures, which give about a millimetre and
-# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 1.0 mm
-# after the click: a slap goes cap -> collar -> platform -> fences -> lid -> table, and the flexures never bend more.
-STOP_AFTER_CLICK = 1.0               # 0.5 until 2026-10-01: with tape under the Atom and a peg a touch short, the collar
-                                     # caught the cap before the click on two buttons. A millimetre of margin; the stouter
-                                     # cage bars take the extra bend on a slap.
-PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 1.0: how far the cap moves from rest to the stop
+# the switch, so a press is the switch's own travel and then the cage's flexures. The collar is raised so the cap's
+# ceiling lands on it STOP_BELOW_LIP under the lip: a slap goes cap -> collar -> platform -> fences -> lid -> table.
+# Where the cap rests, and so how far it has left to the stop, is set by the peg: a shorter peg lets it rest lower.
+# Whatever travel is left after the switch bottoms is bent into the flexures, every press.
+DOME_TRAVEL = 0.3                    # the Atom's switch, from touching to bottomed                     MEASURE
+STOP_BELOW_LIP = 1.8                 # 2026-10-01 (0.5 rest + 1.3 press): the collar the printed platforms have. Changing it means new platforms.
+# How far below the lip the cap rests with the drawn peg. 0.5 with the stiff bars (2026-09-28); 0.9 with the spiral
+# (2026-10-01), so the cap has 0.9 to the stop: the click comes after about 0.5 (0.2 to the dome's click and 0.3 of
+# give in the arms), and the arms bend 0.6 at the stop. The real buttons choose their peg (see PEGS), which also takes
+# up whatever is under the Atom.
+REST_PLAY = 0.9 if m.FLEX_STYLE == 'spiral' else 0.5
+PRESS = STOP_BELOW_LIP - REST_PLAY                                   # from rest to the stop
+FLEX_AT_STOP = PRESS - DOME_TRAVEL                                   # what the flexures bend at the stop
+PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.1 with the spiral, 2.0 with springs
+PEGS = (2.0, 2.25, 2.5, 2.75, 3.0, 3.25, 3.5)                       # to choose from: see the README
 
 
 def _cap_meets_collar():
@@ -150,7 +157,7 @@ def _cap_meets_collar():
     return d
 
 
-COLLAR_RAISE = 0.0 if SPRINGS else _cap_meets_collar() - (REST_PLAY + PRESS) - 0.1      # a hair short, so the stop is just past the drawn press
+COLLAR_RAISE = 0.0 if SPRINGS else _cap_meets_collar() - STOP_BELOW_LIP - 0.1      # a hair short, so the stop is just past the drawn press
 SPRING_ANGLES = (0, 120, 240)                                          # mirrored from the mini: the Atom is turned round, USB-C toward +x
 m.SPRING_ANGLES = SPRING_ANGLES                                        # springs_in_place() reads it
 cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve
@@ -309,21 +316,36 @@ def check_and_write(printed, flipped, out_dir, label):
             state['springs'] = m.springs_in_place((m.FLANGE_BOTTOM - 1.2 if not pressed else m.WALL_TOP - 1.2) - 0.05)
             drop = m.TRAVEL if pressed else 0.0
         else:
-            # resting on the switch, a little below the lip; pressed, the switch's own travel and what the flexures give
+            # Resting on the switch, REST_PLAY under the lip. Pressed, the cap, the hex and the cage's frame go down to
+            # the stop, but the cage's middle and the peg stop when the switch bottoms, so the middle rises inside the
+            # cage by FLEX_AT_STOP, toward the hex's back. Drawn that way, not rigid (until 2026-10-01 the check moved
+            # the cage as one piece and never saw where the disc goes).
             drop = REST_PLAY + (PRESS if pressed else 0.0)
-            state['hex'] = bought(False)['hex']          # the hex rides in the cap: it moves as the cap does, below
+            mid_drop = REST_PLAY + (DOME_TRAVEL if pressed else 0.0)
+            state['hex'] = bought(False)['hex']
+            state['atom'] = bought(False)['atom']        # the panel drawn up: pressed, the peg stands DOME_TRAVEL into it
+            del state['cage']
+            frame, middle = m.cage_parts()
+            for k, s, dz in (('cap', state['cap'], drop), ('hex', state['hex'], drop), ('cage frame', frame, drop),
+                             ('cage middle', middle, mid_drop), ('nub', state['nub'], mid_drop)):
+                state[k] = s.translate([0, 0, -dz])
+            if pressed:
+                room, mid = 0.0, state['cage middle']
+                while room < 5 and (mid.translate([0, 0, room + 0.02]) ^ state['hex']).volume() < 0.01:
+                    room += 0.02
+                print(f'  pressed: the flexures bend {FLEX_AT_STOP:.2f} mm at the stop, and the disc has {room:.2f} mm more before the hex\'s back (as drawn)')
+            drop = 0.0
         if drop:
-            for k in ('cap', 'cage', 'nub') + (() if sprung else ('hex',)):
+            for k in ('cap', 'cage', 'nub'):
                 state[k] = state[k].translate([0, 0, -drop])
         names = list(state)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
+                if {a, b} == {'cage frame', 'cage middle'}:
+                    continue                             # one part
                 overlap = (state[a] ^ state[b]).volume()
                 if pressed and not sprung and {a, b} == {'nub', 'atom'}:
-                    # the parts are drawn rigid, but the peg stops at the switch's bottom and the cage's flexures bend:
-                    # how far the peg is drawn into the Atom's face is how far they bend at the stop
-                    print(f'  pressed: the flexures give {overlap / (math.pi * (m.NUB_D / 2) ** 2):.2f} mm (the peg drawn into the Atom\'s face)')
-                    continue
+                    continue                             # the peg pressing the panel down by DOME_TRAVEL
                 if overlap > 0.5:
                     clashes += 1
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
@@ -341,8 +363,11 @@ if __name__ == '__main__':
     print(f'v2 box: {W:.0f} x {D:.0f} mm, {m.CAP_TOP - BOTTOM:.1f} mm tall to the cap, housing {TOP - BOTTOM:.1f} mm, port on +y, {"straight" if STRAIGHT_USB_A else "right-angle"} USB-A plug')
     check_and_write(printed_parts(), {'housing', 'cap'}, os.path.join(HERE, OUT), OUT)
     if not SPRINGS:
-        # pegs to choose from: the shortest that clicks cleanly without the cap rattling is the one
-        for h in (3.0, 3.5, 4.0):
-            m.write_stl(m.for_printing(m.nub(h), False), os.path.join(HERE, OUT, f'nub-{h:.1f}.stl'))
-        stale = os.path.join(HERE, OUT, 'spring.stl')
-        if os.path.exists(stale): os.remove(stale)
+        # pegs to choose from: the shortest that clicks before the stop, then one step longer (README)
+        label = lambda h: f'nub-{h:.2f}.stl' if round(h * 4) % 2 else f'nub-{h:.1f}.stl'     # nub-2.0, nub-2.25, nub-2.5
+        names = {label(h) for h in PEGS}
+        for h in PEGS:
+            m.write_stl(m.for_printing(m.nub(h), False), os.path.join(HERE, OUT, label(h)))
+        for f in os.listdir(os.path.join(HERE, OUT)):
+            if (f.startswith('nub-') and f not in names) or f == 'spring.stl':
+                os.remove(os.path.join(HERE, OUT, f))
