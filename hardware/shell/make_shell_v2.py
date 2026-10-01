@@ -67,6 +67,7 @@ D = INY + 2 * WALL                  # 80 outside, along y
 BORE_R = m.BORE_R                   # 33
 PLATFORM_T = m.FLOOR_T              # 1.6
 PLATFORM_CLEAR = 0.3                # platform to pocket, each side
+PLATFORM_GUIDES = False             # the ledges below: the slicer called them floating (2026-09-30), off until they are drawn so they start on the wall
 PLATFORM_LEDGE_GAP = 0.3            # the guides above the platform stand this far off its top when it sits on the fences
 LEDGE_IN = 2.0                      # how far they reach in over its edge
 COMP_H = CELL_REAL[2] + 0.9           # 10.8: the cell is the tallest thing on the lid
@@ -193,9 +194,10 @@ def housing():
         lip = wall.translate([nx * LEDGE_IN, ny * LEDGE_IN, 0]) ^ box(-100, -100, z0, 200, 200, 1.0)
         return Manifold.batch_hull([wall, lip])
     e = CORNER_R + 4                  # keep clear of the rounded corners
-    solid += ledge(-IN / 2, -INY / 2 + e, -IN / 2, INY / 2 - e, 1, 0)       # the -x wall, the cell's side
-    solid += ledge(-IN / 2 + e, INY / 2, 0, INY / 2, 0, -1)                   # the +y wall, -x half
-    solid += ledge(-IN / 2 + e, -INY / 2, 0, -INY / 2, 0, 1)                  # the -y wall, -x half
+    if PLATFORM_GUIDES:
+        solid += ledge(-IN / 2, -INY / 2 + e, -IN / 2, INY / 2 - e, 1, 0)       # the -x wall, the cell's side
+        solid += ledge(-IN / 2 + e, INY / 2, 0, INY / 2, 0, -1)                   # the +y wall, -x half
+        solid += ledge(-IN / 2 + e, -INY / 2, 0, -INY / 2, 0, 1)                  # the -y wall, -x half
     if WALL_HOLE_OPEN:
         solid -= box(IN / 2 - 2, -WALL_HOLE[0] / 2, PLATFORM_Z + 0.5, 30, WALL_HOLE[0], WALL_HOLE[1]).rotate([0, 0, CORNER_A])
     tabs = union([cyl(TAB_D, TAB_H, x, y, LID_Z, seg=32) for x, y, sx, sy in TABS] or [Manifold()])
