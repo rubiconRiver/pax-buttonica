@@ -77,6 +77,7 @@ FLEX_R = 16.0            # the sprung middle of the plate ends here; the ring ou
 #            and 16 MPa per mm of bend: the dome still clicks after a third of a millimetre of give, the switch sees
 #            3.5 to 5 N at the stop instead of 40 to 90, and the plastic works at a fifth of what printed PLA breaks at.
 #            The sprung middle is thinner than the plate and flush with its underside, so the disc has room to rise.
+#            (make_shell_v2.py draws it inside a stop ring that lands on the Atom: 14 mm across, 2.2 thick, 9 N/mm.)
 #   'bars'   (2026-09-26 to 2026-09-30): three straight bars, 1.4 x 3.0 with wide roots. About 40 to 90 N/mm and 85 to
 #            135 MPa per mm of bend; at a 1.0 mm stop that is past what PLA takes. Two snapped with no stop (2026-09-28),
 #            the thinner 1.0 x 2.2 ones cracked at a 0.5 mm stop (2026-09-30). Kept to compare.
@@ -91,7 +92,10 @@ FLEX_T = 1.4             # 'bars': thickness
 FLEX_W = 3.0             # and width
 FLEX_ROOT = 1.5          # each end of a bar is this much wider on each side, over FLEX_ROOT_L, where they crack
 FLEX_ROOT_L = 2.0
-DISC_T = SPIRAL_T if FLEX_STYLE == 'spiral' else 2.5   # the disc's thickness: the peg's stem stops flush with its top
+# A stop on the Atom itself (make_shell_v2.py turns it on): the ring round the sprung middle stands STOP_RING below
+# the plate and lands on the Atom's top corners, outside its button, so the press is measured from the Atom and not
+# from whatever it sits on. 0 here: the plate's underside is flat, as the sprung shells want.
+STOP_RING = 0.0
 NUB_D = 8.0 if FLEX_STYLE == 'spiral' else 12.0         # the peg's head: inside the disc, so it never pushes up on the arms
 NUB_STEM = 4.5 if FLEX_STYLE == 'spiral' else 6.0       # the peg's stem, a push fit in the disc's hole (a dab of glue if loose)
 SWITCH_TRAVEL_MIN = 3.5  # the Key Unit's blue switch: about 4.0
@@ -374,9 +378,12 @@ def cage():
     # that hole on flexures, so once the dome has clicked the disc can give a little more (see FLEX_STYLE)
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
     if FLEX_STYLE == 'spiral':
-        middle = cyl(2 * (FLEX_R + 0.5), SPIRAL_T, z=PAD_BOTTOM, seg=SEG)       # overlaps the ring by half a millimetre
-        cuts = spiral_slots(PAD_BOTTOM - 1, PAD_T + 2) + cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
-        return union(parts + [plate, middle]) - cuts
+        # the ring (and the stop under it, if any) and the sprung middle share one underside, the print bed
+        z0, h = PAD_BOTTOM - STOP_RING, PAD_T + STOP_RING
+        ring = cyl(2 * (CAGE_R0 + t), h, z=z0, seg=SEG) - cyl(2 * FLEX_R, h + 2, z=z0 - 1, seg=SEG)
+        middle = cyl(2 * (FLEX_R + 0.5), SPIRAL_T, z=z0, seg=SEG)               # overlaps the ring by half a millimetre
+        cuts = spiral_slots(z0 - 1, h + 2) + cyl(NUB_STEM + 0.2, h + 2, z=z0 - 1, seg=32)
+        return union(parts + [ring, middle]) - cuts
     # the disc, with a hole in the middle for the peg's stem (see nub())
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)
     flex = []
@@ -418,7 +425,7 @@ def cage_parts():
     """The cage split where it bends: the frame (legs, ring) moves with the cap; the middle (disc and its flexures)
     stops when the peg meets the switch. For the clash check, which otherwise draws the cage rigid."""
     c = cage()
-    middle = c ^ cyl(2 * FLEX_R, PAD_T + 1, z=PAD_BOTTOM - 1, seg=SEG)     # the plate's height only: the hex's ledges reach in above it
+    middle = c ^ cyl(2 * FLEX_R, PAD_T + STOP_RING + 1, z=PAD_BOTTOM - STOP_RING - 1, seg=SEG)     # the plate's height only: the hex's ledges reach in above it
     return c - middle, middle
 
 
@@ -426,7 +433,8 @@ def nub(h=None):
     """The peg that presses the Atom's panel: a head under the disc and a stem through it. Prints head-down.
     h is the head's height; shorter pegs click later. The default is what the drawing says; print a few."""
     h = NUB_H if h is None else h
-    return cyl(NUB_D, h, z=PAD_BOTTOM - h, seg=48) + cyl(NUB_STEM, h + DISC_T - 0.01, z=PAD_BOTTOM - h, seg=32)
+    z0, t = (PAD_BOTTOM - STOP_RING, SPIRAL_T) if FLEX_STYLE == 'spiral' else (PAD_BOTTOM, PAD_T)   # the disc's underside, and its thickness
+    return cyl(NUB_D, h, z=z0 - h, seg=48) + cyl(NUB_STEM, h + t - 0.01, z=z0 - h, seg=32)
 
 
 # ── deck: the tray under the turret, with the card rail on its back ────────

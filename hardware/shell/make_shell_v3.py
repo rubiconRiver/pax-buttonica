@@ -40,6 +40,8 @@ def load(name, modname):
 
 v2 = load('make_shell_v2.py', 'v2')
 m = v2.m
+for _k, _v in v2.MINI_PRESS.items():   # v2 puts a stop ring on the cage for its springless press; v3 is sprung
+    setattr(m, _k, _v)
 cyl, box, cbox, union, revolve, rbox_prism = m.cyl, m.box, m.cbox, m.union, m.revolve, v2.rbox_prism
 
 OUT = 'stl-v3'

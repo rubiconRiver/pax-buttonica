@@ -103,18 +103,23 @@ def spiral(m):
 
 if __name__ == '__main__':
     import importlib.util, os
-    spec = importlib.util.spec_from_file_location('mini', os.path.join(os.path.dirname(os.path.abspath(__file__)), 'make_shell_mini.py'))
-    m = importlib.util.module_from_spec(spec)
+    here = os.path.dirname(os.path.abspath(__file__))
     sys.argv = ['x']
-    spec.loader.exec_module(m)
-    print(f'bars, {m.FLEX_T} thick x {m.FLEX_W} wide, wide roots:')
+    def load(name):
+        spec = importlib.util.spec_from_file_location(name[:-3], os.path.join(here, name))
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+    m = load('make_shell_mini.py')
+    print(f'bars, {m.FLEX_T} thick x {m.FLEX_W} wide, wide roots (2026-09-30):')
     for L in (10.0, 12.5):
         k, s = arm(*bars(m, L))
         print(f'  free length {L:4.1f} mm: {k:5.1f} N/mm, {s:5.1f} MPa per mm of bend')
-    pts, ws, t = spiral(m)
+    v2 = load('make_shell_v2.py')                    # the cage v2 prints: arms inside the stop ring
+    pts, ws, t = spiral(v2.m)
     length = sum(math.dist(p, q) for p, q in zip(pts, pts[1:]))
     k, s = arm(pts, ws, t)
-    print(f'spiral, arms of {m.SPIRAL_SWEEP - 120} degrees, {length:.0f} mm long, {ws[0]:.1f} wide x {t} thick:')
-    print(f'  {k:5.1f} N/mm, {s:5.1f} MPa per mm of bend; a 2 N switch clicks after {2 / k:.2f} mm of give')
-    for bend in (0.6, 0.85):
+    print(f'v2 spiral, arms of {v2.m.SPIRAL_SWEEP - 120} degrees, {length:.0f} mm long, {ws[0]:.1f} wide x {t} thick:')
+    print(f'  {k:5.1f} N/mm, {s:5.1f} MPa per mm of bend; a {v2.SWITCH_FORCE:.0f} N switch clicks after {v2.SWITCH_FORCE / k:.2f} mm of give')
+    for bend in (0.45, 0.7):
         print(f'  bent {bend} mm: {k * bend:4.1f} N on the switch, {s * bend:4.1f} MPa (about {1.5 * s * bend:4.1f} at the roots)')
