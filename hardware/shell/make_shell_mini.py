@@ -352,7 +352,7 @@ def cage():
         parts.append(leg.rotate([0, 0, a]))
     # a flat plate joins the legs; it has a hole in the middle, and the disc that presses the Atom's face hangs in
     # that hole on three spiral flexures, so once the dome has clicked the disc can give a little more (the platform's
-    # collar stops the cap 0.5 mm after the click; the bars take that and the print's tolerance, nothing more)
+    # collar stops the cap 1.0 mm after the click; the bars take that and the print's tolerance, nothing more)
     plate = cyl(2 * (CAGE_R0 + t), PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(2 * FLEX_R, PAD_T + 2, z=PAD_BOTTOM - 1, seg=SEG)
     # the disc, with a hole in the middle for the peg's stem (see nub())
     disc = cyl(2 * SADDLE_BRIM_R, PAD_T, z=PAD_BOTTOM, seg=SEG) - cyl(NUB_STEM + 0.2, PAD_T + 2, z=PAD_BOTTOM - 1, seg=32)

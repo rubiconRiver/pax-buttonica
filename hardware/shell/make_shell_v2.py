@@ -133,10 +133,12 @@ REST_PLAY = 0.5                      # how far the cap sits below the lip at res
 PEG_H = m.NUB_H + (0.0 if SPRINGS else m.DISC_GAP - REST_PLAY)     # 3.5 without springs, 2.0 with
 # The stop. Sprung, the cap travelled 2.8 mm and the cage's plate landed on the Atom's rim. Unsprung it rests on
 # the switch, so a press is the switch's 0.3 mm and then the peg's flexures, which give about a millimetre and
-# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 0.5 mm
+# snap beyond it (two of three did, 2026-09-28). The collar is raised so the cap's ceiling lands on it 1.0 mm
 # after the click: a slap goes cap -> collar -> platform -> fences -> lid -> table, and the flexures never bend more.
-STOP_AFTER_CLICK = 0.5               # six platforms are printed to this (2026-09-30); the cage's bars are sized for it
-PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 0.5: how far the cap moves from rest to the stop
+STOP_AFTER_CLICK = 1.0               # 0.5 until 2026-10-01: with tape under the Atom and a peg a touch short, the collar
+                                     # caught the cap before the click on two buttons. A millimetre of margin; the stouter
+                                     # cage bars take the extra bend on a slap.
+PRESS = (m.TRAVEL - m.DISC_GAP - 0.5) + STOP_AFTER_CLICK          # 0.3 + 1.0: how far the cap moves from rest to the stop
 
 
 def _cap_meets_collar():
@@ -317,6 +319,11 @@ def check_and_write(printed, flipped, out_dir, label):
         for i, a in enumerate(names):
             for b in names[i + 1:]:
                 overlap = (state[a] ^ state[b]).volume()
+                if pressed and not sprung and {a, b} == {'nub', 'atom'}:
+                    # the parts are drawn rigid, but the peg stops at the switch's bottom and the cage's flexures bend:
+                    # how far the peg is drawn into the Atom's face is how far they bend at the stop
+                    print(f'  pressed: the flexures give {overlap / (math.pi * (m.NUB_D / 2) ** 2):.2f} mm (the peg drawn into the Atom\'s face)')
+                    continue
                 if overlap > 0.5:
                     clashes += 1
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
