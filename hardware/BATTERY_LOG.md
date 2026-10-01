@@ -26,8 +26,13 @@ is a capacity.
 | 2B30 | — | — | — | switched off 13:42: Garett's own button, runs from a wall charger, no cell |
 | 04F8 | part (on battery since 12:17, low draw) | 13:38 | 15:36 | 1.95 — about 700 mAh at white, after 1.3 h of dim/idle |
 | F4EC | part; the cell in use since ~08:30 at the game's low draw | 13:38 | 14:56 | 1.3 — about 470 mAh at white, after ~5 h of dim/idle before it |
-| C5A8 | part (on battery since 12:30) | 13:38 | | |
-| 58F0 | **full** (charged 2026-09-30) | 13:45 | | |
+| C5A8 | part (on battery since 12:30, low draw) | 13:38 | 15:38 | 1.98 — about 700 mAh at white, after 1.1 h of dim/idle |
+| 58F0 | **full** (charged 2026-09-30) | 13:45 | 18:07 | **4.37 — the benchmark.** Two bars at 2 h 10, one bar at 3 h 48 |
+
+**The benchmark: a full cell gives 4 h 22 at the button's brightest.** A game averages about a sixth of that draw,
+so a full cell is 20–25 hours of game. (4.37 h × the 360 mA estimated for white would be 1570 mAh before the
+Rider's losses, more than the label; the white draw was never put on the meter, so it is a little under 360. The
+hours are the measurement.)
 
 14:00: the hub went quiet with USB still up (every button stopped being heard the same second; a USB reset over the
 port brought it back at 14:11). The buttons kept their own count, so the times above are unaffected; check-ins

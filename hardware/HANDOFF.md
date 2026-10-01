@@ -129,3 +129,7 @@ Hub 0.2.6 lights its Atom pixel: amber breathing = nobody has the port open, blu
 ## Cells (2026-09-30, afternoon)
 
 All seven EEMB cells are alive: the last two "dead" ones woke on a proper charge (Rider powered first, then the cell). Return cancelled; two more arrive 2026-10-04, so there are spares. `hardware/BATTERY_LOG.md` keeps every run-down.
+
+## Battery benchmark (2026-09-30 evening)
+
+A full EEMB cell ran a button at white, solid, 100 % (the firmware's cap) for **4 h 22** before the Rider cut it off: 20–25 hours of game at the game's rhythm. Three part-charged cells gave 1–2 hours at white the same afternoon; none looks weak. Details in `hardware/BATTERY_LOG.md`. The white draw was estimated (≈360 mA) and never measured; the hours are measured.
