@@ -20,7 +20,8 @@ Parts, per design (stl-v5/<design>/):
              keyplate: walls only, printed rim down.
   plate      keyplate only: the top. Prints deck down.
   platform   the flat plate on the lid's fences, with a pedestal and fence for the Atom (USB-C toward the cable
-             corner) and a well for the hex: a hexagonal wall with four posts the board sits on, LEDs up. The well
+             corner) and a well for the hex: a hexagonal wall with three posts the board sits on, LEDs up, 6 mm
+             clear under its sockets, and a notch in the wall for the Grove cable from the Atom. The well
              keeps the light off everything else in the box. Black: in transparent it would leak light inside.
   lid        v2's, the same file.
   lantern    the light: a hexagonal cup with a flange, resting on the well's rim and held down by the top. The
@@ -31,7 +32,8 @@ Parts, per design (stl-v5/<design>/):
   .venv/bin/python make_shell_v5.py    ->  stl-v5/
 
 Assembly, all right side up: lid; cell and Rider on it, plugged; platform onto the fences; Atom onto its pedestal,
-hex into its well, Grove cable between them, the Atom's cable down the corner to the Rider; lantern onto the well;
+Grove cable into the hex and then the hex onto its posts, the cable out through the well's notch and round to
+the Atom's Grove port; the Atom's USB cable down the corner to the Rider; lantern over the hex onto the well;
 foam tape on the Atom's panel. Then lantern and beacon: key onto the tape, housing down over the lot. Keyplate:
 housing down over the lot, plate in tongues first, pressed onto the tape.
 
@@ -93,10 +95,16 @@ PRESS = 0.8                          # how far the key (or the plate, at the Ato
 HX, HY = 0.0, 14.5                   # the hex's centre
 
 # ── the lantern ─────────────────────────────────────────────────────────────
-LANTERN_F = 33.0                     # across flats, outside
+LANTERN_F = 35.0                     # across flats, outside: wide enough inside (32.6) for the board to stand up in it
 LANTERN_WALL, LANTERN_FACE = 1.2, 1.0
-FLANGE_FLARE, FLANGE_T = 2.5, 0.4    # the flange flares out at 45 degrees so the cup prints face down with no support
+FLANGE_FLARE, FLANGE_T = 2.0, 0.4    # the flange flares out at 45 degrees so the cup prints face down with no support
 WELL_T, WELL_CLR = 1.6, 0.3
+# The hex's cable. Its sockets are under the board (7.6 mm of them), and the Grove cable from the Atom has to reach
+# them: so the board stands UNDER_SOCKETS clear of the platform, up inside the lantern, and the well has a notch in
+# its -x side, open at the top, so the cable is plugged into the hex first and drops in with it. (The first drawing
+# left 2.4 mm under the sockets and a slot that opened onto the Atom's corner: Garett, "how do I get power to the hex?")
+UNDER_SOCKETS = 6.0                  # clear height under the hex's sockets, for the plug's wires to turn      MEASURE
+NOTCH = (-5.0, 12.0)                 # in the well's -x flat: where it starts along the flat (from the hex's middle), and its width
 CORNER_CUT = (9.0, -8.0)             # the platform's cable corner: everything at x beyond the first and y below the second
 
 # ── the key (lantern, beacon) ───────────────────────────────────────────────
@@ -134,8 +142,8 @@ def dims(design):
     d.flange_top = d.under - (0.9 if d.plate else 0.3)
     d.lantern_rim = d.flange_top - FLANGE_T - FLANGE_FLARE
     d.well_top = d.lantern_rim
-    d.hex_top = d.well_top - 0.8                         # the LEDs, inside the well
-    d.hex_bot = d.hex_top - m.HEX_BOARD_T
+    d.hex_bot = m.HEX_UNDER + UNDER_SOCKETS              # the board's underside: its sockets clear the platform
+    d.hex_top = d.hex_bot + m.HEX_BOARD_T                # the LEDs: above the well's rim, inside the lantern
     d.window = LANTERN_F + (1.0 if d.plate else 0.5)     # the hole the lantern comes through
     d.gap = TOPZ + d.lantern_h - LANTERN_FACE - d.hex_top           # LEDs to the lantern's face
     d.key_h = TOPZ + KEY_PROUD - (d.panel_z + FOAM)
@@ -245,17 +253,18 @@ def platform(d):
     fence -= cbox(0, 0, d.ped_h - 1, a, a, ATOM_FENCE_H + 2)
     fence -= cbox(0, 0, d.ped_h - 1, a + 20, 14, ATOM_FENCE_H + 2)            # USB-C on +x, Grove on -x
     solid += (stand + fence).rotate([0, 0, d.atom_turn]).translate([d.ax, d.ay, 0])
-    # the hex's well: a hexagonal wall the lantern rests on, and four posts the board rests on
+    # the hex's well: a hexagonal wall the lantern rests on, and three posts the board rests on, at three corners
+    # (the sockets are a block in the middle of the board, so the corners are free). The posts stand above the rim.
     inner = m.HEX_FLAT + 2 * WELL_CLR
     well = hexagon(inner + 2 * WELL_T, d.well_top, 0, HX, HY) - hexagon(inner, d.well_top + 2, 0, HX, HY)
-    r = inner / 2
-    posts = [cbox(HX + sx * (r - 0.6), HY, 0, 2.4, 4.0, d.hex_bot) for sx in (-1, 1)]               # at the two flats
-    v = r / math.cos(math.radians(30))
-    posts += [cbox(HX, HY + sy * (v - 1.6), 0, 4.0, 3.2, d.hex_bot) for sy in (-1, 1)]              # at two corners
+    v = inner / 2 / math.cos(math.radians(30))
+    posts = []
+    for deg in (90, 210, 330):
+        c, sn = math.cos(math.radians(deg)), math.sin(math.radians(deg))
+        posts.append(cyl(4.4, d.hex_bot, HX + (v - 1.3) * c, HY + (v - 1.3) * sn, 0, seg=32))     # small: clear of the sockets' block
     solid += well + (union(posts) ^ hexagon(inner + 0.2, d.hex_bot, 0, HX, HY))
-    # a slot in the well for the hex's cable, toward the Atom's Grove side
-    slot = box(-30, -5, 0.0, 30, 10, d.hex_bot - 1.0).rotate([0, 0, 60]).translate([HX, HY, 0])
-    solid -= slot ^ (hexagon(inner + 2 * WELL_T + 2, d.hex_bot, 0, HX, HY) - hexagon(inner - 0.2, d.hex_bot + 1, -1, HX, HY))
+    # the cable's notch: through the well's -x flat, floor to rim, toward the wall the Atom's Grove port faces
+    solid -= box(HX - inner / 2 - WELL_T - 1, HY + NOTCH[0], 0.0, WELL_T + 2, NOTCH[1], d.well_top + 1)
     return solid
 
 
@@ -291,6 +300,15 @@ def bought(d):
     board = hexagon(m.HEX_FLAT, m.HEX_BOARD_T, d.hex_bot, HX, HY)
     board += cbox(HX, HY, d.hex_bot - m.HEX_UNDER, m.HEX_SOCKETS[0], m.HEX_SOCKETS[1], m.HEX_UNDER)
     parts['hex'] = board
+    # The Grove cable, drawn as a 4 mm run so the check finds anything in its way: out of the Atom's Grove plug,
+    # along the -x wall, in through the well's notch, to just under the board's edge.
+    u = (math.cos(math.radians(d.atom_turn)), math.sin(math.radians(d.atom_turn)))
+    start = (d.ax - 23.2 * u[0], d.ay - 23.2 * u[1])               # just past the Grove plug's end
+    ny = HY + NOTCH[0] + NOTCH[1] / 2
+    lane = -IN / 2 + 6.5
+    z = d.ped_h + 5.0
+    path = [(start[0], start[1], z), (start[0], start[1] + 7.0, z), (lane, start[1] + 12.0, z), (lane, ny, z), (HX - m.HEX_FLAT / 2 + 1.5, ny, z)]
+    parts['grove'] = union([hull([cyl(4.0, 4.0, a[0], a[1], a[2] - 2.0, seg=16), cyl(4.0, 4.0, b[0], b[1], b[2] - 2.0, seg=16)]) for a, b in zip(path, path[1:])])
     return parts
 
 

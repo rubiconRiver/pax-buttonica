@@ -125,7 +125,7 @@
     <h3>What all three share</h3>
     <p><b>No stack.</b> The cap, cage, peg, collar and flexures are gone. Foam tape between the Atom's panel and what presses it is the give; something solid (the top, or the Atom's own rim) is the stop. Nothing has to be printed to a tenth of a millimetre, and tape under the Atom no longer matters.</p>
     <p><b>Built right side up.</b> Lid, cell and Rider, platform, Atom and hex, cables, lantern; the housing goes on last, like a hat. Everything is in the open until the end.</p>
-    <p><b>The light is a lantern.</b> A white cup over the hex, standing proud of the deck, glowing from its sides as well as its face; the LEDs sit 10 mm or more under its face, twice what the dots need to blend. A well round the hex keeps the light out of the rest of the box.</p>
+    <p><b>The light is a lantern.</b> A clear cup over the hex, standing proud of the deck, glowing from its sides as well as its face; the LEDs sit 7 mm under its face. The hex stands on three posts inside a well that keeps the light out of the rest of the box, with 6 mm clear under its sockets and a notch in the well's side for the Grove cable from the Atom.</p>
     <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Two filaments: black for everything, transparent for the lantern. The light is the only colour on it.</p>
   </div></section>
 </div>
@@ -138,10 +138,10 @@
   const PLAYERS = [['Red', '#ff3b3b'], ['Orange', '#ff8a1f'], ['Yellow', '#ffd21f'], ['Green', '#2fe06b'], ['Blue', '#2f8cff'], ['Purple', '#a24bff'], ['Pink', '#ff5fc4'], ['White', '#e9f0ff']];
   const CARD = '#2ec4b0';   // Trade: the demo's strategy card
   const BODY = '#2a2d36';
-  const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#1b1d24', hex: '#123d1c', atom: '#1f4b8f', rider: '#2f9e44', cell: '#c9c77a' };
-  const LABELS = { lantern: 'lantern (transparent)', key: 'key (black)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
-  const ORDER = ['lantern', 'key', 'plate', 'housing', 'hex', 'atom', 'platform', 'rider', 'cell', 'lid'];
-  const LIFT = { lantern: 84, key: 72, plate: 66, housing: 54, hex: 36, atom: 36, platform: 24, rider: 10, cell: 10, lid: 0 };     // pulled apart: everything rises off the lid
+  const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#1b1d24', hex: '#123d1c', atom: '#1f4b8f', grove: '#d8d2b0', rider: '#2f9e44', cell: '#c9c77a' };
+  const LABELS = { lantern: 'lantern (transparent)', key: 'key (black)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', grove: 'Grove cable, Atom to hex', platform: 'platform: pedestal and light well (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
+  const ORDER = ['lantern', 'key', 'plate', 'housing', 'hex', 'atom', 'grove', 'platform', 'rider', 'cell', 'lid'];
+  const LIFT = { lantern: 84, key: 72, plate: 66, housing: 54, hex: 36, atom: 36, grove: 36, platform: 24, rider: 10, cell: 10, lid: 0 };     // pulled apart: everything rises off the lid
   const TINTED = new Set([]);          // nothing is printed in the player's colour now: the key is black, the light is the colour
   const PRINTED = new Set(['lantern', 'key', 'plate', 'housing', 'platform', 'lid']);
   const ABOUT = {
