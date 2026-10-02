@@ -24,7 +24,7 @@ for design in v5.DESIGNS:
     parts = dict(v5.printed_parts(d))
     parts.update(v5.bought(d))
     data = {'meta': {'bottom': v5.BOTTOM, 'topz': v5.TOPZ, 'lantern_h': d.lantern_h, 'hex_top': d.hex_top, 'press': v5.PRESS,
-                     'hx': v5.HX, 'hy': v5.HY, 'ax': d.ax, 'ay': v5.AY, 'pivot': list(d.pivot), 'turn': d.turn, 'plate': d.plate},
+                     'hx': v5.HX, 'hy': v5.HY, 'ax': d.ax, 'ay': d.ay, 'pivot': list(d.pivot), 'turn': d.turn, 'plate': d.plate},
             'parts': {}}
     for name, solid in parts.items():
         mesh = solid.to_mesh()

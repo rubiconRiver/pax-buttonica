@@ -61,6 +61,7 @@
   .parts label { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); cursor: pointer; }
   .parts i { width: 12px; height: 12px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.25); }
   .note { color: var(--faint); font-size: 12.5px; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
@@ -68,11 +69,11 @@
   <header>
     <div class="eyebrow">Pax Buttonica · shell v5</div>
     <h1>The slab, three ways</h1>
-    <p class="lede">One chassis: the tray you already print (cell and Rider side by side, the same charge window and switch), 72 × 80 mm, with nothing riding on the light any more. The hex sits in a well under a raised white lantern; the Atom stands on a pedestal just under the top. What changes is how you press it. Everything you see is on the centre line. Every design is drawn round the real parts and checked at rest and pressed. None is printed yet.</p>
+    <p class="lede">One chassis: the tray you already print (cell and Rider side by side, the same charge window and switch), 72 × 80 mm, with nothing riding on the light any more. The hex sits in a well under a raised white lantern; the Atom stands on a pedestal just under the top. What changes is how you press it. What you see is on the centre line in all of them. Every design is drawn round the real parts and checked at rest and pressed. None is printed yet.</p>
   </header>
 
   <div class="tabs" role="group" aria-label="Design">
-    <button class="tab chamfer" data-design="lantern" aria-pressed="true"><span class="chamfer"><b>Lantern</b><small>A hex of light, a hex key in the player's colour</small></span></button>
+    <button class="tab chamfer" data-design="lantern" aria-pressed="true"><span class="chamfer"><b>Lantern</b><small>A hex of light and a black hex key. Garett's pick</small></span></button>
     <button class="tab chamfer" data-design="beacon"><span class="chamfer"><b>Beacon</b><small>The light as a column, read from across the table</small></span></button>
     <button class="tab chamfer" data-design="keyplate"><span class="chamfer"><b>Keyplate</b><small>The whole top is the button; slap it anywhere</small></span></button>
   </div>
@@ -125,7 +126,7 @@
     <p><b>No stack.</b> The cap, cage, peg, collar and flexures are gone. Foam tape between the Atom's panel and what presses it is the give; something solid (the top, or the Atom's own rim) is the stop. Nothing has to be printed to a tenth of a millimetre, and tape under the Atom no longer matters.</p>
     <p><b>Built right side up.</b> Lid, cell and Rider, platform, Atom and hex, cables, lantern; the housing goes on last, like a hat. Everything is in the open until the end.</p>
     <p><b>The light is a lantern.</b> A white cup over the hex, standing proud of the deck, glowing from its sides as well as its face; the LEDs sit 10 mm or more under its face, twice what the dots need to blend. A well round the hex keeps the light out of the rest of the box.</p>
-    <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Body black, lantern white; on the Lantern and the Beacon the one coloured part is the key.</p>
+    <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Body and key black, lantern white: the light is the only colour on it.</p>
   </div></section>
 </div>
 
@@ -137,29 +138,29 @@
   const PLAYERS = [['Red', '#ff3b3b'], ['Orange', '#ff8a1f'], ['Yellow', '#ffd21f'], ['Green', '#2fe06b'], ['Blue', '#2f8cff'], ['Purple', '#a24bff'], ['Pink', '#ff5fc4'], ['White', '#e9f0ff']];
   const CARD = '#2ec4b0';   // Trade: the demo's strategy card
   const BODY = '#2a2d36';
-  const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#ff8a1f', hex: '#123d1c', atom: '#1f4b8f', rider: '#2f9e44', cell: '#c9c77a' };
-  const LABELS = { lantern: 'lantern (white)', key: 'key (player\'s colour)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
+  const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#1b1d24', hex: '#123d1c', atom: '#1f4b8f', rider: '#2f9e44', cell: '#c9c77a' };
+  const LABELS = { lantern: 'lantern (white)', key: 'key (black)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
   const ORDER = ['lantern', 'key', 'plate', 'housing', 'hex', 'atom', 'platform', 'rider', 'cell', 'lid'];
   const LIFT = { lantern: 84, key: 72, plate: 66, housing: 54, hex: 36, atom: 36, platform: 24, rider: 10, cell: 10, lid: 0 };     // pulled apart: everything rises off the lid
-  const TINTED = new Set(['key']);     // printed in the player's colour
+  const TINTED = new Set([]);          // nothing is printed in the player's colour now: the key is black, the light is the colour
   const PRINTED = new Set(['lantern', 'key', 'plate', 'housing', 'platform', 'lid']);
   const ABOUT = {
     lantern: {
       name: 'Lantern',
-      what: 'A white hexagonal lantern stands 6 mm proud of a flat deck. In front of it, a hexagonal key in the player\'s colour, stuck to the Atom\'s own button with foam tape and standing just proud: press it flush and your finger, or a slapping palm, lands on the deck.',
-      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'Housing (top built in), platform, lantern, key. Lid: the one you have'], ['Needs', 'A right-angle USB-C plug on the Atom: the key sits on the Atom, and a centred Atom leaves 21.5 mm for a 22 mm straight plug'], ['Feel', 'A crisp, shallow click under one finger']],
-      risk: 'To find out in a print: how the lantern looks at 1.0 mm thick, and whether your foam tape gives the half millimetre the key needs (three key heights are in the folder).',
+      what: 'A white hexagonal lantern stands 6 mm proud of a flat deck. In front of it, on the same centre line, a black hexagonal key, stuck to the Atom\'s own button with foam tape and standing just proud: press it flush and your finger, or a slapping palm, lands on the deck. The light is the only colour on it.',
+      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'Housing (top built in), platform, lantern, key. Lid: the one you have'], ['Needs', 'Nothing new. Under the deck the Atom stands 4 mm left and turned 22°, so its straight plug points into the cable corner; the key stays on the centre line and presses the Atom\'s face 4 mm off its middle'], ['Feel', 'A crisp, shallow click under one finger']],
+      risk: 'To find out: press a bare Atom\'s face 4 mm off its middle with a fingertip. If it clicks as cleanly as in the middle, this works as drawn. Then in a print: how the lantern looks at 1.0 mm thick, and whether your foam tape gives the half millimetre the key needs (three key heights are in the folder).',
     },
     beacon: {
       name: 'Beacon',
-      what: 'The same body and the same key, with the light a 22 mm column. It reads from across the table and from any side, and at "waiting" brightness a tall lantern still shows whose seat is whose. It is the tallest of the three, about where the cap is today.',
-      spec: [['Size', '72 × 80 × 32.5 mm, 54.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'As Lantern, with a taller lantern (27 mm, prints face down)'], ['Needs', 'The same right-angle USB-C plug as the Lantern'], ['Feel', 'As Lantern; the light is the show']],
+      what: 'The same body and the same black key, with the light a 22 mm column. It reads from across the table and from any side, and at "waiting" brightness a tall lantern still shows whose seat is whose. It is the tallest of the three, about where the cap is today.',
+      spec: [['Size', '72 × 80 × 32.5 mm, 54.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'As Lantern, with a taller lantern (27 mm, prints face down)'], ['Needs', 'Nothing new, as the Lantern'], ['Feel', 'As Lantern; the light is the show']],
       risk: 'To find out in a print: whether the column lights evenly to its top (the LEDs are 27 mm under its face), and whether a tall light is in the way of reaching across the table.',
     },
     keyplate: {
       name: 'Keyplate',
       what: 'The whole top is the button. A plate floats inside the walls with a shadow gap all round, hinged on two tongues in the back wall and resting on the Atom through a foot on foam tape. Press it anywhere in front of the lantern; it stops on the Atom\'s own rim. The lantern stands on the platform and comes up through the plate, so the light never moves.',
-      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'The whole deck: 0.8 mm at the Atom, 1 mm at the front edge'], ['Print', 'Housing (walls only), plate, platform, lantern. Lid: the one you have'], ['Needs', 'Nothing new: the Atom hides 8 mm off centre under the plate, with the straight plug you have'], ['Feel', 'A mouse button the size of your palm; the further forward, the lighter']],
+      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'The whole deck: 0.8 mm at the Atom, 1 mm at the front edge'], ['Print', 'Housing (walls only), plate, platform, lantern. Lid: the one you have'], ['Needs', 'Nothing new: the Atom stands 8 mm left under the plate, square, with the straight plug you have'], ['Feel', 'A mouse button the size of your palm; the further forward, the lighter']],
       risk: 'To find out in a print: the hinge. The tongues are drawn to print without support and to hold the back edge down, but a hinge is the one thing here that only a print proves. The plate is held at the front by the tape on its foot.',
     },
   };

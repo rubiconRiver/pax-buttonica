@@ -3,10 +3,12 @@ v5, the slab: nothing rides on the light. The bottom half is v2's, unchanged (th
 side by side, the same charge window and switch slot), and everything above the platform is new. Three designs on
 that one chassis, all 72 x 80 and 32.5 mm to the deck, all with a chamfered body rather than a rounded one:
 
-  lantern    A white hexagonal lantern stands 6 mm proud of a flat top, over the hex in its well; it glows from its
-             sides as well as its face. The button is a hexagonal key in the player's colour, stuck to the Atom's own
-             panel with foam tape and standing a little proud: pressed flush, the finger (or a slapping palm) lands
-             on the top. The top is the stop, the foam is the give.
+  lantern    Garett's pick (2026-10-02). A white hexagonal lantern stands 6 mm proud of a flat top, on the centre
+             line, over the hex in its well; it glows from its sides as well as its face. The button is a black
+             hexagonal key, stuck to the Atom's own panel with foam tape and standing a little proud: pressed flush,
+             the finger (or a slapping palm) lands on the top. The top is the stop, the foam is the give. The key is
+             on the centre line too; under it the Atom stands 4 mm to the left and turned 22 degrees, so its straight
+             USB-C plug points into the cable corner with room to turn down (Garett: angle the Atom, no other plug).
   beacon     The same, with the light a 22 mm column: readable from across the table and from any side.
   keyplate   The whole top is the button. A plate floats inside the walls, hinged on two tongues in the back wall
              (closed slots, below the plate) and resting on the Atom through a foot on foam tape; press it anywhere.
@@ -23,7 +25,7 @@ Parts, per design (stl-v5/<design>/):
   lid        v2's, the same file.
   lantern    the light: a white hexagonal cup with a flange, resting on the well's rim and held down by the top.
              Three face thicknesses to try. Prints face down.
-  key        lantern, beacon: the hexagonal key, three heights to try. The player's colour.
+  key        lantern, beacon: the hexagonal key, three heights to try. Black, like the housing.
 
   .venv/bin/python make_shell_v5.py    ->  stl-v5/
 
@@ -74,20 +76,27 @@ WAIST = (-0.8, 0.8, 0.6)             # a line round the walls at the platform's 
 
 # ── the Atom and the hex, where they stand ──────────────────────────────────
 ATOM = m.ATOM
-AY = -22.0                           # the Atom's centre along the box; across it, see dims(): USB-C toward +x
 KX = 0.0                             # the key, the press mark and the lantern are on the centre line
+# The Atom's straight USB-C plug is 22 mm long, and a centred, square Atom leaves 21.5 mm to the side wall. So the
+# Atom is never centred: where it stands is (x, y, turn). Under a key it is 4 mm left and turned 22 degrees toward
+# the cable corner (+x, -y): the plug's tip then has 6.5 mm to the wall along its own line, as much as a square Atom
+# 8 mm left has, and the key's foot is 4 mm off the panel's middle, well inside its 17 mm. Turned further, the
+# Atom's own corners run into the lantern's well and the front wall. Under the keyplate nobody sees it: 8 mm left,
+# square.
+ATOM_AT = {'key': (-4.0, -19.2, -22.0), 'plate': (-8.0, -22.0, 0.0)}
+KEY_FOOT_D = 9.0                     # the key's foot on the panel: small, because it lands off the panel's middle
 ATOM_FENCE_T, ATOM_FENCE_H = 1.5, 3.0
 USBC_PLUG = v2.USBC_PLUG             # 22 long, 12 wide, 7 high: the Atom's plug
-ELBOW = (10.0, 8.0)                  # a right-angle USB-C plug: how far it stands out of the Atom, and its tail   MEASURE
 FOAM = 1.0                           # the tape between the Atom's panel and what presses it, uncompressed     MEASURE
 PRESS = 0.8                          # how far the key (or the plate, at the Atom) travels: the switch's 0.3 and foam
-HX, HY = 0.0, 13.0                   # the hex's centre
+HX, HY = 0.0, 14.5                   # the hex's centre
 
 # ── the lantern ─────────────────────────────────────────────────────────────
 LANTERN_F = 33.0                     # across flats, outside
 LANTERN_WALL, LANTERN_FACE = 1.2, 1.0
 FLANGE_FLARE, FLANGE_T = 2.5, 0.4    # the flange flares out at 45 degrees so the cup prints face down with no support
 WELL_T, WELL_CLR = 1.6, 0.3
+CORNER_CUT = (9.0, -8.0)             # the platform's cable corner: everything at x beyond the first and y below the second
 
 # ── the key (lantern, beacon) ───────────────────────────────────────────────
 KEY_F = 15.0                         # across flats: the Atom's panel is 17 square in a 19 opening
@@ -110,16 +119,13 @@ STOP = (24.0, 19.8)                  # a square ring over the Atom's rim, outsid
 def dims(design):
     """Everything that differs between the designs, worked out from a few choices."""
     d = SimpleNamespace(name=design, plate=design == 'keyplate')
-    d.lantern_h = {'lantern': 6.0, 'beacon': 22.0, 'keyplate': 6.0}[design]
+    d.lantern_h = 22.0 if design == 'beacon' else 6.0
     d.lantern_chamfer = 2.0 if design == 'beacon' else 1.0
     d.top_t = 2.4 if d.plate else 1.6                    # the plate is thicker: it is pressed anywhere
     d.under = TOPZ - d.top_t                             # the underside of the top (or the plate)
     d.top_chamfer = 1.2 if d.plate else 2.5              # an open rim cannot take the big chamfer
-    # Where the Atom stands across the box. Its straight USB-C plug is 22 mm long and the side wall is 21.5 from a
-    # centred Atom, so: under the keyplate, where nobody sees it, it stands 8 mm off centre with the plug Garett has;
-    # under a key, which sits on the Atom, it is centred and needs a right-angle plug.
-    d.ax = -8.0 if d.plate else 0.0
-    d.elbow = not d.plate
+    d.ax, d.ay, d.atom_turn = ATOM_AT['plate' if d.plate else 'key']
+    d.kx, d.ky = (KX, d.ay)                              # the key (or the plate's press mark): on the centre line
     d.ped_h = d.under - (1.2 if d.plate else 1.5) - ATOM[2]          # the Atom's rim ends this far under the top
     d.rim_z = d.ped_h + ATOM[2]                          # the Atom's rim
     d.panel_z = d.rim_z - m.ATOM_BUTTON_DROP             # the top of its button panel
@@ -134,7 +140,7 @@ def dims(design):
     d.key_h = TOPZ + KEY_PROUD - (d.panel_z + FOAM)
     # keyplate: the hinge line and how far the plate turns
     d.pivot = (INY / 2, d.under)
-    d.turn = math.degrees(PRESS / (INY / 2 - AY))
+    d.turn = math.degrees(PRESS / (INY / 2 - d.ay))
     return d
 
 
@@ -163,8 +169,9 @@ def cut_prism(w, d, c, h, z, ct=0.0, cb=0.0, inset=0.0):
 
 
 def deck_lines(d):
-    """What is cut into the deck (the top, or the plate): a hexagon round where you press. Nothing else."""
-    ring = hexagon(KEY_RING[0] + 2 * KEY_RING[1], KEY_RING[2] + 0.01, TOPZ - KEY_RING[2], KX, AY) - hexagon(KEY_RING[0], KEY_RING[2] + 1, TOPZ - KEY_RING[2] - 0.5, KX, AY)
+    """What is cut into the deck: on the keyplate, a hexagon where you press. With a key, nothing: the key is the mark."""
+    if not d.plate: return []
+    ring = hexagon(KEY_RING[0] + 2 * KEY_RING[1], KEY_RING[2] + 0.01, TOPZ - KEY_RING[2], d.kx, d.ky) - hexagon(KEY_RING[0], KEY_RING[2] + 1, TOPZ - KEY_RING[2] - 0.5, d.kx, d.ky)
     return [ring]
 
 
@@ -196,7 +203,7 @@ def housing(d):
             cuts.append(box(x - TONGUE[0] / 2 - 0.3, INY / 2 - 1, d.under - TONGUE[2] - 0.2, TONGUE[0] + 0.6, WALL + 2, TONGUE[2]))
     else:
         cuts.append(hexagon(d.window, d.top_t + 2, d.under - 1, HX, HY))                   # the lantern's window
-        cuts.append(hexagon(KEY_F + 0.6, d.top_t + 2, d.under - 1, KX, AY))                # the key's hole
+        cuts.append(hexagon(KEY_F + 0.6, d.top_t + 2, d.under - 1, d.kx, d.ky))            # the key's hole
         cuts += deck_lines(d)
     # the waist: a line round the walls
     cuts.append(box(-W, -D, WAIST[0], 2 * W, 2 * D, WAIST[1]) - cut_prism(W, D, CORNER_C, WAIST[1] + 2, WAIST[0] - 1, inset=WAIST[2]))
@@ -218,23 +225,25 @@ def plate(d):
         tip = box(x - TONGUE[0] / 2, ye - 0.01, d.under - TONGUE[2], TONGUE[0], TONGUE[2], 0.01)
         solid += hull([block, tip])
     # the foot, down to the foam on the Atom's panel; and the stop, a hair above the Atom's rim until pressed
-    solid += cyl(FOOT_D, d.under - (d.panel_z + FOAM) + 0.01, d.ax, AY, d.panel_z + FOAM, seg=64)
+    solid += cyl(FOOT_D, d.under - (d.panel_z + FOAM) + 0.01, d.ax, d.ay, d.panel_z + FOAM, seg=64)
     # (its front edge is further from the hinge than the Atom's middle and travels more: it is the edge that lands)
-    stop_z = d.rim_z + PRESS * (INY / 2 - (AY - STOP[0] / 2)) / (INY / 2 - AY) + 0.05
-    solid += cbox(d.ax, AY, stop_z, STOP[0], STOP[0], d.under - stop_z + 0.01) - cbox(d.ax, AY, stop_z - 1, STOP[1], STOP[1], d.under - stop_z + 2)
+    stop_z = d.rim_z + PRESS * (INY / 2 - (d.ay - STOP[0] / 2)) / (INY / 2 - d.ay) + 0.05
+    solid += cbox(d.ax, d.ay, stop_z, STOP[0], STOP[0], d.under - stop_z + 0.01) - cbox(d.ax, d.ay, stop_z - 1, STOP[1], STOP[1], d.under - stop_z + 2)
     cuts = [hexagon(d.window, d.top_t + 2, d.under - 1, HX, HY)] + deck_lines(d)
     return solid - union(cuts)
 
 
 def platform(d):
     solid = v2.rbox_prism(IN - 2 * PLATFORM_CLEAR, INY - 2 * PLATFORM_CLEAR, CORNER_R - WALL - PLATFORM_CLEAR, PLATFORM_T, z=PLATFORM_Z - PLATFORM_T)
-    # the Atom's pedestal, and a fence round it open toward its two sockets
+    # the cable corner: cut away so the Atom's plug hangs over it and its cable can go down to the Rider's USB-A
+    solid -= box(CORNER_CUT[0], -60, -PLATFORM_T - 1, 60, 60 + CORNER_CUT[1], PLATFORM_T + 2)
+    # the Atom's pedestal, and a fence round it open toward its two sockets; both turned as the Atom is
     a = ATOM[0] + 2 * CLR
-    solid += cbox(d.ax, AY, 0, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, d.ped_h)
-    fence = cbox(d.ax, AY, d.ped_h, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, ATOM_FENCE_H)
-    fence -= cbox(d.ax, AY, d.ped_h - 1, a, a, ATOM_FENCE_H + 2)
-    fence -= cbox(d.ax, AY, d.ped_h - 1, a + 20, 14, ATOM_FENCE_H + 2)        # USB-C on +x, Grove on -x
-    solid += fence
+    stand = cbox(0, 0, 0, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, d.ped_h)
+    fence = cbox(0, 0, d.ped_h, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, ATOM_FENCE_H)
+    fence -= cbox(0, 0, d.ped_h - 1, a, a, ATOM_FENCE_H + 2)
+    fence -= cbox(0, 0, d.ped_h - 1, a + 20, 14, ATOM_FENCE_H + 2)            # USB-C on +x, Grove on -x
+    solid += (stand + fence).rotate([0, 0, d.atom_turn]).translate([d.ax, d.ay, 0])
     # the hex's well: a hexagonal wall the lantern rests on, and four posts the board rests on
     inner = m.HEX_FLAT + 2 * WELL_CLR
     well = hexagon(inner + 2 * WELL_T, d.well_top, 0, HX, HY) - hexagon(inner, d.well_top + 2, 0, HX, HY)
@@ -246,10 +255,6 @@ def platform(d):
     # a slot in the well for the hex's cable, toward the Atom's Grove side
     slot = box(-30, -5, 0.0, 30, 10, d.hex_bot - 1.0).rotate([0, 0, 60]).translate([HX, HY, 0])
     solid -= slot ^ (hexagon(inner + 2 * WELL_T + 2, d.hex_bot, 0, HX, HY) - hexagon(inner - 0.2, d.hex_bot + 1, -1, HX, HY))
-    # the cable corner: cut away so the Atom's cable can go down to the Rider's USB-A
-    cut_x0 = d.ax + a / 2 + ATOM_FENCE_T + 0.5
-    cut_y1 = AY + a / 2 + ATOM_FENCE_T + 0.5
-    solid -= box(cut_x0, -60, -PLATFORM_T - 1, 60, 60 + cut_y1, PLATFORM_T + 2)
     return solid
 
 
@@ -265,23 +270,23 @@ def lantern(d, face=LANTERN_FACE):
 
 
 def key(d, h=None):
-    """The key: a hexagon with a chamfered top, on the foam on the Atom's panel."""
+    """The key: a small round foot on the foam on the Atom's panel, and above the Atom's rim a hexagon with a chamfered
+    top that comes through the deck. h is the whole height. The hexagon starts high enough to clear the rim pressed."""
     h = d.key_h if h is None else h
     z0, c = d.panel_z + FOAM, 0.6
-    return hull([hexagon(KEY_F, h - c, z0, KX, AY), hexagon(KEY_F - 2 * c, 0.01, z0 + h - 0.01, KX, AY)])
+    body_z = d.rim_z + PRESS + 0.2
+    foot = cyl(KEY_FOOT_D, body_z - z0 + 0.01, d.kx, d.ky, z0, seg=48)
+    body = hull([hexagon(KEY_F, z0 + h - c - body_z, body_z, d.kx, d.ky), hexagon(KEY_F - 2 * c, 0.01, z0 + h - 0.01, d.kx, d.ky)])
+    return foot + body
 
 
 def bought(d):
     lower = v2.bought(False)
     parts = {k: lower[k] for k in ('cell', 'rider')}
     atom = m.bought_parts(False)['atom'].rotate([0, 0, 180])                 # USB-C toward +x
-    if d.elbow:      # a right-angle plug: a short body, then the cable's root turned toward the cable corner
-        atom += box(ATOM[0] / 2, -USBC_PLUG[1] / 2, 1.2, ELBOW[0], USBC_PLUG[1], USBC_PLUG[2])
-        atom += box(ATOM[0] / 2 + ELBOW[0] - USBC_PLUG[2], -USBC_PLUG[1] / 2 - ELBOW[1], 1.2, USBC_PLUG[2], ELBOW[1] + 1, USBC_PLUG[2])
-    else:
-        atom += box(ATOM[0] / 2, -USBC_PLUG[1] / 2, 1.2, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])     # the real plug
+    atom += box(ATOM[0] / 2, -USBC_PLUG[1] / 2, 1.2, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])     # the real plug
     atom += box(-ATOM[0] / 2 - 9, -5, 2.5, 9, 10, 5)                         # and the Grove plug on the other side
-    parts['atom'] = atom.translate([d.ax, AY, d.ped_h])
+    parts['atom'] = atom.rotate([0, 0, d.atom_turn]).translate([d.ax, d.ay, d.ped_h])
     board = hexagon(m.HEX_FLAT, m.HEX_BOARD_T, d.hex_bot, HX, HY)
     board += cbox(HX, HY, d.hex_bot - m.HEX_UNDER, m.HEX_SOCKETS[0], m.HEX_SOCKETS[1], m.HEX_UNDER)
     parts['hex'] = board
@@ -339,12 +344,15 @@ def build(design, write=True):
                     print(f'  CLASH {"pressed" if down else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
     a = ATOM[0] + 2 * CLR + 2 * ATOM_FENCE_T
-    under = (printed['lid'] ^ cbox(d.ax, AY, LID_Z + 0.5, a, a, v2.FENCE_H - 0.6)).volume() / (v2.FENCE_H - 0.6)
+    under = (printed['lid'] ^ cbox(d.ax, d.ay, LID_Z + 0.5, a, a, v2.FENCE_H - 0.6)).volume() / (v2.FENCE_H - 0.6)
     print(f'  under the Atom: {under:.0f} mm2 of full-height fence carries the press to the lid')
     if d.plate:
-        print(f'  the plate turns {d.turn:.2f} degrees: {PRESS:.1f} mm at the Atom, {PRESS * INY / (INY / 2 - AY):.1f} at the front edge, {PRESS * (INY / 2 - HY) / (INY / 2 - AY):.1f} at the lantern')
+        print(f'  the plate turns {d.turn:.2f} degrees: {PRESS:.1f} mm at the Atom, {PRESS * INY / (INY / 2 - d.ay):.1f} at the front edge, {PRESS * (INY / 2 - HY) / (INY / 2 - d.ay):.1f} at the lantern')
     else:
+        u = (math.cos(math.radians(d.atom_turn)), math.sin(math.radians(d.atom_turn)))
+        tip = (d.ax + 34 * u[0], d.ay + 34 * u[1])
         print(f'  the key is {d.key_h:.1f} mm tall; pressed flush is {PRESS:.1f} mm: the switch\'s 0.3 and {PRESS - 0.3:.1f} of foam')
+        print(f'  the Atom: {-d.ax:.0f} mm left of centre, turned {-d.atom_turn:.0f} degrees. Its plug ends at ({tip[0]:.1f}, {tip[1]:.1f}): {(IN / 2 - tip[0]) / u[0]:.1f} mm to the side wall along its line. The key\'s foot lands {math.hypot(d.kx - d.ax, d.ky - d.ay):.1f} mm off the panel\'s middle')
     return d, printed
 
 
