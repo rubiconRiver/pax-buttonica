@@ -126,7 +126,7 @@
     <p><b>No stack.</b> The cap, cage, peg, collar and flexures are gone. Foam tape between the Atom's panel and what presses it is the give; something solid (the top, or the Atom's own rim) is the stop. Nothing has to be printed to a tenth of a millimetre, and tape under the Atom no longer matters.</p>
     <p><b>Built right side up.</b> Lid, cell and Rider, platform, Atom and hex, cables, lantern; the housing goes on last, like a hat. Everything is in the open until the end.</p>
     <p><b>The light is a lantern.</b> A white cup over the hex, standing proud of the deck, glowing from its sides as well as its face; the LEDs sit 10 mm or more under its face, twice what the dots need to blend. A well round the hex keeps the light out of the rest of the box.</p>
-    <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Body and key black, lantern white: the light is the only colour on it.</p>
+    <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Two filaments: black for everything, transparent for the lantern. The light is the only colour on it.</p>
   </div></section>
 </div>
 
@@ -139,7 +139,7 @@
   const CARD = '#2ec4b0';   // Trade: the demo's strategy card
   const BODY = '#2a2d36';
   const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#1b1d24', hex: '#123d1c', atom: '#1f4b8f', rider: '#2f9e44', cell: '#c9c77a' };
-  const LABELS = { lantern: 'lantern (white)', key: 'key (black)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
+  const LABELS = { lantern: 'lantern (transparent)', key: 'key (black)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
   const ORDER = ['lantern', 'key', 'plate', 'housing', 'hex', 'atom', 'platform', 'rider', 'cell', 'lid'];
   const LIFT = { lantern: 84, key: 72, plate: 66, housing: 54, hex: 36, atom: 36, platform: 24, rider: 10, cell: 10, lid: 0 };     // pulled apart: everything rises off the lid
   const TINTED = new Set([]);          // nothing is printed in the player's colour now: the key is black, the light is the colour
@@ -147,9 +147,9 @@
   const ABOUT = {
     lantern: {
       name: 'Lantern',
-      what: 'A white hexagonal lantern stands 6 mm proud of a flat deck. In front of it, on the same centre line, a black hexagonal key, stuck to the Atom\'s own button with foam tape and standing just proud: press it flush and your finger, or a slapping palm, lands on the deck. The light is the only colour on it.',
+      what: 'A clear hexagonal lantern stands 6 mm proud of a flat deck. In front of it, on the same centre line, a black hexagonal key, stuck to the Atom\'s own button with foam tape and standing just proud: press it flush and your finger, or a slapping palm, lands on the deck. The light is the only colour on it.',
       spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'Housing (top built in), platform, lantern, key. Lid: the one you have'], ['Needs', 'Nothing new. Under the deck the Atom stands 4 mm left and turned 22°, so its straight plug points into the cable corner; the key stays on the centre line and presses the Atom\'s face 4 mm off its middle'], ['Feel', 'A crisp, shallow click under one finger']],
-      risk: 'To find out: press a bare Atom\'s face 4 mm off its middle with a fingertip. If it clicks as cleanly as in the middle, this works as drawn. Then in a print: how the lantern looks at 1.0 mm thick, and whether your foam tape gives the half millimetre the key needs (three key heights are in the folder).',
+      risk: 'To find out: press a bare Atom\'s face 4 mm off its middle with a fingertip. If it clicks as cleanly as in the middle, this works as drawn. Then in a print: how a transparent lantern hides the dots (start with the 1.4 mm face and three or four walls), and whether your foam tape gives the half millimetre the key needs (three key heights are in the folder).',
     },
     beacon: {
       name: 'Beacon',

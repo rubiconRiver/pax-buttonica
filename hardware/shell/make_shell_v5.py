@@ -21,10 +21,11 @@ Parts, per design (stl-v5/<design>/):
   plate      keyplate only: the top. Prints deck down.
   platform   the flat plate on the lid's fences, with a pedestal and fence for the Atom (USB-C toward the cable
              corner) and a well for the hex: a hexagonal wall with four posts the board sits on, LEDs up. The well
-             keeps the light off everything else in the box. White makes the light brighter.
+             keeps the light off everything else in the box. Black: in transparent it would leak light inside.
   lid        v2's, the same file.
-  lantern    the light: a white hexagonal cup with a flange, resting on the well's rim and held down by the top.
-             Three face thicknesses to try. Prints face down.
+  lantern    the light: a hexagonal cup with a flange, resting on the well's rim and held down by the top. The
+             only part in transparent filament (Garett prints black and transparent): start with the 1.4 mm
+             face and three or four walls, so the layers scatter the light. Prints face down.
   key        lantern, beacon: the hexagonal key, three heights to try. Black, like the housing.
 
   .venv/bin/python make_shell_v5.py    ->  stl-v5/
