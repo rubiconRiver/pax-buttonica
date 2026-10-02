@@ -32,8 +32,8 @@ Parts, per design (stl-v5/<design>/):
   .venv/bin/python make_shell_v5.py    ->  stl-v5/
 
 Assembly, all right side up: lid; cell and Rider on it, plugged; platform onto the fences; Atom onto its pedestal,
-Grove cable into the hex and then the hex onto its posts, the cable out through the well's notch and round to
-the Atom's Grove port; the Atom's USB cable down the corner to the Rider; lantern over the hex onto the well;
+Grove cable into the hex and then the hex onto its posts, the cable out through the well's notch and down the
++x side to the Atom's Grove port, under its USB-C plug; the Atom's USB cable down the corner to the Rider; lantern over the hex onto the well;
 foam tape on the Atom's panel. Then lantern and beacon: key onto the tape, housing down over the lot. Keyplate:
 housing down over the lot, plate in tongues first, pressed onto the tape.
 
@@ -90,6 +90,10 @@ ATOM_AT = {'key': (-4.0, -19.2, -22.0), 'plate': (-8.0, -22.0, 0.0)}
 KEY_FOOT_D = 9.0                     # the key's foot on the panel: small, because it lands off the panel's middle
 ATOM_FENCE_T, ATOM_FENCE_H = 1.5, 3.0
 USBC_PLUG = v2.USBC_PLUG             # 22 long, 12 wide, 7 high: the Atom's plug
+# The Atom's two sockets are on the SAME side, one above the other: USB-C nearer its face, the Grove port (to the hex)
+# under it. (Garett, 2026-10-02; v2's drawing has the Grove port on the far side, which is wrong.) Heights are guesses.
+GROVE_PLUG = (9.0, 10.0, 4.5)        # the Grove plug: length out of the Atom, width, height                    MEASURE
+USBC_Z, GROVE_Z = 2.7, 0.2           # each plug's underside above the Atom's own underside                      MEASURE
 FOAM = 1.0                           # the tape between the Atom's panel and what presses it, uncompressed     MEASURE
 PRESS = 0.8                          # how far the key (or the plate, at the Atom) travels: the switch's 0.3 and foam
 HX, HY = 0.0, 14.5                   # the hex's centre
@@ -101,10 +105,15 @@ FLANGE_FLARE, FLANGE_T = 2.0, 0.4    # the flange flares out at 45 degrees so th
 WELL_T, WELL_CLR = 1.6, 0.3
 # The hex's cable. Its sockets are under the board (7.6 mm of them), and the Grove cable from the Atom has to reach
 # them: so the board stands UNDER_SOCKETS clear of the platform, up inside the lantern, and the well has a notch in
-# its -x side, open at the top, so the cable is plugged into the hex first and drops in with it. (The first drawing
+# its +x side, open at the top: the plug in the hex's side socket stands out through it, and the hex drops in plugged. (The first drawing
 # left 2.4 mm under the sockets and a slot that opened onto the Atom's corner: Garett, "how do I get power to the hex?")
 UNDER_SOCKETS = 6.0                  # clear height under the hex's sockets, for the plug's wires to turn      MEASURE
-NOTCH = (-5.0, 12.0)                 # in the well's -x flat: where it starts along the flat (from the hex's middle), and its width
+NOTCH = (-6.5, 13.0)                 # in the well's +x flat, the side the Atom's plugs are on: where it starts along the
+                                     # flat (from the hex's middle), and its width: the Grove plug's 10 mm and room
+# The hex has two sockets, either usable (Garett): one underneath near an end, one on its side. The side one is used:
+# the board is turned so that socket faces the notch, and the plug comes straight out through it.
+HEX_SIDE_PLUG = (8.0, 10.0, 5.0)     # the plug in the hex's side socket: how far it stands out past the board's edge,
+                                     # its width, its height; it hangs just under the board                      MEASURE
 CORNER_CUT = (9.0, -8.0)             # the platform's cable corner: everything at x beyond the first and y below the second
 
 # ── the key (lantern, beacon) ───────────────────────────────────────────────
@@ -140,7 +149,8 @@ def dims(design):
     d.panel_z = d.rim_z - m.ATOM_BUTTON_DROP             # the top of its button panel
     # the lantern rests on the well; the top holds it down, with room for the plate to move over it
     d.flange_top = d.under - (0.9 if d.plate else 0.3)
-    d.lantern_rim = d.flange_top - FLANGE_T - FLANGE_FLARE
+    d.flare = 1.0 if d.plate else FLANGE_FLARE          # under the plate the flange is shallower, to clear the hex's side plug
+    d.lantern_rim = d.flange_top - FLANGE_T - d.flare
     d.well_top = d.lantern_rim
     d.hex_bot = m.HEX_UNDER + UNDER_SOCKETS              # the board's underside: its sockets clear the platform
     d.hex_top = d.hex_bot + m.HEX_BOARD_T                # the LEDs: above the well's rim, inside the lantern
@@ -251,7 +261,7 @@ def platform(d):
     stand = cbox(0, 0, 0, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, d.ped_h)
     fence = cbox(0, 0, d.ped_h, a + 2 * ATOM_FENCE_T, a + 2 * ATOM_FENCE_T, ATOM_FENCE_H)
     fence -= cbox(0, 0, d.ped_h - 1, a, a, ATOM_FENCE_H + 2)
-    fence -= cbox(0, 0, d.ped_h - 1, a + 20, 14, ATOM_FENCE_H + 2)            # USB-C on +x, Grove on -x
+    fence -= box(0, -7, d.ped_h - 1, a / 2 + 10, 14, ATOM_FENCE_H + 2)        # open on +x only: both plugs are there
     solid += (stand + fence).rotate([0, 0, d.atom_turn]).translate([d.ax, d.ay, 0])
     # the hex's well: a hexagonal wall the lantern rests on, and three posts the board rests on, at three corners
     # (the sockets are a block in the middle of the board, so the corners are free). The posts stand above the rim.
@@ -263,8 +273,8 @@ def platform(d):
         c, sn = math.cos(math.radians(deg)), math.sin(math.radians(deg))
         posts.append(cyl(4.4, d.hex_bot, HX + (v - 1.3) * c, HY + (v - 1.3) * sn, 0, seg=32))     # small: clear of the sockets' block
     solid += well + (union(posts) ^ hexagon(inner + 0.2, d.hex_bot, 0, HX, HY))
-    # the cable's notch: through the well's -x flat, floor to rim, toward the wall the Atom's Grove port faces
-    solid -= box(HX - inner / 2 - WELL_T - 1, HY + NOTCH[0], 0.0, WELL_T + 2, NOTCH[1], d.well_top + 1)
+    # the cable's notch: through the well's +x flat, floor to rim, on the side the Atom's plugs point to
+    solid -= box(HX + inner / 2 - 1, HY + NOTCH[0], 0.0, WELL_T + 2, NOTCH[1], d.well_top + 1)
     return solid
 
 
@@ -273,8 +283,8 @@ def lantern(d, face=LANTERN_FACE):
     z1 = TOPZ + d.lantern_h
     c = d.lantern_chamfer
     outer = hull([hexagon(LANTERN_F, z1 - c - d.lantern_rim, d.lantern_rim, HX, HY), hexagon(LANTERN_F - 2 * c, 0.01, z1 - 0.01, HX, HY)])
-    flange = hull([hexagon(LANTERN_F, 0.01, d.lantern_rim, HX, HY), hexagon(LANTERN_F + 2 * FLANGE_FLARE, 0.01, d.flange_top - FLANGE_T, HX, HY)])
-    flange += hexagon(LANTERN_F + 2 * FLANGE_FLARE, FLANGE_T, d.flange_top - FLANGE_T, HX, HY)
+    flange = hull([hexagon(LANTERN_F, 0.01, d.lantern_rim, HX, HY), hexagon(LANTERN_F + 2 * d.flare, 0.01, d.flange_top - FLANGE_T, HX, HY)])
+    flange += hexagon(LANTERN_F + 2 * d.flare, FLANGE_T, d.flange_top - FLANGE_T, HX, HY)
     inner = hexagon(LANTERN_F - 2 * LANTERN_WALL, z1 - face - d.lantern_rim + 1, d.lantern_rim - 1, HX, HY)
     return outer + flange - inner
 
@@ -294,21 +304,28 @@ def bought(d):
     lower = v2.bought(False)
     parts = {k: lower[k] for k in ('cell', 'rider')}
     atom = m.bought_parts(False)['atom'].rotate([0, 0, 180])                 # USB-C toward +x
-    atom += box(ATOM[0] / 2, -USBC_PLUG[1] / 2, 1.2, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])     # the real plug
-    atom += box(-ATOM[0] / 2 - 9, -5, 2.5, 9, 10, 5)                         # and the Grove plug on the other side
+    atom += box(ATOM[0] / 2, -USBC_PLUG[1] / 2, USBC_Z, USBC_PLUG[0], USBC_PLUG[1], USBC_PLUG[2])            # the USB-C plug
+    atom += box(ATOM[0] / 2, -GROVE_PLUG[1] / 2, GROVE_Z, GROVE_PLUG[0], GROVE_PLUG[1], GROVE_PLUG[2])       # the Grove plug, under it
     parts['atom'] = atom.rotate([0, 0, d.atom_turn]).translate([d.ax, d.ay, d.ped_h])
     board = hexagon(m.HEX_FLAT, m.HEX_BOARD_T, d.hex_bot, HX, HY)
     board += cbox(HX, HY, d.hex_bot - m.HEX_UNDER, m.HEX_SOCKETS[0], m.HEX_SOCKETS[1], m.HEX_UNDER)
     parts['hex'] = board
-    # The Grove cable, drawn as a 4 mm run so the check finds anything in its way: out of the Atom's Grove plug,
-    # along the -x wall, in through the well's notch, to just under the board's edge.
+    # The Grove cable, drawn as a 4 mm run so the check finds anything in its way: out of the Grove plug under the
+    # USB-C plug, sideways out from under it (the platform is cut away there), up the +x side, to the plug that
+    # stands out of the hex's side socket through the well's notch.
     u = (math.cos(math.radians(d.atom_turn)), math.sin(math.radians(d.atom_turn)))
-    start = (d.ax - 23.2 * u[0], d.ay - 23.2 * u[1])               # just past the Grove plug's end
-    ny = HY + NOTCH[0] + NOTCH[1] / 2
-    lane = -IN / 2 + 6.5
-    z = d.ped_h + 5.0
-    path = [(start[0], start[1], z), (start[0], start[1] + 7.0, z), (lane, start[1] + 12.0, z), (lane, ny, z), (HX - m.HEX_FLAT / 2 + 1.5, ny, z)]
-    parts['grove'] = union([hull([cyl(4.0, 4.0, a[0], a[1], a[2] - 2.0, seg=16), cyl(4.0, 4.0, b[0], b[1], b[2] - 2.0, seg=16)]) for a, b in zip(path, path[1:])])
+    n = (-u[1], u[0])                                                  # to the plug's left: away from the front wall
+    r0 = ATOM[0] / 2 + GROVE_PLUG[0] + 2.2
+    start = (d.ax + r0 * u[0], d.ay + r0 * u[1])
+    out = (start[0] + 10.5 * n[0], start[1] + 10.5 * n[1])
+    lane = IN / 2 - 5.5
+    z0, z1 = d.ped_h + GROVE_Z + 0.2, d.ped_h + 4.0
+    px = HX + m.HEX_FLAT / 2                                           # the board's +x edge, where the side socket is
+    zp = d.hex_bot - 1.0 - HEX_SIDE_PLUG[2] / 2
+    path = [(start[0], start[1], z0), (out[0], out[1], z0), (lane, max(out[1] + 6.0, -6.0), z1), (lane, HY, zp), (px + HEX_SIDE_PLUG[0] + 1.0, HY, zp)]
+    cable = union([hull([cyl(4.0, 4.0, a[0], a[1], a[2] - 2.0, seg=16), cyl(4.0, 4.0, b[0], b[1], b[2] - 2.0, seg=16)]) for a, b in zip(path, path[1:])])
+    # and its plug in the hex's side socket, out through the notch
+    parts['grove'] = cable + box(px - 3.0, HY - HEX_SIDE_PLUG[1] / 2, zp - HEX_SIDE_PLUG[2] / 2, HEX_SIDE_PLUG[0] + 3.0, HEX_SIDE_PLUG[1], HEX_SIDE_PLUG[2])
     return parts
 
 
