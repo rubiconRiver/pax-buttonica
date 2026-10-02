@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<title>Pax Buttonica Slab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #04060b; --bg-2: #0a0e18; --panel: #0d121e; --line: rgba(150, 172, 225, 0.16); --line-2: rgba(150, 172, 225, 0.32);
+    --text: #e6ebf7; --muted: #8d97af; --faint: #5b6480; --gold: #f2b84b; --gold-2: #ffdf9a; --cyan: #5ad1ff;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.55 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1180px; margin-inline: auto; display: grid; gap: 16px; }
+  h1, h2, h3 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
+  h1 { font-size: 30px; font-weight: 700; }
+  h2 { font-size: 20px; font-weight: 700; }
+  h3 { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 74ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 14px 16px 16px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .sep { width: 1px; height: 22px; background: var(--line-2); margin-inline: 4px; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1d2437, #121727); border: 1px solid var(--line-2); padding: 8px 13px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: transparent; }
+  .btn.go { color: var(--bg); background: var(--cyan); border-color: transparent; }
+  .btn:focus-visible, .tab:focus-visible, .sw:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .tabs { grid-template-columns: 1fr; } }
+  .tab { text-align: left; background: var(--line-2); padding: 1px; border: 0; cursor: pointer; color: inherit; font: inherit; }
+  .tab > span { display: grid; gap: 2px; background: var(--panel); padding: 12px 14px; height: 100%; box-sizing: border-box; }
+  .tab b { font: 700 18px var(--font-d); letter-spacing: 0.02em; }
+  .tab small { color: var(--muted); font-size: 12.5px; }
+  .tab[aria-pressed="true"] { background: var(--gold); }
+  .tab[aria-pressed="true"] b { color: var(--gold-2); }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; } }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 11; background: #05070c; border: 1px solid var(--line); overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  .stage .hint { position: absolute; left: 10px; bottom: 8px; color: var(--faint); font-size: 12px; pointer-events: none; }
+  .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+  .sw { width: 26px; height: 26px; border-radius: 50%; border: 3px solid transparent; background: var(--sw); cursor: pointer; padding: 0; }
+  .sw[aria-checked="true"] { border-color: #fff; box-shadow: 0 0 12px var(--sw); }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  input[type=range] { width: 130px; accent-color: var(--gold); }
+  .about p { margin: 0; color: var(--muted); }
+  .about p b { color: var(--text); font-weight: 600; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
+  dt { color: var(--faint); font: 600 11px var(--font-d); letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
+  dd { margin: 0; color: var(--text); }
+  .parts { display: grid; gap: 4px; }
+  .parts label { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .parts i { width: 12px; height: 12px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.25); }
+  .note { color: var(--faint); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · shell v5</div>
+    <h1>The slab, three ways</h1>
+    <p class="lede">One chassis: the tray you already print (cell and Rider side by side, the same charge window and switch), 72 × 80 mm, with nothing riding on the light any more. The hex sits in a well under a raised white lantern; the Atom stands on a pedestal just under the top. What changes is how you press it. Everything you see is on the centre line. Every design is drawn round the real parts and checked at rest and pressed. None is printed yet.</p>
+  </header>
+
+  <div class="tabs" role="group" aria-label="Design">
+    <button class="tab chamfer" data-design="lantern" aria-pressed="true"><span class="chamfer"><b>Lantern</b><small>A hex of light, a hex key in the player's colour</small></span></button>
+    <button class="tab chamfer" data-design="beacon"><span class="chamfer"><b>Beacon</b><small>The light as a column, read from across the table</small></span></button>
+    <button class="tab chamfer" data-design="keyplate"><span class="chamfer"><b>Keyplate</b><small>The whole top is the button; slap it anywhere</small></span></button>
+  </div>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <div class="row">
+      <span role="radiogroup" aria-label="Player colour" class="row" id="swatches"></span>
+      <span class="sep"></span>
+      <button class="btn" data-state="turn" aria-pressed="true">Your turn</button>
+      <button class="btn" data-state="waiting">Waiting</button>
+      <button class="btn" data-state="card">Card played</button>
+      <button class="btn" data-state="score">Scoring</button>
+      <span class="sep"></span>
+      <button class="btn go" id="press">Press it</button>
+    </div>
+    <div class="layout">
+      <div>
+        <div class="stage" id="stage">
+          <div class="loading" id="loading">Loading…</div>
+          <span class="hint">drag to turn · scroll to zoom · click the key to press it · grid squares are 10 mm</span>
+        </div>
+        <div class="row" style="margin-top: 10px">
+          <button class="btn" data-view="hero" aria-pressed="true">Hero</button>
+          <button class="btn" data-view="player">Player's seat</button>
+          <button class="btn" data-view="across">Across the table</button>
+          <button class="btn" data-view="top">Top</button>
+          <button class="btn" data-view="port">Port side</button>
+          <span class="sep"></span>
+          <button class="btn" id="cut" aria-pressed="false">Cut in half</button>
+          <label class="f">Pull apart <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+        </div>
+      </div>
+      <aside class="about" style="display: grid; gap: 14px">
+        <div style="display: grid; gap: 8px">
+          <h2 id="d-name">Lantern</h2>
+          <p id="d-what"></p>
+        </div>
+        <dl id="d-spec"></dl>
+        <div style="display: grid; gap: 6px">
+          <h3>Parts</h3>
+          <div class="parts" id="parts"></div>
+        </div>
+        <p class="note" id="d-risk"></p>
+      </aside>
+    </div>
+  </div></section>
+
+  <section class="panel chamfer"><div class="in chamfer about">
+    <h3>What all three share</h3>
+    <p><b>No stack.</b> The cap, cage, peg, collar and flexures are gone. Foam tape between the Atom's panel and what presses it is the give; something solid (the top, or the Atom's own rim) is the stop. Nothing has to be printed to a tenth of a millimetre, and tape under the Atom no longer matters.</p>
+    <p><b>Built right side up.</b> Lid, cell and Rider, platform, Atom and hex, cables, lantern; the housing goes on last, like a hat. Everything is in the open until the end.</p>
+    <p><b>The light is a lantern.</b> A white cup over the hex, standing proud of the deck, glowing from its sides as well as its face; the LEDs sit 10 mm or more under its face, twice what the dots need to blend. A well round the hex keeps the light out of the rest of the box.</p>
+    <p><b>Looks like the rest of it.</b> Cut corners, not rounded; a waist line at the platform; one groove on the deck, round where you press. Body black, lantern white; on the Lantern and the Beacon the one coloured part is the key.</p>
+  </div></section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const PLAYERS = [['Red', '#ff3b3b'], ['Orange', '#ff8a1f'], ['Yellow', '#ffd21f'], ['Green', '#2fe06b'], ['Blue', '#2f8cff'], ['Purple', '#a24bff'], ['Pink', '#ff5fc4'], ['White', '#e9f0ff']];
+  const CARD = '#2ec4b0';   // Trade: the demo's strategy card
+  const BODY = '#2a2d36';
+  const COLOURS = { housing: BODY, plate: '#30343e', platform: '#4a505e', lid: '#1e2128', lantern: '#f4f6fb', key: '#ff8a1f', hex: '#123d1c', atom: '#1f4b8f', rider: '#2f9e44', cell: '#c9c77a' };
+  const LABELS = { lantern: 'lantern (white)', key: 'key (player\'s colour)', plate: 'plate: the whole top', housing: 'housing', hex: 'NeoHEX', atom: 'AtomS3 and its two plugs', platform: 'platform: pedestal and light well', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (v2, unchanged)' };
+  const ORDER = ['lantern', 'key', 'plate', 'housing', 'hex', 'atom', 'platform', 'rider', 'cell', 'lid'];
+  const LIFT = { lantern: 84, key: 72, plate: 66, housing: 54, hex: 36, atom: 36, platform: 24, rider: 10, cell: 10, lid: 0 };     // pulled apart: everything rises off the lid
+  const TINTED = new Set(['key']);     // printed in the player's colour
+  const PRINTED = new Set(['lantern', 'key', 'plate', 'housing', 'platform', 'lid']);
+  const ABOUT = {
+    lantern: {
+      name: 'Lantern',
+      what: 'A white hexagonal lantern stands 6 mm proud of a flat deck. In front of it, a hexagonal key in the player\'s colour, stuck to the Atom\'s own button with foam tape and standing just proud: press it flush and your finger, or a slapping palm, lands on the deck.',
+      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'Housing (top built in), platform, lantern, key. Lid: the one you have'], ['Needs', 'A right-angle USB-C plug on the Atom: the key sits on the Atom, and a centred Atom leaves 21.5 mm for a 22 mm straight plug'], ['Feel', 'A crisp, shallow click under one finger']],
+      risk: 'To find out in a print: how the lantern looks at 1.0 mm thick, and whether your foam tape gives the half millimetre the key needs (three key heights are in the folder).',
+    },
+    beacon: {
+      name: 'Beacon',
+      what: 'The same body and the same key, with the light a 22 mm column. It reads from across the table and from any side, and at "waiting" brightness a tall lantern still shows whose seat is whose. It is the tallest of the three, about where the cap is today.',
+      spec: [['Size', '72 × 80 × 32.5 mm, 54.5 to the top of the light'], ['Press', 'A 15 mm key, 0.8 mm of travel; the deck is the stop'], ['Print', 'As Lantern, with a taller lantern (27 mm, prints face down)'], ['Needs', 'The same right-angle USB-C plug as the Lantern'], ['Feel', 'As Lantern; the light is the show']],
+      risk: 'To find out in a print: whether the column lights evenly to its top (the LEDs are 27 mm under its face), and whether a tall light is in the way of reaching across the table.',
+    },
+    keyplate: {
+      name: 'Keyplate',
+      what: 'The whole top is the button. A plate floats inside the walls with a shadow gap all round, hinged on two tongues in the back wall and resting on the Atom through a foot on foam tape. Press it anywhere in front of the lantern; it stops on the Atom\'s own rim. The lantern stands on the platform and comes up through the plate, so the light never moves.',
+      spec: [['Size', '72 × 80 × 32.5 mm, 38.5 to the top of the light'], ['Press', 'The whole deck: 0.8 mm at the Atom, 1 mm at the front edge'], ['Print', 'Housing (walls only), plate, platform, lantern. Lid: the one you have'], ['Needs', 'Nothing new: the Atom hides 8 mm off centre under the plate, with the straight plug you have'], ['Feel', 'A mouse button the size of your palm; the further forward, the lighter']],
+      risk: 'To find out in a print: the hinge. The tongues are drawn to print without support and to hold the back edge down, but a hinge is the one thing here that only a print proves. The plate is held at the front by the tape on its foot.',
+    },
+  };
+
+  // ── scene ─────────────────────────────────────────────────────────────────
+  const stage = $('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x070a11, 1);
+  // No sRGB output encoding: this three.js (r128) takes colours as given, and encoding on top washed them out.
+  renderer.toneMapping = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.localClippingEnabled = true;
+  stage.appendChild(renderer.domElement);
+  const camera = new THREE.PerspectiveCamera(28, 1, 5, 3000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.1; controls.maxPolarAngle = Math.PI * 0.495;
+  controls.autoRotate = true; controls.autoRotateSpeed = 0.7;
+  renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; });
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x070a11, 420, 1000);
+  scene.add(new THREE.HemisphereLight(0xb9c6ff, 0x0a0c12, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff2dd, 0.75); sun.position.set(150, 170, 170); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -90; sun.shadow.camera.right = 90; sun.shadow.camera.top = 90; sun.shadow.camera.bottom = -90; sun.shadow.camera.far = 600; sun.shadow.bias = -0.0005; sun.shadow.radius = 4;
+  scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x8fb0ff, 0.6); rim.position.set(-170, 80, -140); scene.add(rim);
+  // the table: dark, takes the shadow and the lantern's glow
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshStandardMaterial({ color: 0x10141d, roughness: 0.85, metalness: 0 }));
+  table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
+  const grid = new THREE.GridHelper(400, 40, 0x232c46, 0x1a2135); grid.position.y = 0.03; grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
+  const group = new THREE.Group(); group.rotation.x = -Math.PI / 2; scene.add(group);
+  const glow = new THREE.PointLight(0xff8a1f, 1, 170, 2); glow.castShadow = true; glow.shadow.mapSize.set(1024, 1024); glow.shadow.bias = -0.002; glow.shadow.camera.near = 2; glow.shadow.radius = 3; scene.add(glow);
+  // a soft halo round the lantern, drawn on a sprite
+  const haloTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const r = g.createRadialGradient(128, 128, 0, 128, 128, 128); r.addColorStop(0, 'rgba(255,255,255,0.55)'); r.addColorStop(0.25, 'rgba(255,255,255,0.22)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: 0xff8a1f, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  scene.add(halo);
+  const clip = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0);       // cut down the centre line: the half kept faces the hero view
+
+  const state = { design: 'lantern', colour: PLAYERS[1][1], light: 'turn', since: performance.now(), cut: false, explode: 0, hidden: new Set(), pressAt: -1e9 };
+  let meshes = {}, meta = null;
+  const cache = {};
+
+  function geometry(d) {
+    let geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(d.v, 3));
+    geo.setIndex(d.i);
+    geo = geo.toNonIndexed();
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  async function load(design) {
+    $('loading').style.display = '';
+    const data = cache[design] || (cache[design] = await (await fetch(`slab/${design}.json`)).json());
+    for (const m of Object.values(meshes)) { group.remove(m); m.geometry.dispose(); m.material.dispose(); }
+    meshes = {}; meta = data.meta; state.design = design;
+    group.position.y = -meta.bottom;
+    $('parts').innerHTML = '';
+    for (const key of ORDER) {
+      const md = data.parts[key];
+      if (!md) continue;
+      const lit = key === 'lantern';
+      const mat = new THREE.MeshStandardMaterial({ color: COLOURS[key], roughness: lit ? 0.35 : TINTED.has(key) ? 0.45 : 0.62, metalness: 0.04, side: THREE.DoubleSide, transparent: lit, opacity: lit ? 0.93 : 1, clippingPlanes: [] });
+      const mesh = new THREE.Mesh(geometry(md), mat);
+      mesh.castShadow = !lit; mesh.receiveShadow = true;
+      mesh.userData.lift = LIFT[key] || 0; mesh.renderOrder = lit ? 2 : 1;
+      group.add(mesh); meshes[key] = mesh;
+      const row = document.createElement('label');
+      row.innerHTML = `<input type="checkbox" checked id="p-${key}"><i style="background:${TINTED.has(key) ? state.colour : COLOURS[key]}" id="i-${key}"></i>${LABELS[key]}${PRINTED.has(key) ? '' : ' <span class="note">· bought</span>'}`;
+      row.querySelector('input').onchange = (e) => { if (e.target.checked) state.hidden.delete(key); else state.hidden.add(key); apply(); };
+      $('parts').appendChild(row);
+    }
+    const a = ABOUT[design];
+    $('d-name').textContent = a.name; $('d-what').textContent = a.what; $('d-risk').textContent = a.risk;
+    $('d-spec').innerHTML = a.spec.map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('');
+    document.querySelectorAll('.tab').forEach((t) => t.setAttribute('aria-pressed', String(t.dataset.design === design)));
+    $('press').textContent = meta.plate ? 'Press the plate' : 'Press the key';
+    $('loading').style.display = 'none';
+    state.since = performance.now();
+    apply();
+  }
+
+  function apply() {
+    for (const [key, mesh] of Object.entries(meshes)) {
+      mesh.visible = !state.hidden.has(key);
+      mesh.userData.base = mesh.userData.lift * state.explode;
+      mesh.material.clippingPlanes = state.cut ? [clip] : [];
+      mesh.material.needsUpdate = true;
+      const box = $('p-' + key); if (box) box.checked = !state.hidden.has(key);
+    }
+    for (const key of TINTED) {
+      if (meshes[key]) { meshes[key].material.color.set(state.colour).multiplyScalar(0.5); meshes[key].material.emissive.set(state.colour); meshes[key].material.emissiveIntensity = 0.25; }
+      const chip = $('i-' + key); if (chip) chip.style.background = state.colour;
+    }
+  }
+
+  // ── the light: what the button would be doing, 0..1, and in which colour ──
+  function level(t) {
+    switch (state.light) {
+      case 'waiting': return [0.06, state.colour];
+      case 'card': { const p = (t % 2000) / 2000; const l = p < 0.38 ? 1 : p < 0.5 ? 1 - (p - 0.38) / 0.12 * 0.95 : p < 0.88 ? 0.05 : 0.05 + (p - 0.88) / 0.12 * 0.95; return [l, CARD]; }
+      case 'score': { const p = (t % 1400) / 1400; return [0.35 + 0.65 * (1 - p) * (1 - p), state.colour]; }
+      default: { return [t < 4250 ? 0.34 + 0.66 * (0.5 - 0.5 * Math.cos(t / 1700 * 2 * Math.PI)) : 1, state.colour]; }   // breathe, then steady
+    }
+  }
+
+  const white = new THREE.Color('#ffffff'), tmp = new THREE.Color(), dark = new THREE.Color();
+  function frame(now) { draw(now); requestAnimationFrame(frame); }
+  function draw(now) {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    if (meta) {
+      const [l, colour] = level(now - state.since);
+      // a press: the key (or the plate) goes down and comes back, and the light answers with a white punch
+      const pt = now - state.pressAt;
+      const down = pt < 90 ? pt / 90 : pt < 300 ? 1 - (pt - 90) / 210 : 0;
+      const punch = pt < 260 ? 1 - pt / 260 : 0;
+      tmp.set(colour).lerp(white, punch * 0.8);
+      const L = Math.min(1, l + punch * 0.5);
+      const lantern = meshes.lantern;
+      if (lantern) { lantern.material.emissive.copy(tmp); lantern.material.emissiveIntensity = 0.03 + 0.97 * L; dark.copy(tmp).multiplyScalar(0.3); lantern.material.color.set('#e6e9ef').lerp(dark, L); }
+      if (meshes.hex) { meshes.hex.material.emissive.copy(tmp); meshes.hex.material.emissiveIntensity = 0.9 * L; }
+      for (const [key, mesh] of Object.entries(meshes)) { mesh.position.set(0, 0, mesh.userData.base || 0); mesh.rotation.set(0, 0, 0); }
+      const exag = 2.5;      // the real travel is under a millimetre: drawn bigger so it can be seen
+      if (meshes.key) meshes.key.position.z -= meta.press * exag * down;
+      for (const p of meta.plate ? [meshes.plate] : []) {
+        if (!p) continue;
+        const a = THREE.MathUtils.degToRad(meta.turn) * exag * down;
+        // turn about the hinge line (along x, at the back wall, at the plate's underside)
+        const py = meta.pivot[0], pz = meta.pivot[1] + (p.userData.base || 0);
+        p.rotation.x = a;
+        p.position.y = py - (py * Math.cos(a) - pz * Math.sin(a));
+        p.position.z = pz - (py * Math.sin(a) + pz * Math.cos(a)) + (p.userData.base || 0);
+      }
+      const ly = -meta.bottom + meta.topz + meta.lantern_h * 0.5 + (meshes.lantern ? meshes.lantern.userData.base || 0 : 0);
+      glow.color.copy(tmp); glow.intensity = meshes.lantern && meshes.lantern.visible ? 1.9 * L : 0; glow.position.set(meta.hx, ly + meta.lantern_h * 0.5 + 6, -meta.hy);
+      halo.material.color.copy(tmp); halo.material.opacity = meshes.lantern && meshes.lantern.visible ? 0.75 * L : 0;
+      halo.position.set(meta.hx, ly, -meta.hy); const s = 70 + meta.lantern_h * 2.2; halo.scale.set(s, s, 1);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  // model +y (the port wall, away from the player) is three.js -z; model +x is three.js +x
+  const VIEWS = { hero: [120, 100, 150], player: [8, 130, 190], across: [-50, 34, -300], top: [0, 290, 0.01], port: [0, 55, -240] };
+  let reach = 1;
+  // pulled apart, the stack is three times as tall: look higher and from further back, along the same line
+  function frameUp() {
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    controls.target.set(0, 18 + 36 * state.explode, 0);
+    camera.position.copy(controls.target).addScaledVector(dir, reach * (1 + 0.75 * state.explode));
+    controls.update();
+  }
+  function look(name) {
+    const [x, y, z] = VIEWS[name];
+    camera.position.set(x, y, z); controls.target.set(0, 18, 0); reach = camera.position.distanceTo(controls.target);
+    frameUp();
+    document.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+  }
+
+  function press() { state.pressAt = performance.now(); }
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    const target = meshes.plate || meshes.key;
+    if (target && target.visible && ray.intersectObject(target).length) press();
+  });
+
+  // ── controls ──────────────────────────────────────────────────────────────
+  for (const [name, hex] of PLAYERS) {
+    const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', name); b.setAttribute('aria-checked', String(hex === state.colour)); b.style.setProperty('--sw', hex);
+    b.onclick = () => { state.colour = hex; document.querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-checked', String(s === b))); apply(); };
+    $('swatches').appendChild(b);
+  }
+  document.querySelectorAll('.tab').forEach((t) => { t.onclick = () => load(t.dataset.design); });
+  document.querySelectorAll('[data-state]').forEach((b) => { b.onclick = () => { state.light = b.dataset.state; state.since = performance.now(); document.querySelectorAll('[data-state]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; });
+  document.querySelectorAll('[data-view]').forEach((b) => { b.onclick = () => { controls.autoRotate = false; look(b.dataset.view); }; });
+  $('press').onclick = press;
+  $('cut').onclick = () => { state.cut = !state.cut; $('cut').setAttribute('aria-pressed', String(state.cut)); apply(); };
+  $('explode').oninput = (e) => { state.explode = +e.target.value; apply(); frameUp(); };
+
+  look('hero');
+  load('lantern').then(() => requestAnimationFrame(frame));
+  // For checking the page from a script: draw one frame at a chosen moment, with no animation loop needed.
+  window.slab = { load, look, draw, press, state, canvas: renderer.domElement };
+})();
+</script>
+</body>
+</html>
