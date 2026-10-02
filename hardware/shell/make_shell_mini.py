@@ -81,7 +81,7 @@ FLEX_R = 16.0            # the sprung middle of the plate ends here; the ring ou
 #   'bars'   (2026-09-26 to 2026-09-30): three straight bars, 1.4 x 3.0 with wide roots. About 40 to 90 N/mm and 85 to
 #            135 MPa per mm of bend; at a 1.0 mm stop that is past what PLA takes. Two snapped with no stop (2026-09-28),
 #            the thinner 1.0 x 2.2 ones cracked at a 0.5 mm stop (2026-09-30). Kept to compare.
-FLEX_STYLE = os.environ.get('PAX_FLEX', 'spiral')     # PAX_FLEX=bars .venv/bin/python make_shell_v2.py draws the old one
+FLEX_STYLE = os.environ.get('PAX_FLEX', 'bars')       # the bars: Garett tried the spiral arms and wants the old cage (2026-10-02). PAX_FLEX=spiral draws those
 SPIRAL_T = 1.8           # the sprung middle's thickness (the plate is PAD_T): flush with the plate's underside
 SPIRAL_DISC_R = 4.5      # the disc the peg's stem goes through
 SPIRAL_SWEEP = 300       # each slot's sweep in degrees; the arm between two slots sweeps SPIRAL_SWEEP - 120
