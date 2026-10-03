@@ -28,6 +28,17 @@ export const test = base.extend<{ problems: string[] }>({
     await context.clock.pauseAt(t0 + 1000);
     await context.route('**/api/**', (r) => r.fulfill({ status: 503, contentType: 'text/plain', body: 'offline' }));
     await context.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+    // The two-beat strategy card (primary first, then secondaries) is what most of these tests exercise, so they run as a
+    // table that has ticked it. A browser with any saved settings, of any version, is left alone; strategy-card.spec.ts
+    // covers the real default, where everyone is called at once.
+    await context.addInitScript(() => {
+      try {
+        if (Object.keys(localStorage).some((k) => k.startsWith('pb.settings.'))) return;
+        localStorage.setItem('pb.settings.v5', JSON.stringify({ primaryStage: true }));
+      } catch {
+        // A blank or sandboxed document has no storage: nothing to seed.
+      }
+    });
     await use(context);
   },
   problems: [
@@ -85,6 +96,8 @@ export async function seedStorage(page: Page, entries: Record<string, unknown>) 
   await page.addInitScript((e) => {
     if (sessionStorage.getItem('e2e.seeded')) return;
     sessionStorage.setItem('e2e.seeded', '1');
+    // A test that brings its own settings (of any version) replaces the ones the fixture put there.
+    if (Object.keys(e).some((k) => k.startsWith('pb.settings.'))) for (const k of Object.keys(localStorage)) if (k.startsWith('pb.settings.')) localStorage.removeItem(k);
     for (const [k, v] of Object.entries(e)) localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v));
   }, entries);
 }

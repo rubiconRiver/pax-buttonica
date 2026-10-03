@@ -640,7 +640,7 @@ export interface GameEvent {
   noop?: true;
 }
 
-export const AUTO_ACTIONS = new Set<Action['type']>(['UPDATE_PLAYER', 'BIND', 'IDENTIFY', 'FANFARE_DONE', 'SET_STATUS_FLOW']);
+export const AUTO_ACTIONS = new Set<Action['type']>(['UPDATE_PLAYER', 'BIND', 'IDENTIFY', 'FANFARE_DONE', 'SET_STATUS_FLOW', 'SET_PRIMARY_STAGE']);
 
 /** Everything except transient effects and the log: what makes an action "count". */
 export const core = (g: GameState) => JSON.stringify({ ...g, fx: 0, fxSeq: 0, log: 0, logSeq: 0 });

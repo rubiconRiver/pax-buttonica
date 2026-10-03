@@ -58,7 +58,7 @@ test.describe('hold to end the turn', () => {
     await table.expectActive('Dave');
     await table.hold('Dave', 1000);
     await table.expectActive('Kyle');
-    expect((await readStorage(page, 'pb.settings.v4')).holdMs).toBe(1000);
+    expect((await readStorage(page, 'pb.settings.v5')).holdMs).toBe(1000);
     await page.reload();
     await expect(page.locator('.center__hint')).toContainText('hold 1s to end the turn');
   });
@@ -77,7 +77,7 @@ test('a laptop that saved its settings before keeps what it chose, and gets the 
 
   // Chosen by hand, it stays.
   await page.evaluate(() => {
-    localStorage.removeItem('pb.settings.v4');
+    localStorage.removeItem('pb.settings.v5');
     localStorage.setItem('pb.settings.v1', JSON.stringify({ holdMs: 1500, brightness: 0.7 }));
   });
   await page.reload();
@@ -87,7 +87,7 @@ test('a laptop that saved its settings before keeps what it chose, and gets the 
 
   // A v2 laptop: 50 % and 10 % were its defaults, nobody chose them; a waiting level set by hand stays.
   await page.evaluate(() => {
-    localStorage.removeItem('pb.settings.v4');
+    localStorage.removeItem('pb.settings.v5');
     localStorage.setItem('pb.settings.v2', JSON.stringify({ brightness: 0.5, waitingBrightness: 0.1, volume: 0.3 }));
   });
   await page.reload();
@@ -97,7 +97,7 @@ test('a laptop that saved its settings before keeps what it chose, and gets the 
   await expect(panel.getByRole('slider', { name: /Volume/ })).toHaveValue('0.3');
   expect(await readStorage(page, 'pb.settings.v2')).toBeNull();
   await page.evaluate(() => {
-    localStorage.removeItem('pb.settings.v4');
+    localStorage.removeItem('pb.settings.v5');
     localStorage.setItem('pb.settings.v2', JSON.stringify({ brightness: 0.5, waitingBrightness: 0.2 }));
   });
   await page.reload();

@@ -81,6 +81,8 @@ test('record the tour', async ({ browser, baseURL }) => {
     recordVideo: { dir: join(OUT, 'raw'), size: { width: 1920, height: 1080 } },
   });
   await context.addInitScript(inject);
+  // The video shows the two-beat strategy card (primary first), which is a setting now, not the default.
+  await context.addInitScript(() => { try { if (!localStorage.getItem('pb.settings.v5')) localStorage.setItem('pb.settings.v5', JSON.stringify({ primaryStage: true })); } catch { /* no storage on a blank page */ } });
   // The site, stood in for: the phones read the game and post presses through it.
   await new FakeApi().install(context);
   const page = await context.newPage();

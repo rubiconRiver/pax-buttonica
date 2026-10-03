@@ -1,4 +1,5 @@
-import { DEMO, PRIMARY_GUARD_MS, expect, lab, openDemo, openSettings, readStorage, setSlider, test } from './helpers';
+import { DEMO, PRIMARY_GUARD_MS, Table, expect, lab, liveGame, openDemo, openSettings, readStorage, seedStorage, setSlider, setUpGame, test } from './helpers';
+import { pickCards } from './flows';
 
 /**
  * "When someone plays a strategy card, nobody gets skipped." The two-beat flow, its guards, and the setting that
@@ -102,7 +103,7 @@ test.describe('setting: primary first, then secondaries', () => {
     const panel = await openSettings(page);
     await panel.getByLabel('Strategy cards: primary first, then secondaries').uncheck();
     await page.keyboard.press('Escape');
-    expect((await readStorage(page, 'pb.settings.v4')).primaryStage).toBe(false);
+    expect((await readStorage(page, 'pb.settings.v5')).primaryStage).toBe(false);
 
     await table.doubleTap('Dave');
     await expect(table.center.locator('.ability__label')).toHaveText('Secondary ability');
@@ -147,4 +148,47 @@ test('buttons that blink or breathe do it in step', async ({ page }) => {
   const delays = await Promise.all(others.map((n) => table.light(n).evaluate((el) => (el as HTMLElement).style.animationDelay)));
   expect(new Set(delays).size).toBe(1);
   expect(delays[0]).toMatch(/^-\d+(\.\d+)?ms$/);
+});
+
+test('a game saved with "everyone at once" follows the host\'s setting again as soon as the screen opens', async ({ page }) => {
+  await setUpGame(page, { names: ['Ana', 'Ben', 'Cleo'] });
+  await page.getByRole('button', { name: /Skip/ }).click();
+  const table = new Table(page);
+  await pickCards(table, [['Ana', 1], ['Ben', 2], ['Cleo', 3], ['Ana', 4], ['Ben', 5], ['Cleo', 6]]);
+  await table.expectActive('Ana');
+  // The game in this browser says "no primary beat" (an old save, another laptop's taste); the setting says otherwise.
+  await page.evaluate(() => {
+    const slot = JSON.parse(localStorage.getItem('pb.game.v4')!);
+    slot.game.primaryStage = false;
+    slot.base.primaryStage = false;
+    localStorage.setItem('pb.game.v4', JSON.stringify(slot));
+  });
+  await page.reload();
+  await table.expectActive('Ana');
+  expect((await liveGame(page)).primaryStage).toBe(true);
+  await table.center.getByRole('button', { name: /Play 1 Leadership/ }).click();
+  await expect(table.center.locator('.ability__label')).toHaveText('Primary ability');
+  await table.expectLights({ Ana: 'flash', Ben: 'dim', Cleo: 'dim' });
+});
+
+test('out of the box a strategy card calls everyone at once; a laptop that never chose "primary first" moves to that too', async ({ page }) => {
+  // No settings chosen by anyone: the real defaults.
+  await seedStorage(page, { 'pb.settings.v5': {} });
+  const table = await openDemo(page);
+  await expect((await openSettings(page)).getByLabel('Strategy cards: primary first, then secondaries')).not.toBeChecked();
+  await page.keyboard.press('Escape');
+  await table.doubleTap('Dave');
+  await expect(table.center.locator('.ability__label')).toHaveText('Secondary ability');
+  await table.expectLights({ Dave: 'solid', Kyle: 'flash', Jen: 'flash' });
+
+  // A laptop from last week saved "primary first" along with everything else, without anyone choosing it.
+  await page.evaluate(() => {
+    localStorage.removeItem('pb.settings.v5');
+    localStorage.setItem('pb.settings.v4', JSON.stringify({ primaryStage: true, volume: 0.3 }));
+  });
+  await page.reload();
+  const panel = await openSettings(page);
+  await expect(panel.getByLabel('Strategy cards: primary first, then secondaries')).not.toBeChecked();
+  await expect(panel.getByRole('slider', { name: /Volume/ })).toHaveValue('0.3');
+  expect(await readStorage(page, 'pb.settings.v4')).toBeNull();
 });

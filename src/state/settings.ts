@@ -28,7 +28,7 @@ export interface Settings {
   clipMaxSec: number;
   /** Show the little caption under each button explaining its light. */
   explainLights: boolean;
-  /** Strategy cards: the owner's button blinks for the primary before everyone else is called. */
+  /** Strategy cards: the owner's button blinks for the primary before everyone else is called. Off: everyone is called at once. */
   primaryStage: boolean;
   /** Put the scoreboard up by itself whenever the status phase begins. */
   autoScoreboard: boolean;
@@ -63,7 +63,7 @@ export const DEFAULT_SETTINGS: Settings = {
   volume: 0.8,
   clipMaxSec: 6,
   explainLights: true,
-  primaryStage: true,
+  primaryStage: false,
   autoScoreboard: true,
   turnLight: 'settle',
   turnFx: 'none',
@@ -81,7 +81,7 @@ export const DEFAULT_SETTINGS: Settings = {
 /** Whether a name is the one the host lets run the table from a phone: case and spaces don't matter. */
 export const isPhoneAdmin = (name: string | undefined, admin: string) => !!name && !!admin.trim() && name.trim().toLowerCase() === admin.trim().toLowerCase();
 
-const KEY = 'pb.settings.v4';
+const KEY = 'pb.settings.v5';
 
 /**
  * Settings are saved whole the first time anything is touched, so a changed default never reached a laptop that had
@@ -89,6 +89,7 @@ const KEY = 'pb.settings.v4';
  * v1 → v2 (2026-09-29): the hold went from 2 s to 0.9 s and brightness from 100 % to 50 %.
  * v2 → v3 (2026-09-30): your turn from 50 % to 60 %, waiting from 10 % to 5 %.
  * v3 → v4 (2026-09-30): your move breathes then holds instead of solid, and starts with no effect instead of the ring.
+ * v4 → v5 (2026-10-03): a strategy card calls everyone at once; waiting for the primary first is there for a table that asks for it.
  */
 function migrate() {
   try {
@@ -97,6 +98,7 @@ function migrate() {
       ['pb.settings.v1', (old) => { if (old.holdMs === 2000) delete old.holdMs; if (old.brightness === 1) delete old.brightness; }],
       ['pb.settings.v2', (old) => { if (old.brightness === 0.5) delete old.brightness; if (old.waitingBrightness === 0.1) delete old.waitingBrightness; }],
       ['pb.settings.v3', (old) => { if (old.turnLight === 'solid') delete old.turnLight; if (old.turnFx === 'ring') delete old.turnFx; }],
+      ['pb.settings.v4', (old) => { if (old.primaryStage === true) delete old.primaryStage; }],
     ];
     let old: Partial<Settings> | null = null;
     for (const [key, fix] of steps) {

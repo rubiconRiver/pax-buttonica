@@ -164,6 +164,12 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
     });
   }, [profiles, game.players, dispatch]);
 
+  // "Primary first, then secondaries" is the host's setting, and the game follows it: a game that was started, saved or
+  // picked up with the other answer is put right the moment the screen opens, not only when the box is next ticked.
+  useEffect(() => {
+    if (game.primaryStage !== settings.primaryStage) dispatch({ type: 'SET_PRIMARY_STAGE', on: settings.primaryStage });
+  }, [game.primaryStage, settings.primaryStage, dispatch]);
+
   // The table's taste in status phases lives in the game (phones and the log see it), and follows the settings.
   useEffect(() => {
     if (game.fanfareMs !== settings.fanfareMs || game.scoreInOrder !== settings.scoreInOrder || game.quietAgenda !== settings.quietAgenda) {
