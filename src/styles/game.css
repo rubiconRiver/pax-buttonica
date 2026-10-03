@@ -234,6 +234,34 @@
   transition: color 0.2s;
 }
 .seat[data-passed] .plate__name { color: var(--faint); text-shadow: none; text-decoration: line-through; text-decoration-thickness: 1px; }
+/* Passed has to read from across a dim room: the button goes grey, the seat fades, and a stamp sits across the dome. */
+.seat[data-passed] > .dev { filter: grayscale(1) brightness(0.5); }
+.seat[data-passed] .plate { opacity: 0.55; }
+.seat[data-passed] .plate__passed { display: none; }
+.seat[data-passed]::after {
+  content: 'Passed';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  translate: -50% -50%;
+  rotate: -12deg;
+  z-index: 3;
+  padding: 7px 12px 6px;
+  border: 3px solid #ff5468;
+  background: rgba(14, 4, 7, 0.88);
+  color: #ff7183;
+  font: 800 calc(var(--size, 122px) * 0.19)/1 var(--font-d);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 0 22px rgba(255, 84, 104, 0.55), inset 0 0 12px rgba(255, 84, 104, 0.25);
+  text-shadow: 0 0 12px rgba(255, 84, 104, 0.8);
+  pointer-events: none;
+  animation: stamp-in 0.28s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+@keyframes stamp-in {
+  from { scale: 1.8; opacity: 0; }
+}
 .plate__speaker {
   display: grid;
   place-items: center;
@@ -705,7 +733,8 @@
   .hextable { display: none; }
   .center::before { display: none; }
   .center { position: static; translate: none; width: 100%; grid-column: 1 / -1; order: -1; padding: 8px 0 14px; }
-  .seat { position: static; translate: none; width: auto; height: auto; transition: none; }
+  .seat { position: relative; left: auto; top: auto; translate: none; width: auto; height: auto; transition: none; }
+  .seat[data-passed]::after { top: calc(var(--size, 122px) / 2); }
   .seat__rank { position: static; translate: none; order: -1; margin-bottom: -4px; }
   .seat > .dev { position: relative; top: auto; left: auto; translate: none; }
   .seat .plate, .seat[data-above] .plate { position: static; }
