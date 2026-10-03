@@ -8,7 +8,7 @@ import { Scoreboard } from '../components/game/Scoreboard';
 import { reactionFor, useReactions, type Reaction } from '../components/game/useReactions';
 import { IconClose, IconGear, IconPlay, IconRedo, IconUndo, IconUpload, IconWhistle } from '../components/Icons';
 import { useWakeLock } from '../components/useWakeLock';
-import { PLAYER_COLORS, colorById } from '../engine/data';
+import { PLAYER_COLORS, STRATEGY_CARDS, colorById } from '../engine/data';
 import { CODE_LENGTH, cleanCode, seatOfDevice } from '../engine/engine';
 import { TURN_LOOKS, UNCLAIMED, clampBrightness, deriveOutputs, levelsOf, screenLevels, type DeviceOutput, type TurnLook, TURN_EFFECTS, type TurnEffect } from '../engine/outputs';
 import type { Action, GameState, SoundRef } from '../engine/types';
@@ -17,7 +17,7 @@ import type { PhoneRequest } from '../remote/relay';
 import { isPhoneAdmin } from '../state/settings';
 import { RefereePanel } from '../components/game/RefereePanel';
 import { ShipsLog } from '../components/game/ShipsLog';
-import { currentScorer, endTurnBlocker, pendingAcks } from '../engine/engine';
+import { cardHolder, currentPicker, currentScorer, endTurnBlocker, pendingAcks } from '../engine/engine';
 import { snapshotOf } from '../remote/messages';
 import { useStore } from '../state/createStore';
 import { createProfile, patchProfile, profilesStore, type Profile } from '../state/profiles';
@@ -406,6 +406,36 @@ function PhoneControls({ game, dispatch }: { game: GameState; dispatch(a: Action
   const buttons: { label: string; action: Action; ghost?: boolean }[] = [];
   const sp = game.strategyPlay;
   if (game.seating) return null;
+  if (game.phase === 'strategy') {
+    // Who takes what: tap the card the chooser took, as on the big screen.
+    const picker = currentPicker(game);
+    return (
+      <div className="join__picks" aria-label="Strategy cards">
+        <div className="join__picking">{picker != null ? <><b style={{ color: colorById(game.players[picker].color).led }}>{game.players[picker].name}</b> is choosing</> : 'All cards chosen'}</div>
+        <div className="join__cards">
+          {STRATEGY_CARDS.map((c) => {
+            const holder = cardHolder(game, c.n);
+            return (
+              <button
+                key={c.n}
+                type="button"
+                className="join__card"
+                style={{ '--cc': c.color } as CSSProperties}
+                disabled={holder != null || picker == null}
+                aria-label={holder != null ? `${c.n} ${c.name}, taken by ${game.players[holder].name}` : `${c.n} ${c.name}`}
+                onClick={() => dispatch({ type: 'PICK_CARD', card: c.n, at: at() })}
+              >
+                <b>{c.n}</b>
+                <span>{c.name}</span>
+                {holder != null && <small>{game.players[holder].name}</small>}
+                {holder == null && game.tradeGoods[c.n - 1] > 0 && <small>+{game.tradeGoods[c.n - 1]} TG</small>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
   if (game.phase === 'action' && game.active != null) {
     if (sp?.stage === 'primary') buttons.push({ label: 'Primary done', action: { type: 'PRIMARY_DONE', at: at() } });
     else if (sp && pendingAcks(game).length) buttons.push({ label: "Everyone's done", action: { type: 'ACK_ALL', at: at() } });
@@ -420,6 +450,8 @@ function PhoneControls({ game, dispatch }: { game: GameState; dispatch(a: Action
       buttons.push({ label: `${game.players[scorer].name} is done`, action: { type: 'SCORED', seat: scorer, at: at() } });
       buttons.push({ label: 'Skip to the tidy-up', action: { type: 'SKIP_SCORING', at: at() }, ghost: true });
     } else buttons.push({ label: "Everyone's ready", action: { type: 'READY_ALL', at: at() } });
+  } else if (game.phase === 'agenda' && game.quietAgenda) {
+    buttons.push({ label: 'Start the next round', action: { type: 'ADVANCE', at: at() } });
   } else if (game.phase === 'agenda') {
     buttons.push({ label: 'Vote done', action: { type: 'VOTE_DONE', at: at() } });
     buttons.push({ label: 'Skip to next round', action: { type: 'ADVANCE', at: at() }, ghost: true });

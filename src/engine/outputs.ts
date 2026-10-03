@@ -192,6 +192,7 @@ function light(g: GameState, seat: number): DeviceOutput {
         : { color: own, mode: 'off', reason: 'Tidy up — tap when ready' };
     }
     case 'agenda':
+      if (g.quietAgenda) return { color: own, mode: 'off', reason: 'Agenda phase' };
       return seat === currentVoter(g)
         ? { color: own, mode: 'pulse', reason: 'Your vote — tap when done' }
         : { color: own, mode: 'dim', reason: 'Waiting to vote' };

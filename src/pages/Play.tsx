@@ -22,8 +22,8 @@ export function Play() {
     return (
       <Setup
         onStart={(players, options) => {
-          const { primaryStage, fanfareMs, scoreInOrder } = settingsStore.get();
-          liveGame.start(players, { ...options, seating: true, primaryStage, fanfareMs, scoreInOrder });
+          const { primaryStage, fanfareMs, scoreInOrder, quietAgenda } = settingsStore.get();
+          liveGame.start(players, { ...options, seating: true, primaryStage, fanfareMs, scoreInOrder, quietAgenda });
         }}
       />
     );

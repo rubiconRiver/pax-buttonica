@@ -406,6 +406,25 @@ describe('status and agenda', () => {
     expect(g.ready[0]).toBe(true);
   });
 
+  it('can keep the agenda phase quiet: every button dark, presses ignored, until the next round is started', () => {
+    let g = run(sixInAction(), { type: 'SET_STATUS_FLOW', fanfareMs: 0, scoreInOrder: false, quietAgenda: true }, { type: 'SET_CUSTODIANS', removed: true }, { type: 'ADVANCE', at: 0 }, { type: 'READY_ALL', at: 0 });
+    expect(g.phase).toBe('agenda');
+    expect(deriveOutputs(g).every((o) => o.mode === 'off')).toBe(true);
+    expect(g.fx.at(-1)).toMatchObject({ kind: 'phase', note: 'agenda' });
+    const voter = g.agenda!.order[0];
+    g = reduce(g, { type: 'INPUT', seat: voter, input: 'tap', at: 0 });
+    expect(g.agenda!.idx).toBe(0);
+    g = reduce(g, { type: 'ADVANCE', at: 0 });
+    expect(g.phase).toBe('strategy');
+    expect(g.round).toBe(2);
+    // Left alone, the buttons call each voter in turn.
+    g = run(sixInAction(), { type: 'SET_STATUS_FLOW', fanfareMs: 0, scoreInOrder: false }, { type: 'SET_CUSTODIANS', removed: true }, { type: 'ADVANCE', at: 0 }, { type: 'READY_ALL', at: 0 });
+    expect(g.quietAgenda).toBe(false);
+    expect(deriveOutputs(g)[g.agenda!.order[0]].mode).toBe('pulse');
+    g = reduce(g, { type: 'INPUT', seat: g.agenda!.order[0], input: 'tap', at: 0 });
+    expect(g.agenda!.idx).toBe(1);
+  });
+
   it('knows the order of play in every phase', () => {
     let g = createGame(setup(6), { vpTarget: 10, speaker: 2 }, 0);
     expect(turnOrder(g)).toEqual([2, 3, 4, 5, 0, 1]);

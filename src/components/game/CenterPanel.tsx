@@ -292,6 +292,18 @@ function StatusView({ game, dispatch }: Props) {
 function AgendaView({ game, dispatch }: Props) {
   const a = game.agenda!;
   const voter = currentVoter(game);
+  if (game.quietAgenda) {
+    return (
+      <>
+        <div className="eyebrow">Round {game.round} · Agenda phase</div>
+        <h2 className="center__title">Agenda phase</h2>
+        <p className="center__hint">The buttons are resting. Vote at the table, then start the next round.</p>
+        <div className="center__actions">
+          <button type="button" className="btn btn--gold" onClick={() => dispatch({ type: 'ADVANCE', at: at() })}>Start the next round</button>
+        </div>
+      </>
+    );
+  }
   return (
     <>
       <div className="eyebrow">Round {game.round} · Agenda phase</div>

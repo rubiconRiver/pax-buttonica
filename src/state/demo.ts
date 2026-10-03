@@ -18,8 +18,8 @@ export type DemoPoint = 'strategy' | 'action' | 'late';
 
 export function seedDemo(store: GameStore, point: DemoPoint = 'action') {
   const at = Date.now();
-  const { primaryStage, fanfareMs, scoreInOrder } = settingsStore.get();
-  store.start(DEMO_PLAYERS, { vpTarget: 10, speaker: 0, primaryStage, fanfareMs, scoreInOrder });
+  const { primaryStage, fanfareMs, scoreInOrder, quietAgenda } = settingsStore.get();
+  store.start(DEMO_PLAYERS, { vpTarget: 10, speaker: 0, primaryStage, fanfareMs, scoreInOrder, quietAgenda });
   if (point === 'strategy') return;
   for (const card of DEMO_PICKS) store.dispatch({ type: 'PICK_CARD', card, at });
   if (point === 'late') {

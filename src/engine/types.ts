@@ -165,6 +165,8 @@ export interface GameState {
   fanfareMs: number;
   /** …and whether scoring goes round in initiative order, one player at a time. */
   scoreInOrder: boolean;
+  /** The agenda phase is the table's business: every button dark, presses mean nothing, until the next round is started. */
+  quietAgenda: boolean;
 
   // Agenda phase
   agenda: AgendaState | null;
@@ -222,7 +224,7 @@ export type Action =
   | { type: 'SCORED'; seat: number; at: number }
   /** Straight to the tidy-up, whoever hasn't scored yet. */
   | { type: 'SKIP_SCORING'; at: number }
-  | { type: 'SET_STATUS_FLOW'; fanfareMs: number; scoreInOrder: boolean }
+  | { type: 'SET_STATUS_FLOW'; fanfareMs: number; scoreInOrder: boolean; quietAgenda?: boolean }
   | { type: 'READY_ALL'; at: number }
   | { type: 'VOTE_DONE'; at: number }
   | { type: 'ADVANCE'; at: number }
@@ -259,6 +261,7 @@ export interface GameOptions {
   /** Status phase: how long every light celebrates the end of the round (0 = skip it), and whether scoring goes round in order. */
   fanfareMs?: number;
   scoreInOrder?: boolean;
+  quietAgenda?: boolean;
   /** Begin with the seat-claiming ritual instead of pre-assigned simulated buttons. */
   seating?: boolean;
 }

@@ -101,6 +101,10 @@ export function SettingsPanel({ onClose, onExit, onReseat, onPrimaryStage, demo 
           <input type="range" min={1000} max={15000} step={1000} value={s.fanfareMs} onChange={(e) => set({ fanfareMs: +e.target.value })} />
         </label>
       )}
+      <label className="toggle" title="On: every button goes dark for the agenda phase and presses mean nothing; start the next round from the big screen when the voting is done. Off: the buttons call each voter in turn.">
+        <input type="checkbox" checked={s.quietAgenda} onChange={(e) => set({ quietAgenda: e.target.checked })} />
+        <span>Agenda phase: buttons stay dark</span>
+      </label>
       <label className="toggle" title="On: after the rainbows, the first player in initiative order is called to score, taps when done, and so on round the table. Off: everyone scores at once.">
         <input type="checkbox" checked={s.scoreInOrder} onChange={(e) => set({ scoreInOrder: e.target.checked })} />
         <span>Score one player at a time, in initiative order</span>

@@ -648,3 +648,32 @@ test('everyone else\'s phone is just a button: no controls, and the host ignores
   await tick(both);
   await expect(phone.page.getByRole('button', { name: 'Log' })).toBeVisible();
 });
+
+test('the named player takes down who chose which strategy card from their phone', async ({ page, context }) => {
+  const { code, table } = await hostWithSite(page, context, ['Garett', 'Ben', 'Cleo']);
+  const phone = await openPhone(context, code);
+  const both = [page, phone.page];
+  await phone.iAm('Garett');
+  await tick(both);
+  await table.tapKey('2');
+  await table.tapKey('3');
+  await table.expectPhase('Strategy');
+  await tick(both);
+  await phone.page.getByRole('button', { name: 'Log' }).click();
+  const picks = phone.page.getByLabel('Strategy cards');
+  await expect(picks.locator('.join__picking')).toHaveText('Garett is choosing');
+  await picks.getByRole('button', { name: '3 Politics', exact: true }).click();
+  await tick(both);
+  await expect(picks.locator('.join__picking')).toHaveText('Ben is choosing');
+  await expect(picks.getByRole('button', { name: '3 Politics, taken by Garett' })).toBeDisabled();
+  await expect(table.seat('Garett').locator('.cardpip')).toHaveText(['3']);
+  // The rest of both laps, one tap and one look each.
+  for (const card of ['5 Trade', '1 Leadership', '8 Imperial', '2 Diplomacy', '6 Warfare']) {
+    await picks.getByRole('button', { name: card, exact: true }).click();
+    await tick(both);
+  }
+  await table.expectPhase('Action');
+  await table.expectActive('Cleo');
+  await expect(phone.page.getByLabel('Strategy cards')).toHaveCount(0);
+  await expect(phone.page.getByRole('button', { name: "End Cleo's turn" })).toBeVisible();
+});

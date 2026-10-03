@@ -152,3 +152,25 @@ test('the big screen shows the order of play, or the seating, and the order foll
   await page.reload();
   await expect(tableBox, 'the choice sticks').toHaveAttribute('data-layout', 'table');
 });
+
+test('the agenda phase can be kept quiet: every button dark until the next round is started', async ({ page }) => {
+  const table = await openDemo(page);
+  const panel = await openSettings(page);
+  await expect(panel.getByLabel('Agenda phase: buttons stay dark'), 'off unless the host asks for it').not.toBeChecked();
+  await panel.getByLabel('Agenda phase: buttons stay dark').check();
+  await page.keyboard.press('Escape');
+  await lab(page, 'Agenda phase').click();
+  await table.expectPhase('Agenda');
+  await page.keyboard.press('Escape');
+  await table.expectLights(Object.fromEntries(DEMO.map((n) => [n, 'off' as const])));
+  await expect(table.center).toContainText('The buttons are resting');
+  await expect(table.center.locator('.voter')).toHaveCount(0);
+  // Presses mean nothing.
+  for (const name of DEMO) await table.tap(name);
+  await table.expectPhase('Agenda');
+  await table.center.getByRole('button', { name: 'Start the next round' }).click();
+  await table.expectPhase('Strategy');
+  await expect(page.locator('.phases__round')).toHaveText('R2');
+  // The chooser's button comes back to life with the new round.
+  await table.expectLights({ Mike: 'pulse' });
+});

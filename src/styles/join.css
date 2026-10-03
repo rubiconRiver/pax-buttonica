@@ -85,3 +85,14 @@
 .join--log .log__rewind { opacity: 0.75; }
 .join__referee { gap: 10px; }
 .join__referee .popover--referee { position: static; width: auto; padding: 0; background: none; animation: none; box-shadow: none; }
+
+/* Choosing strategy cards from the phone that runs the table. */
+.join__picks { display: grid; gap: 10px; }
+.join__picking { font: 700 15px/1.2 var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+.join__cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.join__card { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 10px; row-gap: 2px; padding: 12px 10px; border: 1px solid color-mix(in srgb, var(--cc) 70%, #000); border-left: 5px solid var(--cc); background: color-mix(in srgb, var(--cc) 14%, #0b0e17); color: var(--text); text-align: left; cursor: pointer; }
+.join__card b { grid-row: span 2; font: 800 24px/1 var(--font-d); color: color-mix(in oklab, var(--cc) 70%, white); }
+.join__card span { font: 700 13px/1.1 var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; }
+.join__card small { grid-column: 2; font-size: 11.5px; color: var(--muted); }
+.join__card:disabled { opacity: 0.4; cursor: default; }
+.join__card:active:not(:disabled) { background: color-mix(in srgb, var(--cc) 35%, #0b0e17); }

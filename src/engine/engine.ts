@@ -70,6 +70,7 @@ export function createGame(setups: PlayerSetup[], options: GameOptions, at: numb
     ready: [],
     fanfareMs: options.fanfareMs ?? DEFAULT_FANFARE_MS,
     scoreInOrder: options.scoreInOrder ?? true,
+    quietAgenda: options.quietAgenda ?? false,
     agenda: null,
     winner: null,
     bindings: players.map((_, i) => (options.seating ? null : simDevice(i))),
@@ -228,7 +229,7 @@ export function holdCounts(g: GameState, seat: number): boolean {
       if (g.statusStep === 'scoring') return seat === currentScorer(g);
       return !g.ready[seat];
     case 'agenda':
-      return seat === currentVoter(g);
+      return !g.quietAgenda && seat === currentVoter(g);
     default:
       return false;
   }
@@ -394,8 +395,13 @@ function startAgendaPhase(g: GameState) {
   g.strategyPlay = null;
   g.choosingCard = false;
   g.agenda = { n: 1, order, idx: 0 };
-  log(g, 'Agenda phase — first agenda.', { tone: 'info' });
   fx(g, { kind: 'phase', note: 'agenda' });
+  if (g.quietAgenda) {
+    // The buttons rest: voting happens at the table, and the host starts the next round when it's done.
+    log(g, 'Agenda phase.', { tone: 'info' });
+    return;
+  }
+  log(g, 'Agenda phase — first agenda.', { tone: 'info' });
   fx(g, { kind: 'turnStart', seat: order[0] });
 }
 
@@ -538,7 +544,7 @@ function handleInput(g: GameState, seat: number, input: DeviceInput, at: number)
       if (g.statusStep === 'scoring') return scored(g, seat);
       return ready(g, seat, at);
     case 'agenda':
-      if (seat === currentVoter(g) && (input === 'tap' || input === 'hold')) voteDone(g, at);
+      if (!g.quietAgenda && seat === currentVoter(g) && (input === 'tap' || input === 'hold')) voteDone(g, at);
       return;
     case 'strategy':
       if (seat === currentPicker(g)) fx(g, { kind: 'hint', seat, note: 'Pick a card on the big screen' });
@@ -798,6 +804,7 @@ export function reduce(state: GameState, action: Action): GameState {
     case 'SET_STATUS_FLOW':
       g.fanfareMs = Math.max(0, Math.min(30000, Math.round(action.fanfareMs)));
       g.scoreInOrder = action.scoreInOrder;
+      if (typeof action.quietAgenda === 'boolean') g.quietAgenda = action.quietAgenda;
       break;
     case 'VOTE_DONE':
       voteDone(g, action.at);

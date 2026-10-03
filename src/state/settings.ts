@@ -48,6 +48,8 @@ export interface Settings {
   fanfareMs: number;
   /** …whether scoring goes round in initiative order, one player at a time… */
   scoreInOrder: boolean;
+  /** Agenda phase: every button dark and no presses, until the host starts the next round. */
+  quietAgenda: boolean;
   /** …and what the player whose turn it is to score gets, besides their light. */
   scoringCue: ScoringCue;
   /** Whose phone may run the table (scoring, the referee's levers, undo and rewind): a player's name, matched loosely. Empty: nobody's. */
@@ -71,6 +73,7 @@ export const DEFAULT_SETTINGS: Settings = {
   layout: 'order',
   fanfareMs: DEFAULT_FANFARE_MS,
   scoreInOrder: true,
+  quietAgenda: false,
   scoringCue: 'turn',
   phoneAdmin: 'Garett',
 };

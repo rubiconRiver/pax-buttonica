@@ -166,10 +166,10 @@ export function GameView({ store, game, demo = false, onExit }: Props) {
 
   // The table's taste in status phases lives in the game (phones and the log see it), and follows the settings.
   useEffect(() => {
-    if (game.fanfareMs !== settings.fanfareMs || game.scoreInOrder !== settings.scoreInOrder) {
-      dispatch({ type: 'SET_STATUS_FLOW', fanfareMs: settings.fanfareMs, scoreInOrder: settings.scoreInOrder });
+    if (game.fanfareMs !== settings.fanfareMs || game.scoreInOrder !== settings.scoreInOrder || game.quietAgenda !== settings.quietAgenda) {
+      dispatch({ type: 'SET_STATUS_FLOW', fanfareMs: settings.fanfareMs, scoreInOrder: settings.scoreInOrder, quietAgenda: settings.quietAgenda });
     }
-  }, [game.fanfareMs, game.scoreInOrder, settings.fanfareMs, settings.scoreInOrder, dispatch]);
+  }, [game.fanfareMs, game.scoreInOrder, game.quietAgenda, settings.fanfareMs, settings.scoreInOrder, settings.quietAgenda, dispatch]);
 
   // The host keeps time for the status-phase fanfare: when it's over, scoring begins.
   const fanfare = game.phase === 'status' && game.statusStep === 'fanfare';
