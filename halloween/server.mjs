@@ -9,7 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
-const PORT = Number(process.env.PORT || 8031);
+const PORT = Number(process.env.PORT || process.argv[2] || 8031);
 const HUE_FILE = path.join(dir, '.hue.json');   // { ip, key }: the bridge's address and this laptop's key to it; not committed
 const SOUNDS = path.join(dir, 'sounds');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.aac': 'audio/aac', '.flac': 'audio/flac' };

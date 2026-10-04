@@ -85,6 +85,25 @@
   .shows { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
   .shows .btn { text-align: left; }
   .shows .btn small { display: block; color: var(--faint); font: 400 11px var(--font-b); letter-spacing: 0; text-transform: none; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .chip { font: 600 11.5px var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); padding: 5px 10px 5px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
+  .chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
+  .chip.ok { color: var(--text); } .chip.ok::before { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+  .chip.warn { color: var(--text); } .chip.warn::before { background: var(--danger); }
+  .chip:hover { border-color: var(--gold); }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line-2); margin-bottom: -18px; }
+  .tab { font: 600 13px var(--font-d); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: none; border: 1px solid transparent; border-bottom: 0; padding: 10px 18px; cursor: pointer; clip-path: polygon(9px 0, 100% 0, 100% 100%, 0 100%, 0 9px); }
+  .tab:hover { color: var(--gold-2); }
+  .tab[aria-selected="true"] { color: var(--bg); background: var(--gold); }
+  .tab b { font-weight: 600; opacity: 0.7; margin-left: 4px; }
+  .tab:focus-visible { outline: 2px solid var(--gold-2); outline-offset: -2px; }
+  [data-panel][hidden] { display: none; }
+  .sub { font: 600 11.5px var(--font-d); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 8px 0 0; display: flex; align-items: center; gap: 8px; }
+  .sub::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .sub i { width: 10px; height: 10px; background: var(--k, var(--gold)); clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
+  .shows .btn { border-left: 3px solid var(--k, var(--line-2)); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%); }
+  .shows .btn.on { background: var(--k); color: #000; } .shows .btn.on small { color: #000; }
+  .item .n { font: 700 12px var(--font-d); color: var(--bg); background: var(--gold); width: 20px; height: 20px; display: grid; place-items: center; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
   code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--gold-2); }
 </style>
 </head>
@@ -94,70 +113,82 @@
     <div>
       <div class="eyebrow">Pax Buttonica · off duty</div>
       <h1>Halloween show</h1>
-      <p class="lede">A kid presses a button on the step; the porch lights and the speaker put on a few seconds of show, then everything settles back to a glow that says "press me". It all runs on this laptop: buttons through the hub on USB, lamps through the Hue bridge on the home network, sound from whatever speaker the laptop is using.</p>
+      <div class="chips">
+        <button class="chip" id="chiphub" data-open="buttons">Hub</button>
+        <button class="chip" id="chiphue" data-open="lamps">Lamps</button>
+        <button class="chip" id="chipsnd" data-open="settings">Sound</button>
+      </div>
     </div>
     <div class="count"><b id="count">0</b><small>presses tonight · <a href="#" id="zero" style="color:inherit">zero it</a></small></div>
   </header>
 
-  <section class="panel chamfer"><div class="in chamfer">
+  <section class="panel chamfer stage"><div class="in chamfer">
     <div class="row">
       <button class="btn primary big" id="arm">Start the show</button>
       <div>
-        <div class="now" id="now">Not running. Everything below can be tried without any hardware.</div>
+        <div class="now" id="now">Not running. Everything can be tried on screen with no hardware.</div>
         <div class="status" id="status"></div>
       </div>
     </div>
     <div class="lamps" id="lamps"></div>
     <div class="pads" id="pads"></div>
-    <p class="hint">Click a light (or press <code>1</code> to <code>4</code>) to press it the way a kid would. The circles are the lamps; the hexagons show what a real button of that kind is being told to show.</p>
   </div></section>
 
-  <div class="grid2">
-    <section class="panel chamfer"><div class="in chamfer">
-      <h2>Buttons</h2>
-      <div class="row"><button class="btn" id="connect">Connect the hub</button><span class="status" id="hubstatus">Hub not connected</span></div>
-      <div class="list" id="devs"></div>
-      <p class="hint">Chrome only. Buttons show up here as the hub hears them; give each a kind. Signal: around −50 is excellent, −70 fine, below −80 move the hub closer to the window. Works with the buttons' normal game firmware; nothing needs flashing.</p>
-    </div></section>
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="shows">Shows <b id="tabshows"></b></button>
+    <button class="tab" role="tab" data-tab="buttons">Buttons <b id="tabbuttons"></b></button>
+    <button class="tab" role="tab" data-tab="lamps">Lamps <b id="tablamps"></b></button>
+    <button class="tab" role="tab" data-tab="settings">Settings</button>
+  </nav>
 
-    <section class="panel chamfer"><div class="in chamfer">
-      <h2>Lamps</h2>
-      <div class="row" id="huepair">
-        <input type="text" id="hueip" placeholder="Bridge IP, e.g. 192.168.1.20" size="24">
-        <button class="btn sm" id="huefind">Find it</button>
-        <button class="btn" id="huego">Pair</button>
-        <button class="btn sm" id="huenone">Untick all</button>
-      </div>
-      <div class="status" id="huestatus">No Hue bridge yet: the circles above are stand-ins.</div>
-      <div class="list" id="huelist"></div>
-      <p class="hint">Press the round button on the Hue bridge, then Pair within 30 seconds. Lamps start unticked: tick the ones that are in the show and put them in order along the house (the chases run first to last). Your lamps' settings are noted when the show starts and put back when it stops.</p>
-    </div></section>
-  </div>
+  <section class="panel chamfer" data-panel="shows"><div class="in chamfer">
+    <div id="shows"></div>
+    <p class="hint">Click a show to see and hear it now; the real lamps only join in once the show is started. A press picks the next one of its kind, never the same twice running, and every thirteenth press of the night is the jackpot. The hexagons above are the kinds of button: click one (or press <code>1</code> to <code>4</code>) to press it the way a kid would.</p>
+  </div></section>
 
-  <section class="panel chamfer"><div class="in chamfer">
-    <h2>Settings</h2>
+  <section class="panel chamfer" data-panel="buttons" hidden><div class="in chamfer">
+    <div class="row"><button class="btn" id="connect">Connect the hub</button><span class="status" id="hubstatus">Hub not connected</span></div>
+    <div class="list" id="devs"></div>
+    <p class="hint">Buttons show up here as the hub hears them; give each a kind. Signal: around −50 is excellent, −70 fine, below −80 move the hub closer to the window. A hub that is unplugged and plugged back in is picked up again by itself. Works with the buttons' normal game firmware.</p>
+  </div></section>
+
+  <section class="panel chamfer" data-panel="lamps" hidden><div class="in chamfer">
+    <div class="row" id="huepair">
+      <input type="text" id="hueip" placeholder="Bridge IP, e.g. 192.168.1.20" size="24">
+      <button class="btn sm" id="huefind">Find it</button>
+      <button class="btn" id="huego">Pair</button>
+      <button class="btn sm" id="huenone">Untick all</button>
+      <span class="status" id="huestatus">No Hue bridge yet: the circles above are stand-ins.</span>
+    </div>
+    <div class="list" id="huelist"></div>
+    <p class="hint">Pairing is once: press the round button on the Hue bridge, then Pair within 30 seconds. The lamps in the show are a line: their order here is their order along the house, and the chases run first to last. Your lamps' settings are noted when the show starts and put back when it stops.</p>
+  </div></section>
+
+  <section class="panel chamfer" data-panel="settings" hidden><div class="in chamfer">
+    <div class="sub">Sound</div>
     <div class="row">
       <label class="f">Volume <input type="range" id="vol" min="0" max="100" step="5"><span id="volv"></span></label>
-      <label class="f">Lamp brightness <input type="range" id="lampmax" min="10" max="100" step="5"><span id="lampmaxv"></span></label>
-      <label class="f">Button brightness <input type="range" id="btnmax" min="10" max="100" step="5"><span id="btnmaxv"></span></label>
+      <label class="f">Sounds <select id="source"><option value="mix">Built-in and my recordings</option><option value="synth">Built-in only</option><option value="files">My recordings only</option></select></label>
+      <label class="f"><input type="checkbox" id="awake"> Keep the speaker awake</label>
     </div>
+    <p class="hint">Recordings go in <code>halloween/sounds/spooky</code>, <code>funny</code> and <code>magic</code> (mp3, wav, m4a); <span id="files">none found</span>.</p>
+    <div class="sub">A Bluetooth speaker plays late</div>
     <div class="row">
       <label class="f">Lights wait for the speaker <input type="range" id="lag" min="0" max="600" step="20"><span id="lagv"></span></label>
       <button class="btn sm" id="sync">Test: click and flash</button>
-      <label class="f"><input type="checkbox" id="awake"> Keep the speaker awake</label>
     </div>
+    <p class="hint">Run the test and move the slider until the click and the flash land together (the real lamps flash only while the show is started).</p>
+    <div class="sub">Lights</div>
     <div class="row">
-      <label class="f">Sounds <select id="source"><option value="mix">Built-in and my recordings</option><option value="synth">Built-in only</option><option value="files">My recordings only</option></select></label>
+      <label class="f">Lamp brightness <input type="range" id="lampmax" min="10" max="100" step="5"><span id="lampmaxv"></span></label>
+      <label class="f">Button brightness <input type="range" id="btnmax" min="10" max="100" step="5"><span id="btnmaxv"></span></label>
       <label class="f">Lamps between presses <select id="idle"><option value="glow">Orange and purple glow</option><option value="keep">Leave them as they were</option></select></label>
+    </div>
+    <div class="sub">The night</div>
+    <div class="row">
       <label class="f">Lights out at <input type="time" id="close"></label>
     </div>
-    <p class="hint">A Bluetooth speaker plays a little late, so the lights are held back to match: run the test and move the slider until the click and the flash land together. Recordings go in <code>halloween/sounds/spooky</code>, <code>funny</code> and <code>magic</code> (mp3, wav, m4a); <span id="files">none found</span>. At lights-out the buttons go dark and the lamps go back to how they were.</p>
-  </div></section>
-
-  <section class="panel chamfer"><div class="in chamfer">
-    <h2>The shows</h2>
-    <div class="shows" id="shows"></div>
-    <p class="hint">A press picks the next one of its kind, never the same twice running, and every thirteenth press of the night is the jackpot. Click one here to see and hear it now; the real lamps only join in once the show is started.</p>
+    <p class="hint">At lights-out the buttons go dark and the lamps go back to how they were.</p>
   </div></section>
 </div>
 
@@ -345,15 +376,31 @@
     },
   };
 
+  // The three lights under the title, and the counts on the tabs: what is connected, at a glance.
+  function chips() {
+    const live = devs.filter((d) => !d.lost).length, off = used().filter((l) => l.id && !l.reachable).length, rec = Object.values(sounds).reduce((a, l) => a + l.length, 0);
+    const set = (id, cls, text) => { $(id).className = 'chip ' + cls; $(id).textContent = text; };
+    set('chiphub', port ? (live ? 'ok' : 'warn') : '', port ? `Hub · ${live} button${live === 1 ? '' : 's'}` : 'Hub not connected');
+    set('chiphue', paired ? (off || !used().length ? 'warn' : 'ok') : '', paired ? `${used().length} lamp${used().length === 1 ? '' : 's'}${off ? ` · ${off} not reachable` : ''}` : 'No Hue bridge');
+    set('chipsnd', 'ok', rec ? `Sound · ${rec} recording${rec === 1 ? '' : 's'}` : 'Sound · built-in');
+    $('tabshows').textContent = SHOWS.length; $('tabbuttons').textContent = devs.length || ''; $('tablamps').textContent = paired ? used().length : '';
+  }
   function renderLamps() {
-    $('lamps').replaceChildren(...used().map((l) => { l.dot = el('i'); const box = el('div', { className: 'lamp' }, l.dot, el('small', { textContent: l.name })); paint(l, null, l.bri ?? 0, 0); return box; }));
-    $('huelist').replaceChildren(...(paired ? lamps : []).map((l, i) => {
+    $('lamps').replaceChildren(...used().map((l, k) => { l.dot = el('i'); const box = el('div', { className: 'lamp' }, l.dot, el('small', { textContent: `${k + 1} · ${l.name}` })); paint(l, null, l.bri ?? 0, 0); return box; }));
+    if (!used().length) $('lamps').append(el('p', { className: 'hint', textContent: 'No lamps in the show yet: tick some under Lamps.' }));
+    const row = (l) => {
+      const i = lamps.indexOf(l), order = lamps.map((x, k) => (x.use ? k : -1)).filter((k) => k >= 0), at = order.indexOf(i);
       const tick = el('input', { type: 'checkbox', checked: l.use }); tick.onchange = () => { l.use = tick.checked; lampsChanged(); };
-      const move = (d) => () => { const j = i + d; if (j < 0 || j >= lamps.length) return; [lamps[i], lamps[j]] = [lamps[j], lamps[i]]; lampsChanged(); };
+      const move = (d) => () => { const j = order[at + d]; if (j == null) return; [lamps[i], lamps[j]] = [lamps[j], lamps[i]]; lampsChanged(); };
       const blink = el('button', { className: 'btn sm', textContent: 'Blink' }); blink.onclick = () => hueSend(`lights/${l.id}/state`, { alert: 'select' }, true);
-      return el('div', { className: 'item' }, tick, el('span', { className: 'grow', textContent: l.name }), el('span', { className: 'meta' + (l.reachable ? '' : ' bad'), textContent: l.reachable ? '' : 'not reachable' }), blink,
-        el('button', { className: 'btn sm', textContent: '▲', onclick: move(-1) }), el('button', { className: 'btn sm', textContent: '▼', onclick: move(1) }));
-    }));
+      return el('div', { className: 'item' }, tick, ...(l.use ? [el('span', { className: 'n', textContent: at + 1 })] : []), el('span', { className: 'grow', textContent: l.name }), el('span', { className: 'meta bad', textContent: l.reachable ? '' : 'not reachable' }), blink,
+        ...(l.use ? [el('button', { className: 'btn sm', textContent: '▲', onclick: move(-1) }), el('button', { className: 'btn sm', textContent: '▼', onclick: move(1) })] : []));
+    };
+    const inShow = lamps.filter((l) => l.use), rest = lamps.filter((l) => !l.use);
+    $('huelist').replaceChildren(...(!paired ? [] : [
+      el('div', { className: 'sub', textContent: inShow.length ? 'In the show, in order along the house' : 'In the show: none yet, tick some below' }), ...inShow.map(row),
+      el('div', { className: 'sub', textContent: 'Not in the show' }), ...rest.map(row)]));
+    chips();
   }
   function lampsChanged() { store.lamps = lamps.map((l) => ({ id: l.id, use: l.use })); save(); renderLamps(); L.group(); }
 
@@ -400,6 +447,7 @@
       return el('div', { className: 'item' }, el('span', { className: 'id', textContent: d.dev.slice(-6) }), sel,
         el('span', { className: 'meta grow' + (d.lost || d.rssi < -80 ? ' bad' : ''), textContent: d.lost ? 'lost' : `${d.rssi ?? '…'} dBm${d.mv ? ` · ${(d.mv / 1000).toFixed(2)} V` : ''} · fw ${d.fw ?? '?'}` }), blink);
     }));
+    chips();
     $('hubstatus').innerHTML = port ? `Hub <b>connected</b> · <b>${devs.length}</b> button${devs.length === 1 ? '' : 's'} heard` : 'Hub not connected';
   }
   function handle(line) {
@@ -642,10 +690,11 @@
     if (counted) { store.count += 1; save(); $('count').textContent = store.count; }
     say(`${label(show)}: ${show.name}${buf ? ' (your recording)' : ''}`);
     const at = (when, fn) => timers.push(setTimeout(fn, when + +store.lag));
+    show.card?.classList.add('on');
     show.lights(at);
     at(show.ms, () => { if (armed) { L.idle(); } else L.all(null, 0, 600); });
     at(ms, () => { if (armed) B.idle(); else B.dark(); });
-    at(ms + 1200, () => { busy = false; timers = []; say(armed ? 'Waiting for a press.' : 'Not running.'); });   // a breath before the next one
+    at(ms + 1200, () => { show.card?.classList.remove('on'); busy = false; timers = []; say(armed ? 'Waiting for a press.' : 'Not running.'); });   // a breath before the next one
   }
   function press(role) { if (armed && !busy) play((store.count + 1) % 13 === 0 ? SHOWS.find((s) => s.role === 'jackpot') : deal(role), true); }
 
@@ -663,6 +712,7 @@
     L.idle(); B.idle();
   }
   function disarm(why = 'Not running.') {
+    for (const sh of SHOWS) sh.card?.classList.remove('on');
     armed = false; store.armed = false; wake?.release().catch(() => {}); wake = null; busy = false; timers.forEach(clearTimeout); timers = [];
     $('arm').textContent = 'Start the show'; $('arm').className = 'btn primary big';
     say(why); $('status').textContent = '';
@@ -679,7 +729,18 @@
     return pad;
   }));
   addEventListener('keydown', (e) => { if (e.target.matches('input, select')) return; const role = Object.keys(ROLES)[+e.key - 1]; if (role) pads[role].parentElement.click(); });
-  $('shows').replaceChildren(...SHOWS.map((s) => { const b = el('button', { className: 'btn' }, `${label(s)} · ${s.name}`, el('small', { textContent: s.what })); b.onclick = () => play(s, false); return b; }));
+  const kindColour = (role) => '#' + (ROLES[role]?.idle.c ?? C.gold);
+  $('shows').replaceChildren(...[...Object.keys(ROLES), 'jackpot'].filter((k) => SHOWS.some((s) => s.role === k)).flatMap((k) => {
+    const head = el('div', { className: 'sub' }, el('i'), ROLES[k]?.label ?? 'Jackpot'); head.style.setProperty('--k', kindColour(k));
+    const grid = el('div', { className: 'shows' }, ...SHOWS.filter((s) => s.role === k).map((s) => { s.card = el('button', { className: 'btn' }, s.name, el('small', { textContent: s.what })); s.card.style.setProperty('--k', kindColour(k)); s.card.onclick = () => play(s, false); return s.card; }));
+    return [head, grid];
+  }));
+  for (const [role, p] of Object.entries(pads)) p.parentElement.style.setProperty('--k', kindColour(role));
+  // tabs
+  const openTab = (name) => { store.tab = name; save(); for (const t of document.querySelectorAll('.tab')) t.setAttribute('aria-selected', String(t.dataset.tab === name)); for (const pnl of document.querySelectorAll('[data-panel]')) pnl.hidden = pnl.dataset.panel !== name; };
+  for (const t of document.querySelectorAll('.tab')) t.onclick = () => openTab(t.dataset.tab);
+  for (const c of document.querySelectorAll('.chip')) c.onclick = () => openTab(c.dataset.open);
+  openTab(store.tab ?? 'shows');
   const units = { vol: '%', lampmax: '%', btnmax: '%', lag: ' ms' };
   for (const id of ['vol', 'lampmax', 'btnmax', 'lag', 'source', 'idle', 'close', 'awake']) {
     const input = $(id), box = input.type === 'checkbox';
@@ -696,7 +757,7 @@
   $('connect').onclick = () => connect(false);
   B.dark(); renderLamps(); renderDevs();
   if (store.snapshot) $('status').textContent = 'The page was closed mid-show last time; starting and stopping once will put the lamps back as they were.';
-  fetch('/api/sounds').then((r) => r.json()).then((s) => { sounds = s; const nn = Object.entries(s).filter(([, l]) => l.length).map(([k, l]) => `${l.length} in ${k}`); if (nn.length) $('files').textContent = 'found ' + nn.join(', '); }).catch(() => {});
+  fetch('/api/sounds').then((r) => r.json()).then((s) => { sounds = s; const nn = Object.entries(s).filter(([, l]) => l.length).map(([k, l]) => `${l.length} in ${k}`); if (nn.length) $('files').textContent = 'found ' + nn.join(', '); chips(); }).catch(() => {});
   loadHue();
   // The hub is looked for again every few seconds, so a cable pulled and pushed back in mends itself.
   if (navigator.serial) { connect(true); setInterval(() => connect(true), 4000); }
