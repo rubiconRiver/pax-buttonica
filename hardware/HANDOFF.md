@@ -151,3 +151,9 @@ Garett asked for more fundamental designs after a week of cap, cage, peg, collar
 ## Back to the old cage (2026-10-02)
 
 Garett tried the spiral-arm cage from the other session and wants the old one: `FLEX_STYLE` now defaults to `bars` (the 1.4 × 3.0 bars with wide roots), and `stl-v2/cage.stl` and the pegs are byte-for-byte the files he printed before (`PAX_FLEX=spiral` still draws the spiral). The v5 slab designs stay drawn and unprinted; game night goes ahead on the v2 buttons as built.
+
+## Game day: 2026-10-03
+
+The first full game ran on the six v2 buttons (bar cage, Atom's own switch, hub 0.2.x, buttons 0.3.14+). Garett: "a big success. Everyone used them and it was a big load off not having to keep track of order ourselves." Mid-game he switched off "primary first, then secondaries" so a played card calls everyone at once. No hardware failed during the game that he reported.
+
+**Next iteration, in his words: the buttons have to feel way nicer, and people should be able to press them with a fist.** That points at a bought mechanism, not another printed one: see `reports/Glowing buttons to buy.md` (a 100 mm or 60 mm arcade dome on an Omron V microswitch and a steel spring, our own WS2812 light; test-buy two sizes before six). The v5 slab drawings stay as they are, unprinted.
