@@ -109,7 +109,7 @@
     </div>
     <div class="lamps" id="lamps"></div>
     <div class="pads" id="pads"></div>
-    <p class="hint">Click a light (or press <code>1</code>, <code>2</code>, <code>3</code>) to press it the way a kid would. The circles are the lamps; the hexagons show what a real button of that kind is being told to show.</p>
+    <p class="hint">Click a light (or press <code>1</code> to <code>4</code>) to press it the way a kid would. The circles are the lamps; the hexagons show what a real button of that kind is being told to show.</p>
   </div></section>
 
   <div class="grid2">
@@ -151,13 +151,13 @@
       <label class="f">Lamps between presses <select id="idle"><option value="glow">Orange and purple glow</option><option value="keep">Leave them as they were</option></select></label>
       <label class="f">Lights out at <input type="time" id="close"></label>
     </div>
-    <p class="hint">A Bluetooth speaker plays a little late, so the lights are held back to match: run the test and move the slider until the click and the flash land together. Recordings go in <code>halloween/sounds/spooky</code> and <code>halloween/sounds/funny</code> (mp3, wav, m4a); <span id="files">none found</span>. At lights-out the buttons go dark and the lamps go back to how they were.</p>
+    <p class="hint">A Bluetooth speaker plays a little late, so the lights are held back to match: run the test and move the slider until the click and the flash land together. Recordings go in <code>halloween/sounds/spooky</code>, <code>funny</code> and <code>magic</code> (mp3, wav, m4a); <span id="files">none found</span>. At lights-out the buttons go dark and the lamps go back to how they were.</p>
   </div></section>
 
   <section class="panel chamfer"><div class="in chamfer">
     <h2>The shows</h2>
     <div class="shows" id="shows"></div>
-    <p class="hint">A press picks the next one of its kind, never the same twice running. Click one here to see and hear it now; the real lamps only join in once the show is started.</p>
+    <p class="hint">A press picks the next one of its kind, never the same twice running, and every thirteenth press of the night is the jackpot. Click one here to see and hear it now; the real lamps only join in once the show is started.</p>
   </div></section>
 </div>
 
@@ -176,9 +176,10 @@
   const ROLES = {
     spooky: { label: 'Spooky', idle: { c: '6dff2a', m: 'heartbeat' } },
     funny: { label: 'Funny', idle: { c: 'ff8a1f', m: 'wave' } },
-    mystery: { label: 'Mystery', idle: { c: 'a24bff', m: 'rainbow' } },   // plays either kind
+    magic: { label: 'Magic', idle: { c: '7fd4ff', m: 'sparkle' } },       // gentle ones, for the smallest visitors
+    mystery: { label: 'Mystery', idle: { c: 'a24bff', m: 'rainbow' } },   // plays any kind
   };
-  const C = { white: 'ffffff', red: 'ff1a00', blood: 'b00000', green: '35ff3a', teal: '00c8a0', purple: '8a2be2', orange: 'ff7a00', blue: '3a6bff', pink: 'ff3fb0', yellow: 'ffd21f', mustard: '8a6a00' };
+  const C = { white: 'ffffff', red: 'ff1a00', blood: 'b00000', green: '35ff3a', teal: '00c8a0', purple: '8a2be2', orange: 'ff7a00', blue: '3a6bff', pink: 'ff3fb0', yellow: 'ffd21f', mustard: '8a6a00', gold: 'ffb428', night: '2040ff', sky: '00a0ff' };
 
   // ── sound ─────────────────────────────────────────────────────────────────
   let ac = null, master = null, wet = null, noiseBuf = null, hum = null;
@@ -259,6 +260,26 @@
       const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.2; bp.connect(master);
       tone(t, { type: 'sawtooth', f: [[0, hz(midi) * 0.97], [0.04, hz(midi)]], g: [[0, 0], [0.02, 0.5], [dur - 0.03, 0.45], [dur, 0]], vib: [6, 5], out: bp });
     },
+    chime(t, midi, dur = 1.2, v = 0.22) { for (const [mult, lv] of [[1, v], [3, v * 0.25], [4.2, v * 0.08]]) tone(t, { f: [[0, hz(midi) * mult]], g: [[0, 0], [0.005, lv], [dur * 0.3, lv * 0.3], [dur, 0]], out: wet }); },
+    step(t) { noise(t, { f: [[0, 260], [0.12, 80]], g: [[0, 0.9], [0.14, 0]] }); tone(t, { f: [[0, 80], [0.1, 40]], g: [[0, 0.6], [0.14, 0]] }); },
+    growl(t, dur = 1.6) {
+      const o = ac.createOscillator(), trem = ac.createGain(), gn = ac.createGain(), lp = ac.createBiquadFilter(), l = ac.createOscillator(), lg = ac.createGain();
+      o.type = 'sawtooth'; ramp(o.frequency, t, [[0, 55], [dur * 0.5, 78], [dur, 48]]); ramp(lp.frequency, t, [[0, 250], [dur * 0.5, 700], [dur, 200]]);
+      l.frequency.value = 27; lg.gain.value = 0.45; trem.gain.value = 0.55; l.connect(lg).connect(trem.gain);
+      ramp(gn.gain, t, [[0, 0], [0.15, 0.7], [dur - 0.3, 0.6], [dur, 0]]);
+      o.connect(lp).connect(trem).connect(gn).connect(wet); o.start(t); l.start(t); o.stop(t + dur + 0.05); l.stop(t + dur + 0.05);
+    },
+    cackle(t) {   // eh-heh-heh-heh-heh, getting quicker and lower
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1900; bp.Q.value = 2.5; bp.connect(wet);
+      let x = t; for (let k = 0; k < 8; k++) { const f = 760 - k * 45, d = 0.17 - k * 0.012; tone(x, { type: 'sawtooth', f: [[0, f * 1.25], [d, f * 0.8]], g: [[0, 0], [0.015, 0.7], [d * 0.7, 0.4], [d, 0]], out: bp }); x += d + 0.05; }
+    },
+    whoosh(t, dur = 1.2) { noise(t, { type: 'bandpass', q: 2, f: [[0, 300], [dur * 0.55, 2600], [dur, 400]], g: [[0, 0], [dur * 0.5, 0.7], [dur, 0]], out: wet }); },
+    warble(t, dur = 3) { tone(t, { f: [[0, 520], [dur, 700]], g: [[0, 0], [0.2, 0.14], [dur - 0.2, 0.14], [dur, 0]], vib: [9, 160], out: wet }); },
+    tuba(t, midi, dur = 0.3) { const lp = ac.createBiquadFilter(); lp.frequency.value = 420; lp.connect(master); tone(t, { type: 'sawtooth', f: [[0, hz(midi)]], g: [[0, 0], [0.02, 0.55], [dur * 0.8, 0.35], [dur, 0]], out: lp }); },
+    inhale(t, dur, v = 0.3) { noise(t, { type: 'bandpass', q: 3, f: [[0, 700], [dur, 2600]], g: [[0, 0], [dur * 0.9, v], [dur, 0]] }); tone(t, { f: [[0, 300], [dur, 620]], g: [[0, 0], [dur * 0.9, v * 0.4], [dur, 0]] }); },
+    achoo(t) { noise(t, { type: 'bandpass', q: 0.6, f: [[0, 3200], [0.5, 500]], g: [[0, 1], [0.12, 0.6], [0.6, 0]], out: wet }); tone(t, { type: 'sawtooth', f: [[0, 900], [0.45, 180]], g: [[0, 0.35], [0.5, 0]], out: wet }); },
+    blip(t, f = 440, dur = 0.08) { tone(t, { type: 'square', f: [[0, f]], g: [[0, 0.2], [dur, 0.2], [dur + 0.01, 0]] }); },
+    brass(t, midi, dur) { const lp = ac.createBiquadFilter(); ramp(lp.frequency, t, [[0, 600], [0.06, 2600], [dur, 1400]]); lp.connect(wet); for (const det of [0.997, 1.003]) tone(t, { type: 'sawtooth', f: [[0, hz(midi) * det]], g: [[0, 0], [0.03, 0.16], [dur - 0.05, 0.13], [dur, 0]], out: lp }); },
     click(t) { noise(t, { type: 'highpass', f: [[0, 2000]], g: [[0, 0.8], [0.03, 0]] }); },
   };
 
@@ -359,7 +380,7 @@
   const devs = [];                      // real buttons the hub has heard: { dev, role, fw, rssi, lost }
   const look = {};                      // what each kind is showing now: role → { c, m, d }
   const pads = {};                      // role → the on-screen light
-  let port = null, writer = null;
+  let port = null, writer = null, connecting = false;
   async function send(msg) { if (writer) await writer.write(new TextEncoder().encode(JSON.stringify(msg) + '\n')).catch(() => {}); }
   // hold: 300 makes every press count once: let go sooner and it is a tap, keep it down and the hold fires at 0.3 s.
   const cfg = (dev) => ({ t: 'cfg', dev, hold: 300, bright: +store.btnmax, dim: 10, fx: 100, pulse: 'pulse' });
@@ -419,9 +440,10 @@
   }
   async function connect(silent = false) {
     if (!navigator.serial) { $('hubstatus').textContent = 'This browser has no Web Serial. Use Chrome.'; return; }
-    if (port) return;
+    if (port || connecting) return;
+    connecting = true;
     try {
-      port = await findHub(silent);
+      port = await findHub(silent).finally(() => { connecting = false; });
       if (!port) return;
       await port.open({ baudRate: 115200 });
       writer = port.writable.getWriter();
@@ -439,6 +461,12 @@
   // at(ms, fn) from the start. `ms` is how long before the next press counts. Lamps change at most three times a second:
   // big flashing areas faster than that are unkind to people with photosensitive epilepsy.
   const n = () => Math.max(1, used().length);
+  // A light running along the house, lamp by lamp, `step` ms apart: each is lit in `c`, then let go to `rest` ([colour, level, fade])
+  // as the next one lights. Two commands a lamp, so no quicker than 200 ms a step. Answers when it arrives at the far end.
+  const run = (at, t0, step, dir, c, rest = [null, 0, 300]) => { const N = n(); for (let k = 0; k < N; k++) { const i = dir > 0 ? k : N - 1 - k; at(t0 + k * step, () => L.one(i, c, 1)); at(t0 + (k + 1) * step, () => L.one(i, ...rest)); } return t0 + N * step; };
+  // The same, but each lamp stays lit: one command a lamp, so it can go twice as fast.
+  const fill = (at, t0, step, dir, c, bri = 1, upTo = n()) => { const N = n(); for (let k = 0; k < Math.min(N, upTo); k++) { const i = dir > 0 ? k : N - 1 - k; at(t0 + k * step, () => L.one(i, typeof c === 'function' ? c(i) : c, bri, 100)); } return t0 + Math.min(N, upTo) * step; };
+  const RAINBOW = ['ff0000', 'ff8a00', 'ffe600', '00ff40', '00c8ff', '4040ff', 'ff00c8'];
   const SHOWS = [
     { role: 'spooky', name: 'Thunderstorm', what: 'blackout, lightning, thunder', ms: 6500,
       sound(t) { S.thunder(t + 0.6); S.thunder(t + 1.9, 0.6); },
@@ -498,7 +526,92 @@
         at(2600, () => { L.all(C.green, 0.9); B.all(C.green, 'sparkle'); B.fx('glitch'); }); at(3000, () => L.all(C.mustard, 0.5, 400));
         at(3800, () => { L.all(C.pink, 1); B.fx('fireworks'); }); at(4300, () => L.all(C.blue, 1)); at(4700, () => L.all(C.blue, 0.2, 800));
       } },
+    { role: 'spooky', name: 'Something runs past', what: 'footsteps along the house… and back', ms: 7400,
+      sound(t) { for (let k = 0; k < 7; k++) S.step(t + 0.4 + k * 0.23); for (let k = 0; k < 7; k++) S.step(t + 2.8 + k * 0.12); S.growl(t + 3.9); },
+      lights(at) {
+        at(0, () => { L.all(null, 0, 300); B.all(C.red, 'dim'); });
+        at(400, () => B.fx('thump')); run(at, 400, 1610 / n(), 1, C.red, [C.blood, 0, 250]);
+        fill(at, 2800, 840 / n(), -1, C.red);                                   // back the other way, faster, and it stays
+        at(3900, () => { L.all(C.red, 1); B.all(C.red, 'solid'); B.fx('alarm'); }); at(4500, () => L.all(C.blood, 0.3, 300)); at(4900, () => L.all(C.red, 1, 100)); at(5500, () => L.all(C.blood, 0.05, 1300));
+      } },
+    { role: 'spooky', name: 'Witch flyby', what: 'she goes over one way, then the other, then laughs', ms: 7000,
+      sound(t) { S.whoosh(t + 0.3, 1.5); S.whoosh(t + 2.2, 1.5); S.cackle(t + 3.9); },
+      lights(at) {
+        at(0, () => { L.all(C.green, 0.05, 300); B.all(C.green, 'spin', 500); });
+        at(300, () => B.fx('comet')); run(at, 300, 1400 / n(), 1, C.green, [C.green, 0.05, 400]);
+        at(2200, () => B.fx('comet')); run(at, 2200, 1400 / n(), -1, C.purple, [C.purple, 0.05, 400]);
+        at(3900, () => { L.all(C.green, 1); B.fx('glitch'); }); at(4300, () => L.all(C.purple, 0.8)); at(4700, () => L.all(C.green, 1)); at(5200, () => L.all(C.green, 0.05, 1200));
+      } },
+    { role: 'spooky', name: 'Flying saucer', what: 'it scans the house, then the beam', ms: 6800,
+      sound(t) { S.warble(t + 0.2, 3.2); tone(t + 3.4, { f: [[0, 200], [1.6, 1900]], g: [[0, 0], [0.2, 0.2], [1.5, 0.25], [1.6, 0]], out: wet }); S.pop(t + 5.05, 300); for (const [dt, f] of [[5.6, 1200], [5.8, 900], [6.0, 1500]]) S.blip(t + dt, f, 0.05); },
+      lights(at) {
+        at(0, () => { L.all(C.teal, 0.05, 200); B.all(C.teal, 'spin', 400); B.fx('laser'); });
+        run(at, 200, 1400 / n(), 1, C.teal, [C.teal, 0.05, 300]); run(at, 1700, 1400 / n(), -1, C.teal, [C.teal, 0.05, 300]);
+        at(3400, () => { L.all(C.white, 0.15); B.fx('warp'); }); at(3550, () => L.all(C.white, 1, 1400));
+        at(5050, () => { L.all(null, 0); B.all('000000', 'off'); });
+      } },
+    { role: 'funny', name: 'Ping pong', what: 'a rally along the house', ms: 7000,
+      sound(t) { const leg = 1.54; for (let k = 0; k < 4; k++) S.blip(t + 0.3 + k * leg, k % 2 ? 330 : 440); const end = t + 0.3 + 3 * leg + 0.5; for (const [dt, m] of [[0, 72], [0.12, 76], [0.24, 79], [0.36, 84]]) note(end + dt, m, dt > 0.3 ? 0.5 : 0.11); },
+      lights(at) {
+        at(0, () => { L.all(C.green, 0.08, 200); B.all(C.green, 'dim'); });
+        let x = 300; for (let k = 0; k < 3; k++) { at(x, () => B.fx('ripple')); x = run(at, x, 1540 / n(), k % 2 ? -1 : 1, C.white, [C.green, 0.08, 200]); }
+        at(x + 500, () => { L.all(C.yellow, 1); B.fx('fireworks'); }); at(x + 1100, () => L.all(C.green, 0.2, 800));
+      } },
+    { role: 'funny', name: 'Oom-pah parade', what: 'a tuba, a kazoo, and the lamps swapping sides', ms: 6600,
+      sound(t) { const b = 0.46; for (let k = 0; k < 12; k++) { S.tuba(t + 0.3 + k * b, k % 2 ? 31 : 36); for (const m of [60, 64, 67]) note(t + 0.3 + k * b + b / 2, m, 0.09, 'square', 0.07); } [72, 72, 76, 72, 79, 76, 72, 74, 74, 77, 74, 81].forEach((m, k) => S.kazoo(t + 0.3 + k * b, m, b * 0.7)); S.kazoo(t + 0.3 + 12 * b, 84, 0.5); },
+      lights(at) {
+        at(0, () => { B.all(C.orange, 'heartbeat', 460); B.fx('disco'); });
+        fill(at, 0, 100, 1, (i) => (i % 2 ? C.sky : C.orange));                 // opposite colours, so half a turn of the wheel swaps them
+        for (let k = 2; k <= 12; k++) at(300 + k * 460, () => L.spin(180, 100));
+        at(300 + 12 * 460, () => B.fx('confetti'));
+      } },
+    { role: 'funny', name: 'The big sneeze', what: 'ah… ah… AH…', ms: 6400,
+      sound(t) { S.inhale(t + 0.3, 0.5, 0.2); S.inhale(t + 1.2, 0.6, 0.3); S.inhale(t + 2.2, 1.0, 0.45); S.achoo(t + 3.5); S.whistle(t + 4.3, 1200, 300, 0.7); S.boing(t + 5.0); },
+      lights(at) {
+        at(0, () => { L.all(C.yellow, 0.05, 200); B.all(C.yellow, 'rings', 1100); });
+        fill(at, 300, 120, 1, C.yellow, 0.5, Math.ceil(n() * 0.3)); fill(at, 1200, 100, 1, C.yellow, 0.7, Math.ceil(n() * 0.6)); at(2200, () => L.all(C.yellow, 1, 900));
+        at(3500, () => { L.all(C.white, 1); B.fx('explosion'); });
+        fill(at, 3750, 100, 1, () => RAINBOW[Math.floor(Math.random() * 7)]); at(3900, () => B.fx('confetti'));
+        at(5000, () => L.all(C.orange, 0.2, 900));
+      } },
+    { role: 'magic', name: 'Twinkle xylophone', what: 'the house is the instrument: each note has its lamp', ms: 7400,
+      tune: [0, 0, 4, 4, 5, 5, 4, -1, 3, 3, 2, 2, 1, 1, 0],                     // steps of the scale; -1 is a rest
+      sound(t) { this.tune.forEach((d, k) => { if (d >= 0) S.chime(t + 0.3 + k * 0.36, [72, 74, 76, 77, 79, 81][d], k === 14 ? 2 : 0.9); }); },
+      lights(at) {
+        at(0, () => { L.all(C.night, 0.1, 300); B.all('7fd4ff', 'sparkle'); });
+        this.tune.forEach((d, k) => { if (d < 0) return; const i = Math.round(d / 5 * (n() - 1)), x = 300 + k * 360; at(x, () => { L.one(i, RAINBOW[d], 1); B.fx('sparkle'); }); if (k < 14) at(x + 250, () => L.one(i, C.night, 0.1, 300)); });
+        at(300 + 14 * 360 + 300, () => L.all(C.gold, 0.8, 500)); at(6400, () => L.all(C.gold, 0.1, 900));
+      } },
+    { role: 'magic', name: 'Shooting star', what: 'one streak along the house, then it twinkles', ms: 6400,
+      twinkles: [1500, 1900, 2300, 2700, 3100, 3500, 3900, 4300],
+      sound(t) { [72, 74, 76, 79, 81, 84, 86, 88, 91, 96].forEach((m, k) => S.chime(t + 0.3 + k * 0.08, m, 0.8, 0.14)); this.twinkles.forEach((x, k) => S.chime(t + x / 1000, [96, 91, 93, 88, 96, 86, 91, 84][k], 1.2, 0.12)); },
+      lights(at) {
+        at(0, () => { L.all(C.night, 0.06, 300); B.all(C.gold, 'sparkle'); });
+        at(300, () => B.fx('comet')); fill(at, 300, 110, 1, C.white); at(1200, () => L.all(C.gold, 0.35, 500));
+        for (const x of this.twinkles) { const i = Math.floor(Math.random() * n()); at(x, () => L.one(i, C.white, 1)); at(x + 200, () => L.one(i, C.gold, 0.35, 300)); }
+        at(5000, () => L.all(C.gold, 0.08, 1200));
+      } },
+    { role: 'magic', name: 'Rainbow river', what: 'a harp, and the colours pour along the house', ms: 6800,
+      sound(t) { [60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77, 79, 81, 83, 84].forEach((m, k) => S.chime(t + 0.2 + k * 0.07, m, 1, 0.12)); for (const m of [60, 64, 67, 72]) tone(t + 1.3, { f: [[0, hz(m)]], g: [[0, 0], [1.5, 0.07], [3.4, 0.07], [4.4, 0]], out: wet }); for (const [dt, m] of [[4.6, 84], [4.75, 88], [4.9, 91]]) S.chime(t + dt, m, 1.6); },
+      lights(at) {
+        at(0, () => { B.all(C.pink, 'rainbow'); B.fx('rainbow'); });
+        fill(at, 200, 150, 1, (i) => RAINBOW[i % 7]);
+        for (let k = 0; k < 7; k++) at(1500 + k * 450, () => L.spin(51, 400));
+        at(4600, () => B.fx('sparkle')); at(5400, () => L.all(null, 0.15, 1100));
+      } },
+    // Not a kind of button: every thirteenth press of the night gets this, whichever button it was.
+    { role: 'jackpot', name: 'Lucky thirteen', what: 'every 13th press: thunder, then a fanfare', ms: 8200,
+      sound(t) { S.thunder(t + 0.3, 0.8); let x = t + 1.6; for (const [m, d] of [[67, 0.16], [67, 0.16], [67, 0.16], [72, 0.6], [68, 0.5], [70, 0.5], [72, 0.2], [70, 0.14], [72, 1.4]]) { S.brass(x, m, d); S.brass(x, m - 12, d); x += d + 0.04; } },
+      lights(at) {
+        at(0, () => { L.all(null, 0, 200); B.all(C.gold, 'rainbow'); });
+        at(300, () => { L.all(C.white, 1); B.fx('lightning'); }); at(600, () => L.all(C.purple, 0.1, 700));
+        fill(at, 1600, 100, 1, (i) => RAINBOW[i % 7]);
+        for (let k = 0; k < 9; k++) at(2500 + k * 450, () => L.spin(51, 300));
+        at(1600, () => B.fx('fireworks')); at(3400, () => B.fx('confetti')); at(5200, () => B.fx('fireworks'));
+        at(6600, () => L.all(C.gold, 1, 200)); at(7200, () => L.all(C.gold, 0.2, 800));
+      } },
   ];
+  const label = (show) => ROLES[show.role]?.label ?? 'Jackpot';
 
   // ── running it ────────────────────────────────────────────────────────────
   let armed = false, busy = false, closeAt = null, timers = [], sounds = {};
@@ -506,7 +619,7 @@
   const say = (text) => { $('now').textContent = text; };
   // The next show of a kind: each bag is dealt out shuffled, and never deals the same show twice running.
   function deal(role) {
-    const kind = role === 'mystery' ? (Math.random() < 0.5 ? 'spooky' : 'funny') : role;
+    const kind = role === 'mystery' ? ['spooky', 'funny', 'magic'][Math.floor(Math.random() * 3)] : role;
     const bag = bags[kind] ??= { left: [], last: null };
     if (!bag.left.length) { bag.left = SHOWS.filter((s) => s.role === kind).sort(() => Math.random() - 0.5); if (bag.left.length > 1 && bag.left[0] === bag.last) bag.left.push(bag.left.shift()); }
     return (bag.last = bag.left.shift());
@@ -527,17 +640,21 @@
     if (buf) { const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; const len = Math.min(buf.duration, 15); g.gain.setValueAtTime(1, t + len - 0.4); g.gain.linearRampToValueAtTime(0, t + len); src.connect(g).connect(master); src.start(t); src.stop(t + len); ms = Math.max(ms, len * 1000); }
     else if (store.source !== 'files' || !(sounds[show.role] ?? []).length) show.sound(t);
     if (counted) { store.count += 1; save(); $('count').textContent = store.count; }
-    say(`${ROLES[show.role].label}: ${show.name}${buf ? ' (your recording)' : ''}`);
+    say(`${label(show)}: ${show.name}${buf ? ' (your recording)' : ''}`);
     const at = (when, fn) => timers.push(setTimeout(fn, when + +store.lag));
     show.lights(at);
     at(show.ms, () => { if (armed) { L.idle(); } else L.all(null, 0, 600); });
     at(ms, () => { if (armed) B.idle(); else B.dark(); });
     at(ms + 1200, () => { busy = false; timers = []; say(armed ? 'Waiting for a press.' : 'Not running.'); });   // a breath before the next one
   }
-  function press(role) { if (armed && !busy) play(deal(role), true); }
+  function press(role) { if (armed && !busy) play((store.count + 1) % 13 === 0 ? SHOWS.find((s) => s.role === 'jackpot') : deal(role), true); }
 
+  // Keep the display (and so the Mac) awake while the show runs; the lock is lost when the window is hidden, so ask again when it is back.
+  let wake = null;
+  const stayAwake = async () => { if (armed && document.visibilityState === 'visible') wake = await navigator.wakeLock?.request('screen').catch(() => null); };
+  document.addEventListener('visibilitychange', stayAwake);
   async function arm() {
-    audio(); armed = true;
+    audio(); armed = true; store.armed = true; save(); stayAwake();
     $('arm').textContent = 'Stop and put the lamps back'; $('arm').className = 'btn live big';
     const [h, m] = store.close.split(':').map(Number); const c = new Date(); c.setHours(h, m, 0, 0); closeAt = c > new Date() ? c : null;
     say('Waiting for a press.'); $('status').textContent = closeAt ? `Lights out at ${store.close}.` : store.close ? `It is already past ${store.close}: running until you stop it.` : '';
@@ -546,7 +663,7 @@
     L.idle(); B.idle();
   }
   function disarm(why = 'Not running.') {
-    armed = false; busy = false; timers.forEach(clearTimeout); timers = [];
+    armed = false; store.armed = false; wake?.release().catch(() => {}); wake = null; busy = false; timers.forEach(clearTimeout); timers = [];
     $('arm').textContent = 'Start the show'; $('arm').className = 'btn primary big';
     say(why); $('status').textContent = '';
     B.dark(); L.restore(); store.snapshot = null; save();
@@ -562,7 +679,7 @@
     return pad;
   }));
   addEventListener('keydown', (e) => { if (e.target.matches('input, select')) return; const role = Object.keys(ROLES)[+e.key - 1]; if (role) pads[role].parentElement.click(); });
-  $('shows').replaceChildren(...SHOWS.map((s) => { const b = el('button', { className: 'btn' }, `${ROLES[s.role].label} · ${s.name}`, el('small', { textContent: s.what })); b.onclick = () => play(s, false); return b; }));
+  $('shows').replaceChildren(...SHOWS.map((s) => { const b = el('button', { className: 'btn' }, `${label(s)} · ${s.name}`, el('small', { textContent: s.what })); b.onclick = () => play(s, false); return b; }));
   const units = { vol: '%', lampmax: '%', btnmax: '%', lag: ' ms' };
   for (const id of ['vol', 'lampmax', 'btnmax', 'lag', 'source', 'idle', 'close', 'awake']) {
     const input = $(id), box = input.type === 'checkbox';
@@ -581,7 +698,15 @@
   if (store.snapshot) $('status').textContent = 'The page was closed mid-show last time; starting and stopping once will put the lamps back as they were.';
   fetch('/api/sounds').then((r) => r.json()).then((s) => { sounds = s; const nn = Object.entries(s).filter(([, l]) => l.length).map(([k, l]) => `${l.length} in ${k}`); if (nn.length) $('files').textContent = 'found ' + nn.join(', '); }).catch(() => {});
   loadHue();
-  if (navigator.serial) connect(true);
+  // The hub is looked for again every few seconds, so a cable pulled and pushed back in mends itself.
+  if (navigator.serial) { connect(true); setInterval(() => connect(true), 4000); }
+  // A show that was running when the page closed (a crash, a restart) carries on: at once if the browser lets sound start
+  // by itself (the app's own window does), otherwise at the first click or key.
+  if (store.armed) {
+    const again = (e) => { if (!armed && !e?.target?.closest?.('#arm')) arm(); removeEventListener('pointerdown', again, true); removeEventListener('keydown', again, true); };
+    if (audio().state === 'running') again();
+    else { say('The show was running when this page closed. Click anywhere to carry on.'); addEventListener('pointerdown', again, true); addEventListener('keydown', again, true); }
+  }
   // For trying the page with no hub: feed it lines as if the hub had said them, e.g. halloween.feed('{"t":"btn","dev":"A1","b":0,"e":"tap"}')
   window.halloween = { feed: handle };
 })();
