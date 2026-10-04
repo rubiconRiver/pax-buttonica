@@ -126,10 +126,11 @@
         <input type="text" id="hueip" placeholder="Bridge IP, e.g. 192.168.1.20" size="24">
         <button class="btn sm" id="huefind">Find it</button>
         <button class="btn" id="huego">Pair</button>
+        <button class="btn sm" id="huenone">Untick all</button>
       </div>
       <div class="status" id="huestatus">No Hue bridge yet: the circles above are stand-ins.</div>
       <div class="list" id="huelist"></div>
-      <p class="hint">Press the round button on the Hue bridge, then Pair within 30 seconds. Tick the lamps that are in the show and put them in order along the house (the chases run first to last). Your lamps' settings are noted when the show starts and put back when it stops.</p>
+      <p class="hint">Press the round button on the Hue bridge, then Pair within 30 seconds. Lamps start unticked: tick the ones that are in the show and put them in order along the house (the chases run first to last). Your lamps' settings are noted when the show starts and put back when it stops.</p>
     </div></section>
   </div>
 
@@ -344,13 +345,13 @@
     if (!all || all.error || Array.isArray(all)) { $('huestatus').textContent = `Paired with ${st.ip}, but it is not answering. Is the laptop on the home network?`; return; }
     paired = true;
     const found = Object.entries(all).map(([id, l]) => ({ id, name: l.name, reachable: l.state.reachable, use: false }));
-    // Keep the order and ticks from last time; lamps never seen before go at the end, unticked unless this is the first time.
-    const first = !store.lamps.some((s) => s.id);
-    lamps = [...store.lamps.map((s) => { const f = found.find((x) => x.id === s.id); return f && { ...f, use: s.use }; }).filter(Boolean), ...found.filter((f) => !store.lamps.some((s) => s.id === f.id)).map((f) => ({ ...f, use: first }))];
+    // Keep the order and ticks from last time; lamps never seen before go at the end, unticked.
+    lamps = [...store.lamps.map((s) => { const f = found.find((x) => x.id === s.id); return f && { ...f, use: s.use }; }).filter(Boolean), ...found.filter((f) => !store.lamps.some((s) => s.id === f.id)).map((f) => ({ ...f, use: false }))];
     $('huestatus').innerHTML = `Bridge <b>${st.ip}</b> · <b>${lamps.length}</b> lamps`;
     $('huego').textContent = 'Pair again';
     lampsChanged();
   }
+  $('huenone').onclick = () => { if (!paired) return; for (const l of lamps) l.use = false; lampsChanged(); };
   $('huefind').onclick = async () => { $('huestatus').textContent = 'Looking…'; const r = await fetch('/api/hue/find', { method: 'POST' }).then((x) => x.json()).catch(() => ({ ips: [] })); if (r.ips?.[0]) $('hueip').value = r.ips[0]; $('huestatus').textContent = r.ips?.length ? `Found ${r.ips.join(', ')}. Press the button on the bridge, then Pair.` : 'Could not find one. The Hue app shows the address under Settings → Bridges.'; };
   $('huego').onclick = async () => { if (!$('hueip').value.trim()) { await $('huefind').onclick(); if (!$('hueip').value.trim()) return; } const r = await fetch('/api/hue/pair', { method: 'POST', body: JSON.stringify({ ip: $('hueip').value.trim() }) }).then((x) => x.json()).catch((e) => ({ error: String(e) })); if (r.ok) loadHue(); else $('huestatus').textContent = `Not paired: ${r.error}. Press the round button on the bridge first, then Pair within 30 seconds.`; };
 
