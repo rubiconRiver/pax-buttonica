@@ -273,7 +273,7 @@
   // The bridge takes about ten commands a second, so they go out in a queue, 100 ms apart. A show's command that has waited
   // too long is dropped (late is worse than missing); `keep` marks the ones that must arrive, like putting the lamps back.
   const queue = []; let pumping = false;
-  function hueSend(path, data, keep = false) { if (!paired || (!armed && !keep)) return;   // a preview with the show stopped stays on the screen queue.push({ path, data, keep, at: Date.now() }); if (!pumping) pump(); }
+  function hueSend(path, data, keep = false) { if (!paired || (!armed && !keep)) return; /* a preview with the show stopped stays on the screen */ queue.push({ path, data, keep, at: Date.now() }); if (!pumping) pump(); }
   async function pump() {
     pumping = true;
     while (queue.length) {
@@ -352,7 +352,7 @@
     lampsChanged();
   }
   $('huefind').onclick = async () => { $('huestatus').textContent = 'Looking…'; const r = await fetch('/api/hue/find', { method: 'POST' }).then((x) => x.json()).catch(() => ({ ips: [] })); if (r.ips?.[0]) $('hueip').value = r.ips[0]; $('huestatus').textContent = r.ips?.length ? `Found ${r.ips.join(', ')}. Press the button on the bridge, then Pair.` : 'Could not find one. The Hue app shows the address under Settings → Bridges.'; };
-  $('huego').onclick = async () => { const r = await fetch('/api/hue/pair', { method: 'POST', body: JSON.stringify({ ip: $('hueip').value.trim() }) }).then((x) => x.json()).catch((e) => ({ error: String(e) })); if (r.ok) loadHue(); else $('huestatus').textContent = `Not paired: ${r.error}. Press the round button on the bridge first, then Pair within 30 seconds.`; };
+  $('huego').onclick = async () => { if (!$('hueip').value.trim()) { await $('huefind').onclick(); if (!$('hueip').value.trim()) return; } const r = await fetch('/api/hue/pair', { method: 'POST', body: JSON.stringify({ ip: $('hueip').value.trim() }) }).then((x) => x.json()).catch((e) => ({ error: String(e) })); if (r.ok) loadHue(); else $('huestatus').textContent = `Not paired: ${r.error}. Press the round button on the bridge first, then Pair within 30 seconds.`; };
 
   // ── buttons ───────────────────────────────────────────────────────────────
   const devs = [];                      // real buttons the hub has heard: { dev, role, fw, rssi, lost }
