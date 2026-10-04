@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Halloween show</title>
+<style>
+  :root {
+    --bg: #07050a; --bg-2: #120c16; --panel: #150f1a; --line: rgba(255, 150, 60, 0.16); --line-2: rgba(255, 150, 60, 0.34);
+    --text: #f1e9e2; --muted: #a6978d; --faint: #6d6058; --gold: #ff8a1f; --gold-2: #ffc487; --ok: #5dff6a; --danger: #ff5468; --purple: #a24bff;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 18px; }
+  h1, h2 { font-family: var(--font-d); margin: 0; }
+  h1 { font-size: 28px; font-weight: 700; }
+  h2 { font-size: 15px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 76ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 16px 18px 18px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#2a1d2c, #1a121d); border: 1px solid var(--line-2); padding: 9px 14px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn.primary { color: var(--bg); background: linear-gradient(#ffb060, #f07a10); border-color: transparent; }
+  .btn.live { color: var(--bg); background: var(--ok); border-color: transparent; }
+  .btn.sm { padding: 5px 9px; font-size: 11px; }
+  .btn.big { font-size: 15px; padding: 14px 26px; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+  .status { font: 600 13px var(--font-d); color: var(--muted); }
+  .status b { color: var(--gold-2); }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  label.f span { color: var(--text); min-width: 4ch; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 140px; accent-color: var(--gold); }
+  select, input[type=text], input[type=time] { background: var(--bg-2); color: var(--text); border: 1px solid var(--line-2); font: 500 13px var(--font-b); padding: 6px 8px; }
+  input[type=checkbox] { accent-color: var(--gold); }
+  .hint { color: var(--faint); font-size: 12.5px; margin: 0; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+  @media (max-width: 860px) { .grid2 { grid-template-columns: 1fr; } }
+  .top { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+  .count { margin-left: auto; text-align: right; font-family: var(--font-d); }
+  .count b { display: block; font-size: 44px; line-height: 1; color: var(--gold-2); font-variant-numeric: tabular-nums; }
+  .count small { color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; font-size: 11px; }
+  .now { font: 600 14px var(--font-d); color: var(--gold-2); min-height: 1.5em; }
+
+  /* The stage: the outdoor lamps as the show drives them, and one light per kind of button. */
+  .lamps { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; padding: 8px 0 2px; }
+  .lamp { display: grid; justify-items: center; gap: 6px; width: 92px; text-align: center; }
+  .lamp i { --col: #000; --bri: 0; --ms: 0ms; width: 54px; height: 54px; border-radius: 50%; background: #0b080d; border: 2px solid #2a2030; position: relative; }
+  .lamp i::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--col); opacity: var(--bri); box-shadow: 0 0 34px 8px var(--col); transition: background var(--ms) linear, opacity var(--ms) linear, box-shadow var(--ms) linear; }
+  .lamp small { color: var(--muted); font-size: 11.5px; line-height: 1.25; }
+  .pads { display: flex; flex-wrap: wrap; gap: 26px; justify-content: center; }
+  .pad { display: grid; justify-items: center; gap: 8px; background: none; border: 0; color: var(--text); cursor: pointer; font: 600 13px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; }
+  .pad small { color: var(--faint); font: 400 11.5px var(--font-b); letter-spacing: 0; text-transform: none; }
+  .light { --lum: 0.03; --led: #fff; width: 96px; height: 96px; position: relative; background: #0b080d; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
+  .light::after { content: ''; position: absolute; inset: 5%; clip-path: inherit; background: radial-gradient(circle, color-mix(in srgb, var(--led) 70%, white), var(--led) 65%); opacity: var(--lum); }
+  .pad:active .light { transform: scale(0.95); }
+  .light[data-m="dim"] { --lum: 0.2; }
+  .light[data-m="solid"], .light[data-m="spin"], .light[data-m="rings"] { --lum: 1; }
+  .light[data-m="pulse"], .light[data-m="wave"], .light[data-m="ripple"], .light[data-m="ripple_in"] { animation: lum-pulse 1.7s ease-in-out infinite; }
+  .light[data-m="heartbeat"] { animation: lum-heart 1.3s ease-out infinite; }
+  .light[data-m="sparkle"] { animation: lum-sparkle 0.45s steps(3) infinite; }
+  .light[data-m="flash"] { animation: lum-flash 2s linear infinite; }
+  .light[data-m="rainbow"] { --lum: 1; animation: hue 2.2s linear infinite; }
+  .light.fx::before { content: attr(data-fx); position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; font: 700 11px var(--font-d); color: #000; background: #fff; clip-path: inherit; animation: fx-out 0.7s ease-out forwards; }
+  @keyframes lum-pulse { 0%, 100% { --lum: 0.34; } 50% { --lum: 1; } }
+  @keyframes lum-heart { 0% { --lum: 1; } 14% { --lum: 0.3; } 24% { --lum: 1; } 45%, 100% { --lum: 0.2; } }
+  @keyframes lum-sparkle { 0% { --lum: 0.5; } 50% { --lum: 1; } 100% { --lum: 0.7; } }
+  @keyframes lum-flash { 0%, 38% { --lum: 1; } 50%, 88% { --lum: 0.05; } 100% { --lum: 1; } }
+  @keyframes hue { to { filter: hue-rotate(360deg); } }
+  @keyframes fx-out { from { opacity: 0.9; } to { opacity: 0; } }
+  @property --lum { syntax: '<number>'; inherits: true; initial-value: 0.03; }
+
+  .list { display: grid; }
+  .item { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .item .id { font: 12px ui-monospace, Menlo, monospace; color: var(--gold-2); }
+  .item .grow { flex: 1; min-width: 120px; }
+  .item .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .item .meta.bad { color: var(--danger); }
+  .shows { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
+  .shows .btn { text-align: left; }
+  .shows .btn small { display: block; color: var(--faint); font: 400 11px var(--font-b); letter-spacing: 0; text-transform: none; }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: 12px; color: var(--gold-2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="eyebrow">Pax Buttonica · off duty</div>
+      <h1>Halloween show</h1>
+      <p class="lede">A kid presses a button on the step; the porch lights and the speaker put on a few seconds of show, then everything settles back to a glow that says "press me". It all runs on this laptop: buttons through the hub on USB, lamps through the Hue bridge on the home network, sound from whatever speaker the laptop is using.</p>
+    </div>
+    <div class="count"><b id="count">0</b><small>presses tonight · <a href="#" id="zero" style="color:inherit">zero it</a></small></div>
+  </header>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <div class="row">
+      <button class="btn primary big" id="arm">Start the show</button>
+      <div>
+        <div class="now" id="now">Not running. Everything below can be tried without any hardware.</div>
+        <div class="status" id="status"></div>
+      </div>
+    </div>
+    <div class="lamps" id="lamps"></div>
+    <div class="pads" id="pads"></div>
+    <p class="hint">Click a light (or press <code>1</code>, <code>2</code>, <code>3</code>) to press it the way a kid would. The circles are the lamps; the hexagons show what a real button of that kind is being told to show.</p>
+  </div></section>
+
+  <div class="grid2">
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>Buttons</h2>
+      <div class="row"><button class="btn" id="connect">Connect the hub</button><span class="status" id="hubstatus">Hub not connected</span></div>
+      <div class="list" id="devs"></div>
+      <p class="hint">Chrome only. Buttons show up here as the hub hears them; give each a kind. Signal: around −50 is excellent, −70 fine, below −80 move the hub closer to the window. Works with the buttons' normal game firmware; nothing needs flashing.</p>
+    </div></section>
+
+    <section class="panel chamfer"><div class="in chamfer">
+      <h2>Lamps</h2>
+      <div class="row" id="huepair">
+        <input type="text" id="hueip" placeholder="Bridge IP, e.g. 192.168.1.20" size="24">
+        <button class="btn sm" id="huefind">Find it</button>
+        <button class="btn" id="huego">Pair</button>
+      </div>
+      <div class="status" id="huestatus">No Hue bridge yet: the circles above are stand-ins.</div>
+      <div class="list" id="huelist"></div>
+      <p class="hint">Press the round button on the Hue bridge, then Pair within 30 seconds. Tick the lamps that are in the show and put them in order along the house (the chases run first to last). Your lamps' settings are noted when the show starts and put back when it stops.</p>
+    </div></section>
+  </div>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>Settings</h2>
+    <div class="row">
+      <label class="f">Volume <input type="range" id="vol" min="0" max="100" step="5"><span id="volv"></span></label>
+      <label class="f">Lamp brightness <input type="range" id="lampmax" min="10" max="100" step="5"><span id="lampmaxv"></span></label>
+      <label class="f">Button brightness <input type="range" id="btnmax" min="10" max="100" step="5"><span id="btnmaxv"></span></label>
+    </div>
+    <div class="row">
+      <label class="f">Lights wait for the speaker <input type="range" id="lag" min="0" max="600" step="20"><span id="lagv"></span></label>
+      <button class="btn sm" id="sync">Test: click and flash</button>
+      <label class="f"><input type="checkbox" id="awake"> Keep the speaker awake</label>
+    </div>
+    <div class="row">
+      <label class="f">Sounds <select id="source"><option value="mix">Built-in and my recordings</option><option value="synth">Built-in only</option><option value="files">My recordings only</option></select></label>
+      <label class="f">Lamps between presses <select id="idle"><option value="glow">Orange and purple glow</option><option value="keep">Leave them as they were</option></select></label>
+      <label class="f">Lights out at <input type="time" id="close"></label>
+    </div>
+    <p class="hint">A Bluetooth speaker plays a little late, so the lights are held back to match: run the test and move the slider until the click and the flash land together. Recordings go in <code>halloween/sounds/spooky</code> and <code>halloween/sounds/funny</code> (mp3, wav, m4a); <span id="files">none found</span>. At lights-out the buttons go dark and the lamps go back to how they were.</p>
+  </div></section>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <h2>The shows</h2>
+    <div class="shows" id="shows"></div>
+    <p class="hint">A press picks the next one of its kind, never the same twice running. Click one here to see and hear it now; the real lamps only join in once the show is started.</p>
+  </div></section>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+  // ── what is remembered between visits ─────────────────────────────────────
+  const store = Object.assign({ vol: 60, lampmax: 80, btnmax: 80, lag: 160, awake: true, source: 'mix', idle: 'glow', close: '21:00', count: 0, roles: {}, lamps: [], group: null, snapshot: null }, JSON.parse(localStorage.getItem('halloween') || '{}'));
+  const save = () => localStorage.setItem('halloween', JSON.stringify(store));
+
+  // ── kinds of button ───────────────────────────────────────────────────────
+  // `idle` is the "press me" light a button of that kind shows between shows.
+  const ROLES = {
+    spooky: { label: 'Spooky', idle: { c: '6dff2a', m: 'heartbeat' } },
+    funny: { label: 'Funny', idle: { c: 'ff8a1f', m: 'wave' } },
+    mystery: { label: 'Mystery', idle: { c: 'a24bff', m: 'rainbow' } },   // plays either kind
+  };
+  const C = { white: 'ffffff', red: 'ff1a00', blood: 'b00000', green: '35ff3a', teal: '00c8a0', purple: '8a2be2', orange: 'ff7a00', blue: '3a6bff', pink: 'ff3fb0', yellow: 'ffd21f', mustard: '8a6a00' };
+
+  // ── sound ─────────────────────────────────────────────────────────────────
+  let ac = null, master = null, wet = null, noiseBuf = null, hum = null;
+  function audio() {
+    if (ac) { ac.resume(); return ac; }
+    ac = new AudioContext();
+    master = ac.createGain(); master.gain.value = store.vol / 100;
+    const comp = ac.createDynamicsCompressor(); master.connect(comp).connect(ac.destination);
+    // `wet`: anything sent here also gets an echo, for the big empty-house sounds.
+    wet = ac.createGain(); const d = ac.createDelay(1), fb = ac.createGain(), lp = ac.createBiquadFilter();
+    d.delayTime.value = 0.31; fb.gain.value = 0.42; lp.frequency.value = 1800;
+    wet.connect(master); wet.connect(d); d.connect(lp); lp.connect(fb); fb.connect(d); lp.connect(master);
+    noiseBuf = ac.createBuffer(1, ac.sampleRate * 2, ac.sampleRate);
+    const ch = noiseBuf.getChannelData(0); for (let i = 0; i < ch.length; i++) ch[i] = Math.random() * 2 - 1;
+    keepAwake();
+    return ac;
+  }
+  // A Bluetooth speaker that hears silence goes to sleep and swallows the start of the next sound. A hum far too quiet to hear keeps it up.
+  function keepAwake() {
+    if (!ac) return;
+    if (store.awake && !hum) { hum = ac.createOscillator(); const g = ac.createGain(); hum.frequency.value = 50; g.gain.value = 0.0015; hum.connect(g).connect(ac.destination); hum.start(); }
+    if (!store.awake && hum) { hum.stop(); hum = null; }
+  }
+  const ramp = (param, t, pts) => { param.setValueAtTime(pts[0][1], t + pts[0][0]); for (const [dt, v] of pts.slice(1)) param.linearRampToValueAtTime(v, t + dt); };
+  const hz = (midi) => 440 * 2 ** ((midi - 69) / 12);
+  // One voice: `f` and `g` are [[seconds, value], ...] from the start; it stops when the gain's last point is reached.
+  function tone(t, { type = 'sine', f, g, out = master, vib }) {
+    const o = ac.createOscillator(), gn = ac.createGain(); o.type = type;
+    ramp(o.frequency, t, f); ramp(gn.gain, t, g);
+    if (vib) { const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = vib[0]; lg.gain.value = vib[1]; l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + g.at(-1)[0] + 0.1); }
+    o.connect(gn).connect(out); o.start(t); o.stop(t + g.at(-1)[0] + 0.05);
+    return o;
+  }
+  function noise(t, { g, type = 'lowpass', f, q = 1, out = master }) {
+    const s = ac.createBufferSource(), fl = ac.createBiquadFilter(), gn = ac.createGain(); s.buffer = noiseBuf; s.loop = true;
+    fl.type = type; fl.Q.value = q; ramp(fl.frequency, t, f); ramp(gn.gain, t, g);
+    s.connect(fl).connect(gn).connect(out); s.start(t); s.stop(t + g.at(-1)[0] + 0.05);
+  }
+  const note = (t, midi, dur, type = 'square', vol = 0.16, out = master) => tone(t, { type, f: [[0, hz(midi)]], g: [[0, 0], [0.01, vol], [Math.max(0.03, dur - 0.04), vol * 0.7], [dur, 0]], out });
+
+  const S = {
+    thunder(t, size = 1) {
+      noise(t, { type: 'highpass', f: [[0, 900]], g: [[0, 0], [0.01, 0.9 * size], [0.12, 0.25 * size], [0.4, 0]], out: wet });
+      const g = [[0, 0], [0.05, 0.9 * size]]; for (let k = 1; k <= 9; k++) g.push([k * 0.4 * size, (0.15 + Math.random() * 0.6) * size * (1 - k / 10)]); g.push([4.2 * size, 0]);
+      noise(t, { f: [[0, 180], [4 * size, 50]], g, out: wet });
+      tone(t, { f: [[0, 55], [3 * size, 32]], g: [[0, 0], [0.04, 0.7 * size], [3 * size, 0]] });
+    },
+    wail(t, dur = 3) {
+      for (const det of [0, 5]) tone(t, { f: [[0, 380 + det], [dur * 0.4, 720 + det], [dur * 0.7, 560 + det], [dur, 260 + det]], g: [[0, 0], [dur * 0.25, 0.16], [dur * 0.8, 0.12], [dur, 0]], vib: [5.5, 14], out: wet });
+    },
+    howl(t) {
+      for (const [type, v] of [['sine', 0.2], ['triangle', 0.08]]) tone(t, { type, f: [[0, 290], [0.5, 610], [1.7, 640], [2.6, 420]], g: [[0, 0], [0.4, v], [1.8, v], [2.6, 0]], vib: [6, 9], out: wet });
+    },
+    heart(t) {
+      for (const [dt, v] of [[0, 0.9], [0.2, 0.6]]) tone(t + dt, { f: [[0, 95], [0.14, 42]], g: [[0, 0], [0.01, v], [0.2, 0]] });
+    },
+    stab(t) {
+      for (const m of [50, 53, 56, 59, 62, 68]) tone(t, { type: 'sawtooth', f: [[0, hz(m) * 1.02], [1.3, hz(m) * 0.96]], g: [[0, 0], [0.02, 0.09], [0.9, 0.05], [1.4, 0]], out: wet });
+      noise(t, { type: 'bandpass', f: [[0, 2400], [0.6, 600]], q: 0.7, g: [[0, 0.5], [0.6, 0]], out: wet });
+    },
+    organ(t, midi, dur) {   // a pipe-organ note: the pitch with the octave below and above
+      for (const [m, v] of [[midi - 12, 0.09], [midi, 0.1], [midi + 12, 0.045]]) tone(t, { type: 'square', f: [[0, hz(m)]], g: [[0, 0], [0.02, v], [dur - 0.05, v], [dur + 0.15, 0]], out: wet });
+    },
+    whistle(t, from, to, dur) { tone(t, { f: [[0, from], [dur, to]], g: [[0, 0], [0.04, 0.22], [dur - 0.05, 0.2], [dur, 0]], vib: [7, 12] }); },
+    boing(t, base = 170) {
+      const o = tone(t, { type: 'triangle', f: [[0, base * 2.2], [0.06, base], [0.9, base * 0.9]], g: [[0, 0], [0.01, 0.5], [0.9, 0]] });
+      const l = ac.createOscillator(), lg = ac.createGain(); l.frequency.value = 17; ramp(lg.gain, t, [[0, base * 0.6], [0.9, 0]]); l.connect(lg).connect(o.frequency); l.start(t); l.stop(t + 1);
+    },
+    raspberry(t, dur = 0.9) {
+      const o = ac.createOscillator(), trem = ac.createGain(), gn = ac.createGain(), lp = ac.createBiquadFilter(), l = ac.createOscillator(), lg = ac.createGain();
+      o.type = 'sawtooth'; ramp(o.frequency, t, [[0, 82], [dur * 0.7, 58], [dur, 44]]); lp.frequency.value = 520;
+      l.type = 'square'; ramp(l.frequency, t, [[0, 31], [dur, 19]]); lg.gain.value = 0.5; trem.gain.value = 0.5; l.connect(lg).connect(trem.gain);
+      ramp(gn.gain, t, [[0, 0], [0.02, 0.6], [dur - 0.1, 0.5], [dur, 0]]);
+      o.connect(lp).connect(trem).connect(gn).connect(master); o.start(t); l.start(t); o.stop(t + dur + 0.05); l.stop(t + dur + 0.05);
+    },
+    pop(t, f = 500) { tone(t, { f: [[0, f], [0.07, f * 2.6]], g: [[0, 0], [0.005, 0.4], [0.09, 0]] }); },
+    kazoo(t, midi, dur) {
+      const bp = ac.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = 1.2; bp.connect(master);
+      tone(t, { type: 'sawtooth', f: [[0, hz(midi) * 0.97], [0.04, hz(midi)]], g: [[0, 0], [0.02, 0.5], [dur - 0.03, 0.45], [dur, 0]], vib: [6, 5], out: bp });
+    },
+    click(t) { noise(t, { type: 'highpass', f: [[0, 2000]], g: [[0, 0.8], [0.03, 0]] }); },
+  };
+
+  // ── lamps ─────────────────────────────────────────────────────────────────
+  // `lamps` is what the show plays on, in order along the house: Hue lamps once a bridge is paired, seven stand-ins before.
+  let lamps = Array.from({ length: 7 }, (_, i) => ({ id: null, name: `Lamp ${i + 1}`, use: true }));
+  let paired = false;
+  const used = () => lamps.filter((l) => l.use);
+  const hsv = (hex) => { const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255); const mx = Math.max(r, g, b), d = mx - Math.min(r, g, b); const h = !d ? 0 : mx === r ? ((g - b) / d + 6) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return { h: h * 60, s: mx ? d / mx : 0 }; };
+  const body = (c, bri, ms) => { const b = { transitiontime: Math.round(ms / 100) }; const v = bri * store.lampmax / 100; if (v <= 0) return { ...b, on: false }; if (c) { const { h, s } = hsv(c); b.hue = Math.round(h / 360 * 65535); b.sat = Math.round(s * 254); } return { ...b, on: true, bri: Math.max(1, Math.round(v * 254)) }; };
+  function paint(l, c, bri, ms) { if (c) { const { h, s } = hsv(c); l.h = h; l.s = s; } l.bri = bri; l.ms = ms; if (l.dot) { l.dot.style.setProperty('--ms', ms + 'ms'); l.dot.style.setProperty('--col', `hsl(${l.h ?? 30} ${(l.s ?? 1) * 100}% ${100 - (l.s ?? 1) * 45}%)`); l.dot.style.setProperty('--bri', bri); } }
+
+  // The bridge takes about ten commands a second, so they go out in a queue, 100 ms apart. A show's command that has waited
+  // too long is dropped (late is worse than missing); `keep` marks the ones that must arrive, like putting the lamps back.
+  const queue = []; let pumping = false;
+  function hueSend(path, data, keep = false) { if (!paired || (!armed && !keep)) return;   // a preview with the show stopped stays on the screen queue.push({ path, data, keep, at: Date.now() }); if (!pumping) pump(); }
+  async function pump() {
+    pumping = true;
+    while (queue.length) {
+      const q = queue.shift();
+      if (!q.keep && Date.now() - q.at > 700) continue;
+      fetch('/api/hue/bridge/' + q.path, { method: 'PUT', body: JSON.stringify(q.data) }).catch(() => {});
+      await sleep(100);
+    }
+    pumping = false;
+  }
+  const L = {
+    all(c, bri, ms = 0, keep = false) {
+      for (const l of used()) paint(l, c, bri, ms);
+      if (store.group) hueSend(`groups/${store.group}/action`, body(c, bri, ms), keep);
+      else for (const l of used()) if (l.id) hueSend(`lights/${l.id}/state`, body(c, bri, ms), keep);
+    },
+    one(i, c, bri, ms = 0, keep = false) { const u = used(); if (!u.length) return; const l = u[((i % u.length) + u.length) % u.length]; paint(l, c, bri, ms); if (l.id) hueSend(`lights/${l.id}/state`, body(c, bri, ms), keep); },
+    // Turn every lamp's colour round the wheel by `deg`: one command for the lot.
+    spin(deg, ms) { for (const l of used()) { l.h = ((l.h ?? 0) + deg) % 360; paint(l, null, l.bri, ms); } if (store.group) hueSend(`groups/${store.group}/action`, { hue_inc: Math.round(deg / 360 * 65535), transitiontime: Math.round(ms / 100) }); },
+    idle() {
+      if (store.idle === 'keep') return L.restore();
+      used().forEach((_, i) => L.one(i, i % 2 ? C.purple : C.orange, 0.35, 1200, true));
+    },
+    async snapshot() {
+      if (!paired) return;
+      const all = await fetch('/api/hue/bridge/lights').then((r) => r.json()).catch(() => null); if (!all || all.error) return;
+      store.snapshot = Object.fromEntries(used().filter((l) => all[l.id]).map((l) => [l.id, all[l.id].state])); save();
+    },
+    restore() {
+      for (const l of used()) paint(l, null, 0, 600);
+      for (const [id, s] of Object.entries(store.snapshot ?? {})) {
+        const b = { on: s.on, transitiontime: 6 };
+        if (s.on) { b.bri = s.bri; if (s.colormode === 'xy') b.xy = s.xy; else if (s.colormode === 'ct') b.ct = s.ct; else if (s.colormode === 'hs') { b.hue = s.hue; b.sat = s.sat; } }
+        hueSend(`lights/${id}/state`, b, true);
+      }
+    },
+    // One hidden group on the bridge holding the show's lamps, so "all of them" is a single command and they change together.
+    async group() {
+      if (!paired) return;
+      const ids = used().map((l) => l.id).filter(Boolean); if (!ids.length) { store.group = null; return; }
+      const put = store.group && await fetch(`/api/hue/bridge/groups/${store.group}`, { method: 'PUT', body: JSON.stringify({ lights: ids }) }).then((r) => r.json()).catch(() => null);
+      if (!put?.[0]?.success) {
+        const made = await fetch('/api/hue/bridge/groups', { method: 'POST', body: JSON.stringify({ name: 'Halloween show', type: 'LightGroup', lights: ids }) }).then((r) => r.json()).catch(() => null);
+        store.group = made?.[0]?.success?.id ?? null;
+      }
+      save();
+    },
+  };
+
+  function renderLamps() {
+    $('lamps').replaceChildren(...used().map((l) => { l.dot = el('i'); const box = el('div', { className: 'lamp' }, l.dot, el('small', { textContent: l.name })); paint(l, null, l.bri ?? 0, 0); return box; }));
+    $('huelist').replaceChildren(...(paired ? lamps : []).map((l, i) => {
+      const tick = el('input', { type: 'checkbox', checked: l.use }); tick.onchange = () => { l.use = tick.checked; lampsChanged(); };
+      const move = (d) => () => { const j = i + d; if (j < 0 || j >= lamps.length) return; [lamps[i], lamps[j]] = [lamps[j], lamps[i]]; lampsChanged(); };
+      const blink = el('button', { className: 'btn sm', textContent: 'Blink' }); blink.onclick = () => hueSend(`lights/${l.id}/state`, { alert: 'select' }, true);
+      return el('div', { className: 'item' }, tick, el('span', { className: 'grow', textContent: l.name }), el('span', { className: 'meta' + (l.reachable ? '' : ' bad'), textContent: l.reachable ? '' : 'not reachable' }), blink,
+        el('button', { className: 'btn sm', textContent: '▲', onclick: move(-1) }), el('button', { className: 'btn sm', textContent: '▼', onclick: move(1) }));
+    }));
+  }
+  function lampsChanged() { store.lamps = lamps.map((l) => ({ id: l.id, use: l.use })); save(); renderLamps(); L.group(); }
+
+  async function loadHue() {
+    const st = await fetch('/api/hue').then((r) => r.json()).catch(() => null);
+    if (!st) { $('huestatus').textContent = 'Open this page through the little server (node halloween/server.mjs) to use the lamps and your recordings.'; return; }
+    if (st.ip) $('hueip').value = st.ip;
+    if (!st.paired) return;
+    const all = await fetch('/api/hue/bridge/lights').then((r) => r.json()).catch(() => null);
+    if (!all || all.error || Array.isArray(all)) { $('huestatus').textContent = `Paired with ${st.ip}, but it is not answering. Is the laptop on the home network?`; return; }
+    paired = true;
+    const found = Object.entries(all).map(([id, l]) => ({ id, name: l.name, reachable: l.state.reachable, use: false }));
+    // Keep the order and ticks from last time; lamps never seen before go at the end, unticked unless this is the first time.
+    const first = !store.lamps.some((s) => s.id);
+    lamps = [...store.lamps.map((s) => { const f = found.find((x) => x.id === s.id); return f && { ...f, use: s.use }; }).filter(Boolean), ...found.filter((f) => !store.lamps.some((s) => s.id === f.id)).map((f) => ({ ...f, use: first }))];
+    $('huestatus').innerHTML = `Bridge <b>${st.ip}</b> · <b>${lamps.length}</b> lamps`;
+    $('huego').textContent = 'Pair again';
+    lampsChanged();
+  }
+  $('huefind').onclick = async () => { $('huestatus').textContent = 'Looking…'; const r = await fetch('/api/hue/find', { method: 'POST' }).then((x) => x.json()).catch(() => ({ ips: [] })); if (r.ips?.[0]) $('hueip').value = r.ips[0]; $('huestatus').textContent = r.ips?.length ? `Found ${r.ips.join(', ')}. Press the button on the bridge, then Pair.` : 'Could not find one. The Hue app shows the address under Settings → Bridges.'; };
+  $('huego').onclick = async () => { const r = await fetch('/api/hue/pair', { method: 'POST', body: JSON.stringify({ ip: $('hueip').value.trim() }) }).then((x) => x.json()).catch((e) => ({ error: String(e) })); if (r.ok) loadHue(); else $('huestatus').textContent = `Not paired: ${r.error}. Press the round button on the bridge first, then Pair within 30 seconds.`; };
+
+  // ── buttons ───────────────────────────────────────────────────────────────
+  const devs = [];                      // real buttons the hub has heard: { dev, role, fw, rssi, lost }
+  const look = {};                      // what each kind is showing now: role → { c, m, d }
+  const pads = {};                      // role → the on-screen light
+  let port = null, writer = null;
+  async function send(msg) { if (writer) await writer.write(new TextEncoder().encode(JSON.stringify(msg) + '\n')).catch(() => {}); }
+  // hold: 300 makes every press count once: let go sooner and it is a tap, keep it down and the hold fires at 0.3 s.
+  const cfg = (dev) => ({ t: 'cfg', dev, hold: 300, bright: +store.btnmax, dim: 10, fx: 100, pulse: 'pulse' });
+  const ledMsg = (dev, lk) => ({ t: 'led', dev, c: lk.c, m: lk.m, ...(lk.d ? { d: lk.d } : {}) });
+  const B = {
+    set(role, lk) { look[role] = lk; const p = pads[role]; if (p) { p.dataset.m = lk.m; p.style.setProperty('--led', '#' + lk.c); } for (const d of devs) if (d.role === role && !d.lost) send(ledMsg(d.dev, lk)); },
+    all(c, m, d) { for (const role of Object.keys(ROLES)) B.set(role, { c, m, d }); },
+    fx(k) { for (const p of Object.values(pads)) { p.dataset.fx = k; p.classList.remove('fx'); void p.offsetWidth; p.classList.add('fx'); } for (const d of devs) if (!d.lost) send({ t: 'fx', dev: d.dev, k }); },
+    idle() { for (const [role, r] of Object.entries(ROLES)) B.set(role, r.idle); },
+    dark() { B.all('000000', 'off'); },
+  };
+  function renderDevs() {
+    $('devs').replaceChildren(...devs.map((d) => {
+      const sel = el('select', {}, ...Object.entries(ROLES).map(([k, r]) => el('option', { value: k, textContent: r.label, selected: k === d.role })));
+      sel.onchange = () => { d.role = sel.value; store.roles[d.dev] = d.role; save(); if (look[d.role]) send(ledMsg(d.dev, look[d.role])); };
+      const blink = el('button', { className: 'btn sm', textContent: 'Blink' }); blink.onclick = () => send({ t: 'id', dev: d.dev });
+      return el('div', { className: 'item' }, el('span', { className: 'id', textContent: d.dev.slice(-6) }), sel,
+        el('span', { className: 'meta grow' + (d.lost || d.rssi < -80 ? ' bad' : ''), textContent: d.lost ? 'lost' : `${d.rssi ?? '…'} dBm${d.mv ? ` · ${(d.mv / 1000).toFixed(2)} V` : ''} · fw ${d.fw ?? '?'}` }), blink);
+    }));
+    $('hubstatus').innerHTML = port ? `Hub <b>connected</b> · <b>${devs.length}</b> button${devs.length === 1 ? '' : 's'} heard` : 'Hub not connected';
+  }
+  function handle(line) {
+    let msg; try { msg = JSON.parse(line); } catch { return; }
+    if (!msg.dev || !['hello', 'btn', 'rssi', 'bat', 'lost'].includes(msg.t)) return;
+    let d = devs.find((x) => x.dev === msg.dev);
+    if (!d) { if (msg.t === 'lost') return; d = { dev: msg.dev, role: store.roles[msg.dev] ?? (devs.length % 2 ? 'funny' : 'spooky') }; devs.push(d); }
+    if (msg.t === 'hello') { d.fw = msg.fw; d.lost = false; send(cfg(d.dev)); if (look[d.role]) send(ledMsg(d.dev, look[d.role])); }
+    if (msg.t === 'rssi') d.rssi = msg.dbm;
+    if (msg.t === 'bat') d.mv = msg.mv;
+    if (msg.t === 'lost') d.lost = true;
+    if (msg.t === 'btn') { d.lost = false; press(d.role); }       // tap, double or hold: a press is a press
+    renderDevs();
+  }
+  // Ask a port what it is (hub, button, or nothing) and close it again.
+  async function whatIs(p) {
+    let answer = null;
+    try {
+      await p.open({ baudRate: 115200 });
+      const w = p.writable.getWriter(); await w.write(new TextEncoder().encode('{"t":"hub?"}\n')); w.releaseLock();
+      const reader = p.readable.getReader(); const dec = new TextDecoder(); let buf = ''; const until = Date.now() + 1500;
+      while (!answer && Date.now() < until) {
+        const chunk = await Promise.race([reader.read(), new Promise((r) => setTimeout(() => r({ done: false }), until - Date.now()))]);
+        if (chunk.done) break; if (!chunk.value) continue;
+        buf += dec.decode(chunk.value);
+        for (const l of buf.split('\n').slice(0, -1)) { try { const m = JSON.parse(l.trim()); if (m.t === 'hub' || m.t === 'button') answer = m; } catch {} }
+        buf = buf.slice(buf.lastIndexOf('\n') + 1);
+      }
+      await reader.cancel().catch(() => {}); reader.releaseLock();
+    } catch {}
+    await p.close().catch(() => {});
+    return answer;
+  }
+  async function findHub(silent) {
+    for (const p of await (navigator.serial.getPorts?.() ?? [])) { const who = await whatIs(p); if (who?.t === 'hub') return p; }
+    if (silent) return null;
+    return navigator.serial.requestPort({ filters: [{ usbVendorId: 0x303a }] });
+  }
+  async function connect(silent = false) {
+    if (!navigator.serial) { $('hubstatus').textContent = 'This browser has no Web Serial. Use Chrome.'; return; }
+    if (port) return;
+    try {
+      port = await findHub(silent);
+      if (!port) return;
+      await port.open({ baudRate: 115200 });
+      writer = port.writable.getWriter();
+      $('connect').textContent = 'Connected'; renderDevs();
+      const reader = port.readable.pipeThrough(new TextDecoderStream()).getReader();
+      let buf = '';
+      await send({ t: 'hub?' });
+      for (;;) { const { value, done } = await reader.read(); if (done) break; buf += value; let i; while ((i = buf.indexOf('\n')) >= 0) { const l = buf.slice(0, i).trim(); buf = buf.slice(i + 1); if (l) handle(l); } }
+      throw new Error('the hub was unplugged');
+    } catch (e) { port = null; writer = null; $('connect').textContent = 'Connect the hub'; renderDevs(); if (e.name !== 'NotFoundError') $('hubstatus').textContent = 'Hub: ' + e.message; }
+  }
+
+  // ── the shows ─────────────────────────────────────────────────────────────
+  // `sound(t)` schedules the built-in sound from audio time t (seconds); `lights(at)` schedules the lamps and buttons,
+  // at(ms, fn) from the start. `ms` is how long before the next press counts. Lamps change at most three times a second:
+  // big flashing areas faster than that are unkind to people with photosensitive epilepsy.
+  const n = () => Math.max(1, used().length);
+  const SHOWS = [
+    { role: 'spooky', name: 'Thunderstorm', what: 'blackout, lightning, thunder', ms: 6500,
+      sound(t) { S.thunder(t + 0.6); S.thunder(t + 1.9, 0.6); },
+      lights(at) {
+        at(0, () => { L.all(null, 0, 300); B.all('20205a', 'dim'); });
+        at(600, () => { L.all(C.white, 1); B.fx('lightning'); }); at(780, () => L.all(null, 0));
+        at(1150, () => L.all(C.white, 0.7)); at(1400, () => L.all(C.blue, 0.12, 800));
+        at(1900, () => { L.all(C.white, 1); B.fx('lightning'); }); at(2250, () => L.all(C.purple, 0.25, 2500));
+      } },
+    { role: 'spooky', name: 'Phantom organ', what: 'Bach in the dark, purple to blood red', ms: 7200,
+      sound(t) { let x = t + 0.3; for (const [m, d] of [[81, 0.12], [79, 0.12], [81, 1.3]]) { S.organ(x, m, d); x += d; } x = t + 2.3; for (const [m, d] of [[79, 0.14], [77, 0.14], [76, 0.14], [74, 0.14], [73, 1.0], [74, 2.0]]) { S.organ(x, m, d); x += d + (d > 0.5 ? 0.12 : 0); } },
+      lights(at) {
+        at(0, () => { L.all(C.purple, 0.1, 200); B.all(C.purple, 'solid'); });
+        at(300, () => { L.all(C.purple, 1); B.fx('thump'); }); at(1700, () => L.all(C.purple, 0.15, 500));
+        for (let i = 0; i < 4; i++) at(2300 + i * 140, () => L.one(i * 2, C.red, 1));
+        at(2860, () => { L.all(C.red, 1); B.all(C.red, 'solid'); B.fx('alarm'); });
+        at(3980, () => { L.all(C.orange, 1, 100); B.fx('fire'); }); at(4600, () => L.all(C.blood, 0.1, 1800));
+      } },
+    { role: 'spooky', name: 'The ghost', what: 'a wail drifts along the house, then a howl', ms: 7400,
+      sound(t) { S.wail(t + 0.3, 3.2); S.howl(t + 3.8); },
+      lights(at) {
+        at(0, () => { L.all(null, 0, 600); B.all(C.green, 'sparkle'); B.fx('glitch'); });
+        for (let i = 0; i < n(); i++) { at(500 + i * 380, () => L.one(i, C.green, 0.9, 300)); at(1000 + i * 380, () => L.one(i, C.teal, 0.08, 900)); }
+        at(3800, () => { L.all(C.blue, 0.6, 1400); B.all(C.blue, 'wave'); }); at(5800, () => L.all(C.blue, 0.05, 1200));
+      } },
+    { role: 'spooky', name: 'Heartbeat', what: 'faster and faster, then…', ms: 7400,
+      beats: [400, 1400, 2300, 3100, 3800, 4400],
+      sound(t) { for (const b of this.beats) S.heart(t + b / 1000); S.stab(t + 5); },
+      lights(at) {
+        at(0, () => { L.all(C.blood, 0.08, 200); B.all(C.red, 'dim'); });
+        for (const b of this.beats) { at(b, () => { L.all(C.red, 0.9); B.fx('thump'); }); at(b + 330, () => L.all(C.blood, 0.08, 300)); }
+        at(5000, () => { L.all(C.white, 1); B.fx('explosion'); }); at(5350, () => L.all(C.red, 1, 200)); at(5900, () => L.all(C.red, 0.05, 1300));
+      } },
+    { role: 'funny', name: 'Disco', what: 'every lamp a different colour, going round', ms: 6400,
+      sound(t) { const e = 0.2; [72, 76, 79, 76, 81, 79, 76, 72, 74, 77, 81, 77, 84, 81, 79, 76, 72, 76, 79, 84, 88, 84, 79, 76, 84, 0, 84, 0, 96].forEach((m, i) => { if (m) note(t + 0.1 + i * e, m, i === 28 ? 0.5 : e * 0.8); if (i % 2 === 0 && i < 28) note(t + 0.1 + i * e, i % 8 < 4 ? 48 : 43, e * 1.5, 'triangle', 0.3); }); },
+      lights(at) {
+        at(0, () => { B.all(C.pink, 'rainbow'); B.fx('disco'); });
+        for (let i = 0; i < n(); i++) at(i * 100, () => L.one(i, ['ff0000', 'ff8a00', 'ffe600', '00ff40', '00c8ff', '4040ff', 'ff00c8'][i % 7], 1, 200));
+        for (let k = 0; k < 9; k++) at(1000 + k * 500, () => L.spin(51, 300));
+        at(2400, () => B.fx('confetti')); at(4400, () => B.fx('fireworks'));
+      } },
+    { role: 'funny', name: 'Shave and a haircut', what: 'kazoo, two bits, two boings', ms: 5600,
+      notes: [[300, 72, 0.26], [600, 67, 0.13], [750, 67, 0.13], [900, 69, 0.26], [1200, 67, 0.28], [1800, 71, 0.25], [2100, 72, 0.45]],
+      sound(t) { for (const [ms, m, d] of this.notes) S.kazoo(t + ms / 1000, m, d); S.boing(t + 3.0); S.boing(t + 3.5, 230); S.pop(t + 4.1); },
+      lights(at) {
+        at(0, () => { L.all(C.orange, 0.12, 200); B.all(C.yellow, 'spin', 600); });
+        this.notes.slice(0, 5).forEach(([ms], k) => at(ms, () => L.one(k * 2 + 1, [C.pink, C.green, C.blue, C.yellow, C.orange][k], 1)));
+        at(1800, () => { L.all(C.yellow, 1); B.fx('burst'); }); at(2100, () => { L.all(C.pink, 1); B.fx('burst'); });
+        at(3000, () => L.all(C.green, 0.8, 100)); at(3500, () => L.all(C.purple, 0.8, 100));
+        at(4100, () => { L.all(C.white, 1); B.fx('confetti'); }); at(4450, () => L.all(C.orange, 0.2, 800));
+      } },
+    { role: 'funny', name: 'Whistle and splat', what: 'up the house, down again, a rude noise', ms: 5800,
+      sound(t) { S.whistle(t + 0.3, 500, 1600, 0.8); S.whistle(t + 1.3, 1600, 380, 0.9); S.raspberry(t + 2.6); for (const [dt, f] of [[3.8, 500], [4.05, 630], [4.3, 800]]) S.pop(t + dt, f); },
+      lights(at) {
+        at(0, () => { L.all(C.orange, 0.08, 200); B.all(C.yellow, 'ripple', 700); });
+        for (let i = 0; i < n(); i++) { at(300 + i * (800 / n()), () => L.one(i, C.yellow, 1, 100)); at(1300 + i * (900 / n()), () => L.one(n() - 1 - i, C.orange, 0.1, 200)); }
+        at(2600, () => { L.all(C.green, 0.9); B.all(C.green, 'sparkle'); B.fx('glitch'); }); at(3000, () => L.all(C.mustard, 0.5, 400));
+        at(3800, () => { L.all(C.pink, 1); B.fx('fireworks'); }); at(4300, () => L.all(C.blue, 1)); at(4700, () => L.all(C.blue, 0.2, 800));
+      } },
+  ];
+
+  // ── running it ────────────────────────────────────────────────────────────
+  let armed = false, busy = false, closeAt = null, timers = [], sounds = {};
+  const bags = {}, buffers = new Map();
+  const say = (text) => { $('now').textContent = text; };
+  // The next show of a kind: each bag is dealt out shuffled, and never deals the same show twice running.
+  function deal(role) {
+    const kind = role === 'mystery' ? (Math.random() < 0.5 ? 'spooky' : 'funny') : role;
+    const bag = bags[kind] ??= { left: [], last: null };
+    if (!bag.left.length) { bag.left = SHOWS.filter((s) => s.role === kind).sort(() => Math.random() - 0.5); if (bag.left.length > 1 && bag.left[0] === bag.last) bag.left.push(bag.left.shift()); }
+    return (bag.last = bag.left.shift());
+  }
+  async function recording(kind) {
+    const list = sounds[kind] ?? []; if (!list.length || store.source === 'synth') return null;
+    if (store.source === 'mix' && Math.random() < 0.5) return null;
+    const url = list[Math.floor(Math.random() * list.length)];
+    if (!buffers.has(url)) buffers.set(url, await fetch(url).then((r) => r.arrayBuffer()).then((b) => ac.decodeAudioData(b)).catch(() => null));
+    return buffers.get(url);
+  }
+  async function play(show, counted) {
+    if (busy) return;
+    busy = true; audio();
+    const buf = await recording(show.role);
+    let ms = show.ms;
+    const t = ac.currentTime + 0.05;
+    if (buf) { const src = ac.createBufferSource(), g = ac.createGain(); src.buffer = buf; const len = Math.min(buf.duration, 15); g.gain.setValueAtTime(1, t + len - 0.4); g.gain.linearRampToValueAtTime(0, t + len); src.connect(g).connect(master); src.start(t); src.stop(t + len); ms = Math.max(ms, len * 1000); }
+    else if (store.source !== 'files' || !(sounds[show.role] ?? []).length) show.sound(t);
+    if (counted) { store.count += 1; save(); $('count').textContent = store.count; }
+    say(`${ROLES[show.role].label}: ${show.name}${buf ? ' (your recording)' : ''}`);
+    const at = (when, fn) => timers.push(setTimeout(fn, when + +store.lag));
+    show.lights(at);
+    at(show.ms, () => { if (armed) { L.idle(); } else L.all(null, 0, 600); });
+    at(ms, () => { if (armed) B.idle(); else B.dark(); });
+    at(ms + 1200, () => { busy = false; timers = []; say(armed ? 'Waiting for a press.' : 'Not running.'); });   // a breath before the next one
+  }
+  function press(role) { if (armed && !busy) play(deal(role), true); }
+
+  async function arm() {
+    audio(); armed = true;
+    $('arm').textContent = 'Stop and put the lamps back'; $('arm').className = 'btn live big';
+    const [h, m] = store.close.split(':').map(Number); const c = new Date(); c.setHours(h, m, 0, 0); closeAt = c > new Date() ? c : null;
+    say('Waiting for a press.'); $('status').textContent = closeAt ? `Lights out at ${store.close}.` : store.close ? `It is already past ${store.close}: running until you stop it.` : '';
+    if (!store.snapshot) await L.snapshot();
+    await L.group();
+    L.idle(); B.idle();
+  }
+  function disarm(why = 'Not running.') {
+    armed = false; busy = false; timers.forEach(clearTimeout); timers = [];
+    $('arm').textContent = 'Start the show'; $('arm').className = 'btn primary big';
+    say(why); $('status').textContent = '';
+    B.dark(); L.restore(); store.snapshot = null; save();
+  }
+  $('arm').onclick = () => (armed ? disarm() : arm());
+  setInterval(() => { if (armed && closeAt && new Date() >= closeAt && !busy) disarm(`Lights out: it is past ${store.close}. Good night.`); }, 5000);
+
+  // ── controls ──────────────────────────────────────────────────────────────
+  $('pads').replaceChildren(...Object.entries(ROLES).map(([role, r], i) => {
+    pads[role] = el('div', { className: 'light' });
+    const pad = el('button', { className: 'pad' }, pads[role], r.label, el('small', { textContent: `key ${i + 1}` }));
+    pad.onclick = () => { if (armed) press(role); else play(deal(role), false); };
+    return pad;
+  }));
+  addEventListener('keydown', (e) => { if (e.target.matches('input, select')) return; const role = Object.keys(ROLES)[+e.key - 1]; if (role) pads[role].parentElement.click(); });
+  $('shows').replaceChildren(...SHOWS.map((s) => { const b = el('button', { className: 'btn' }, `${ROLES[s.role].label} · ${s.name}`, el('small', { textContent: s.what })); b.onclick = () => play(s, false); return b; }));
+  const units = { vol: '%', lampmax: '%', btnmax: '%', lag: ' ms' };
+  for (const id of ['vol', 'lampmax', 'btnmax', 'lag', 'source', 'idle', 'close', 'awake']) {
+    const input = $(id), box = input.type === 'checkbox';
+    if (box) input.checked = store[id]; else input.value = store[id];
+    const shown = () => { if ($(id + 'v')) $(id + 'v').textContent = input.value + units[id]; };
+    shown();
+    input.oninput = () => { store[id] = box ? input.checked : input.value; save(); shown(); if (id === 'vol' && master) master.gain.value = store.vol / 100; if (id === 'awake') keepAwake(); };
+    if (id === 'btnmax') input.onchange = () => { for (const d of devs) send(cfg(d.dev)); };
+    if (id === 'idle') input.onchange = () => { if (armed && !busy) L.idle(); };
+  }
+  $('sync').onclick = () => { audio(); S.click(ac.currentTime + 0.05); setTimeout(() => { L.all(C.white, 1); B.fx('burst'); setTimeout(() => (armed ? L.idle() : L.all(null, 0, 300)), 400); }, +store.lag); };
+  $('zero').onclick = (e) => { e.preventDefault(); store.count = 0; save(); $('count').textContent = 0; };
+  $('count').textContent = store.count;
+  $('connect').onclick = () => connect(false);
+  B.dark(); renderLamps(); renderDevs();
+  if (store.snapshot) $('status').textContent = 'The page was closed mid-show last time; starting and stopping once will put the lamps back as they were.';
+  fetch('/api/sounds').then((r) => r.json()).then((s) => { sounds = s; const nn = Object.entries(s).filter(([, l]) => l.length).map(([k, l]) => `${l.length} in ${k}`); if (nn.length) $('files').textContent = 'found ' + nn.join(', '); }).catch(() => {});
+  loadHue();
+  if (navigator.serial) connect(true);
+  // For trying the page with no hub: feed it lines as if the hub had said them, e.g. halloween.feed('{"t":"btn","dev":"A1","b":0,"e":"tap"}')
+  window.halloween = { feed: handle };
+})();
+</script>
+</body>
+</html>
