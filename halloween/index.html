@@ -85,6 +85,10 @@
   .shows { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px; }
   .shows .btn { text-align: left; }
   .shows .btn small { display: block; color: var(--faint); font: 400 11px var(--font-b); letter-spacing: 0; text-transform: none; }
+  .apps { display: inline-flex; gap: 2px; margin-bottom: 10px; }
+  .apps a { font: 600 12px var(--font-d); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); padding: 7px 14px; }
+  .apps a:first-child { clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); } .apps a:last-child { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+  .apps a:hover { color: var(--gold-2); } .apps a.on { color: var(--bg); background: var(--gold); border-color: transparent; }
   .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
   .chip { font: 600 11.5px var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); padding: 5px 10px 5px 8px; cursor: pointer; display: inline-flex; align-items: center; gap: 7px; }
   .chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
@@ -111,7 +115,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Pax Buttonica · off duty <a href="/glow" style="color:var(--muted);margin-left:14px;text-decoration:none">Porch glow →</a></div>
+      <nav class="apps"><a class="on" href="/">Halloween show</a><a href="/glow">Porch glow</a></nav>
       <h1>Halloween show</h1>
       <div class="chips">
         <button class="chip" id="chiphub" data-open="buttons">Hub</button>
@@ -161,7 +165,7 @@
       <span class="status" id="huestatus">No Hue bridge yet: the circles above are stand-ins.</span>
     </div>
     <div class="list" id="huelist"></div>
-    <p class="hint">Pairing is once: press the round button on the Hue bridge, then Pair within 30 seconds. The lamps in the show are a line: their order here is their order along the house, and the chases run first to last. Your lamps' settings are noted when the show starts and put back when it stops.</p>
+    <p class="hint">Pairing is once: press the round button on the Hue bridge, then Pair within 30 seconds. The ticked lamps are a line, the same one Porch glow uses: their order here is their order along the house, and the chases run first to last. If the bridge's address ever changes it is found again by itself. Your lamps' settings are noted when the show starts and put back when it stops.</p>
   </div></section>
 
   <section class="panel chamfer" data-panel="settings" hidden><div class="in chamfer">
@@ -193,14 +197,16 @@
 </div>
 
 <script>
-(() => {
+(async () => {
   const $ = (id) => document.getElementById(id);
   const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ── what is remembered between visits ─────────────────────────────────────
-  const store = Object.assign({ vol: 60, lampmax: 80, btnmax: 80, lag: 160, awake: true, source: 'mix', idle: 'glow', close: '21:00', count: 0, roles: {}, lamps: [], group: null, snapshot: null }, JSON.parse(localStorage.getItem('halloween') || '{}'));
-  const save = () => localStorage.setItem('halloween', JSON.stringify(store));
+  const store = Object.assign({ vol: 60, lampmax: 80, btnmax: 80, lag: 160, awake: true, source: 'mix', idle: 'glow', close: '21:00', count: 0, roles: {}, lamps: [], group: null, snapshot: null }, JSON.parse(localStorage.getItem('halloween') || '{}'),
+    await fetch('/api/state').then((r) => r.json()).catch(() => ({})));   // the server's copy wins: it is the same in every window
+  let saving = null;
+  const save = () => { localStorage.setItem('halloween', JSON.stringify(store)); clearTimeout(saving); saving = setTimeout(() => fetch('/api/state', { method: 'POST', body: JSON.stringify({ ...store, armed: undefined, tab: undefined }) }).catch(() => {}), 300); };   // whether the show is running, and which tab is open, are this window's own
 
   // ── kinds of button ───────────────────────────────────────────────────────
   // `idle` is the "press me" light a button of that kind shows between shows.
@@ -402,7 +408,7 @@
       el('div', { className: 'sub', textContent: 'Not in the show' }), ...rest.map(row)]));
     chips();
   }
-  function lampsChanged() { store.lamps = lamps.map((l) => ({ id: l.id, use: l.use })); save(); renderLamps(); L.group(); }
+  function lampsChanged() { if (paired) fetch('/api/glow/config', { method: 'POST', body: JSON.stringify({ lamps: used().map((l) => l.id) }) }).catch(() => {}); renderLamps(); L.group(); }
 
   async function loadHue() {
     const st = await fetch('/api/hue').then((r) => r.json()).catch(() => null);
@@ -413,8 +419,10 @@
     if (!all || all.error || Array.isArray(all)) { $('huestatus').textContent = `Paired with ${st.ip}, but it is not answering. Is the laptop on the home network?`; return; }
     paired = true;
     const found = Object.entries(all).map(([id, l]) => ({ id, name: l.name, reachable: l.state.reachable, use: false }));
-    // Keep the order and ticks from last time; lamps never seen before go at the end, unticked.
-    lamps = [...store.lamps.map((s) => { const f = found.find((x) => x.id === s.id); return f && { ...f, use: s.use }; }).filter(Boolean), ...found.filter((f) => !store.lamps.some((s) => s.id === f.id)).map((f) => ({ ...f, use: false }))];
+    // The line of lamps along the house is the server's, shared with Porch glow; the bridge's other lamps follow, unticked.
+    let line = (await fetch('/api/glow').then((r) => r.json()).catch(() => null))?.lamps ?? [];
+    if (!line.length) line = store.lamps.filter((s) => s.use && s.id).map((s) => s.id);      // from when this window kept it itself
+    lamps = [...line.map((id) => found.find((f) => f.id === id)).filter(Boolean).map((f) => ({ ...f, use: true })), ...found.filter((f) => !line.includes(f.id))];
     $('huestatus').innerHTML = `Bridge <b>${st.ip}</b> · <b>${lamps.length}</b> lamps`;
     $('huego').textContent = 'Pair again';
     lampsChanged();

@@ -5,13 +5,21 @@
 import http from 'node:http';
 import https from 'node:https';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGlow } from './glow.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || process.argv[2] || 8031);
-const HUE_FILE = path.join(dir, '.hue.json');   // { ip, key }: the bridge's address and this laptop's key to it; not committed
+// Everything remembered lives in one folder outside the repo, so it is the same whichever copy of the code is running and
+// whichever window is looking: the bridge's key, the line of lamps, the show's settings. (A second argument names another
+// folder: tests use that, so they can never touch the real lamps.)
+const DATA = process.argv[3] || path.join(os.homedir(), 'Library', 'Application Support', 'PaxHalloween');
+fs.mkdirSync(DATA, { recursive: true });
+if (!process.argv[3]) for (const f of ['hue.json', 'glow.json']) { const old = path.join(dir, '.' + f); if (!fs.existsSync(path.join(DATA, f)) && fs.existsSync(old)) fs.copyFileSync(old, path.join(DATA, f)); }   // from before the folder existed
+const HUE_FILE = path.join(DATA, 'hue.json');     // { ip, key }: the bridge's address and this laptop's key to it
+const SHOW_FILE = path.join(DATA, 'show.json');   // the Halloween page's settings, kept here so every window has the same ones
 const SOUNDS = path.join(dir, 'sounds');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.aac': 'audio/aac', '.flac': 'audio/flac' };
 const AUDIO = new Set(Object.keys(TYPES).filter((e) => e !== '.html' && e !== '.mjs'));
@@ -38,7 +46,26 @@ function bridgeOnce(mod, ip, method, p, body) {
 const bridge = (ip, method, p, body) => bridgeOnce(https, ip, method, p, body).catch(() => bridgeOnce(http, ip, method, p, body));
 
 // Porch glow: ambient scenes on the lamps, played from here (glow.mjs).
-const glow = createGlow({ dir, call: (method, p, body) => (hue.key ? bridge(hue.ip, method, `/api/${hue.key}/${p}`, body) : Promise.reject(new Error('No bridge paired.'))) });
+// Pairing is once. The key never expires; only the bridge's address can change (the router hands it a new one). When the
+// bridge stops answering, look it up again and keep whichever answers to our key, so nobody has to go and press its button.
+let lookedAt = 0;
+async function refind() {
+  if (Date.now() - lookedAt < 30000) return false;
+  lookedAt = Date.now();
+  const found = await fetch('https://discovery.meethue.com').then((r) => r.json()).catch(() => []);
+  for (const b of Array.isArray(found) ? found : []) {
+    const ip = b.internalipaddress; if (!ip || ip === hue.ip) continue;
+    const cfg = await bridge(ip, 'GET', `/api/${hue.key}/config`).catch(() => null);
+    if (cfg?.whitelist) { hue.ip = ip; saveHue(); console.log(`The bridge moved to ${ip}.`); return true; }
+  }
+  return false;
+}
+async function hueCall(method, p, body) {
+  if (!hue.key) throw new Error('No bridge paired.');
+  try { return await bridge(hue.ip, method, `/api/${hue.key}/${p}`, body); }
+  catch (e) { if (!(await refind())) throw e; return bridge(hue.ip, method, `/api/${hue.key}/${p}`, body); }
+}
+const glow = createGlow({ dir: DATA, call: hueCall });
 
 const readBody = (req) => new Promise((resolve) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { resolve(s ? JSON.parse(s) : null); } catch { resolve(null); } }); });
 const json = (res, obj, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
@@ -65,6 +92,8 @@ const server = http.createServer(async (req, res) => {
     if (p === '/api/glow/start' && req.method === 'POST') { await glow.start(((await readBody(req)) ?? {}).scene); return json(res, glow.status()); }
     if (p === '/api/glow/stop' && req.method === 'POST') { await glow.stop(); return json(res, glow.status()); }
     if (p === '/api/glow/config' && req.method === 'POST') { glow.configure((await readBody(req)) ?? {}); return json(res, glow.status()); }
+    if (p === '/api/state' && req.method === 'POST') { fs.writeFileSync(SHOW_FILE, JSON.stringify((await readBody(req)) ?? {}, null, 2)); return json(res, { ok: true }); }
+    if (p === '/api/state') { let s = {}; try { s = JSON.parse(fs.readFileSync(SHOW_FILE, 'utf8')); } catch {} return json(res, s); }
     if (p === '/api/sounds') return json(res, listSounds());
     if (p === '/api/hue') return json(res, { ip: hue.ip ?? null, paired: Boolean(hue.key) });
     if (p === '/api/hue/find' && req.method === 'POST') {
@@ -86,7 +115,7 @@ const server = http.createServer(async (req, res) => {
       if (!hue.key) return json(res, { error: 'No bridge paired.' }, 409);
       const rest = p.slice('/api/hue/bridge/'.length);
       if (!/^[\w/]*$/.test(rest)) return json(res, { error: 'Bad path.' }, 400);
-      return json(res, await bridge(hue.ip, req.method, `/api/${hue.key}/${rest}`, await readBody(req)));
+      return json(res, await hueCall(req.method, rest, await readBody(req)));
     }
     if (p.startsWith('/sounds/')) {
       const file = path.normalize(path.join(dir, p));

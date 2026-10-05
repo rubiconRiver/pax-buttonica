@@ -9,7 +9,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // `call(method, path, body)` talks to the bridge (and rejects when none is paired).
 export function createGlow({ dir, call }) {
-  const FILE = path.join(dir, '.glow.json');     // what was chosen, and what is running: survives a restart; not committed
+  const FILE = path.join(dir, 'glow.json');      // the line of lamps, what was chosen, and what is running: survives a restart
   const cfg = { lamps: [], bri: 70, speed: 100, schedule: { enabled: false, on: 'sunset', off: '23:00', scene: 'tonight' }, where: { lat: 52.13, lon: -106.67 }, running: null, snapshot: null };
   try { Object.assign(cfg, JSON.parse(fs.readFileSync(FILE, 'utf8'))); } catch {}
   const save = () => fs.writeFileSync(FILE, JSON.stringify(cfg, null, 2));

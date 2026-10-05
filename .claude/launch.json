@@ -30,7 +30,7 @@
     {
       "name": "halloween",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["halloween/server.mjs", "8032"],
+      "runtimeArgs": ["halloween/server.mjs", "8032", "/tmp/claude-501/halloween-test-data"],
       "port": 8032
     }
   ]

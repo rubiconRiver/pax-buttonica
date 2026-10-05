@@ -19,6 +19,10 @@
   .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
   .eyebrow a { color: var(--muted); margin-left: 14px; text-decoration: none; } .eyebrow a:hover { color: var(--gold-2); }
   .lede { color: var(--muted); max-width: 76ch; margin: 6px 0 0; }
+  .apps { display: inline-flex; gap: 2px; margin-bottom: 10px; }
+  .apps a { font: 600 12px var(--font-d); letter-spacing: 0.14em; text-transform: uppercase; text-decoration: none; color: var(--muted); background: var(--bg-2); border: 1px solid var(--line); padding: 7px 14px; }
+  .apps a:first-child { clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px); } .apps a:last-child { clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+  .apps a:hover { color: var(--gold-2); } .apps a.on { color: var(--bg); background: var(--gold); border-color: transparent; }
   .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
   .panel { background: var(--line-2); padding: 1px; }
   .panel > .in { background: var(--panel); padding: 16px 18px 18px; display: grid; gap: 12px; }
@@ -70,7 +74,7 @@
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Pax Buttonica · off duty <a href="/">Halloween show →</a></div>
+    <nav class="apps"><a href="/">Halloween show</a><a class="on" href="/glow">Porch glow</a></nav>
     <h1>Porch glow</h1>
     <p class="lede">Slow, living light for the lamps along the house. Pick a scene and it plays until you stop it or the schedule does; it runs in the background, so this window can be closed.</p>
   </header>
@@ -105,9 +109,9 @@
   </div></section>
 
   <section class="panel chamfer" data-panel="lamps" hidden><div class="in chamfer">
-    <div class="row"><button class="btn sm" id="fromshow">Use the Halloween show's line</button><span class="hint" id="lampnote"></span></div>
+    <span class="hint" id="lampnote"></span>
     <div class="list" id="lamplist"></div>
-    <p class="hint">The ticked lamps are a line: their order here is their order along the house, and the scenes are laid along it. How the lamps were is noted when a scene starts and put back when it stops. The bridge is paired from the Halloween show's Lamps tab.</p>
+    <p class="hint">The ticked lamps are a line, the same one the Halloween show uses: their order here is their order along the house, and the scenes are laid along it. How the lamps were is noted when a scene starts and put back when it stops. The bridge is paired from the Halloween show's Lamps tab.</p>
   </div></section>
 
   <section class="panel chamfer" data-panel="schedule" hidden><div class="in chamfer">
@@ -192,8 +196,6 @@ function lampList() {
   $('lamplist').replaceChildren(...(!st.paired ? [] : [el('div', { className: 'sub', textContent: st.lamps.length ? 'In the glow, in order along the house' : 'In the glow: none yet, tick some below' }), ...st.lamps.map(row), el('div', { className: 'sub', textContent: 'Not in the glow' }), ...rest.map(row)]));
   $('lampnote').textContent = st.paired ? '' : 'No Hue bridge is paired yet.';
 }
-// The Halloween show keeps its line of lamps in this browser; borrow it.
-$('fromshow').onclick = () => { const line = (JSON.parse(localStorage.getItem('halloween') || '{}').lamps ?? []).filter((l) => l.use && l.id).map((l) => l.id); if (line.length) setLamps(line); else $('lampnote').textContent = 'The Halloween show has no lamps ticked in this window.'; };
 
 // ── schedule ────────────────────────────────────────────────────────────────
 $('sscene').replaceChildren(el('option', { value: 'tonight', textContent: 'whatever suits the night' }), ...SCENES.map((s) => el('option', { value: s.id, textContent: s.name })));

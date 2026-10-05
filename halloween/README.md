@@ -15,7 +15,7 @@ It mends itself: a hub that is unplugged and plugged back in is picked up again 
 
 - **Try it with nothing plugged in:** click the hexagons or the show names. The circles stand in for the lamps.
 - **Buttons:** plug the hub in, "Connect the hub", switch the buttons on, give each a kind. The hub wants to be near the window closest to the buttons; the page shows each button's signal.
-- **Lamps:** "Find it" (or type the bridge's IP), press the round button on the Hue bridge, "Pair". Tick the lamps that are in the show and order them along the house. The key the bridge hands out is kept in `halloween/.hue.json`, which is not committed. The page makes one group on the bridge, "Halloween show" (it does not appear in the Hue app), so all the lamps can change at once.
+- **Lamps:** "Find it" (or type the bridge's IP), press the round button on the Hue bridge, "Pair". Tick the lamps that are in the show and order them along the house. Pairing is once: the key the bridge hands out never expires, and if the bridge's address changes the server finds it again by itself. The page makes one group on the bridge, "Halloween show" (it does not appear in the Hue app), so all the lamps can change at once.
 - **Speaker:** pair the Bluetooth speaker with the laptop as usual, then use "Test: click and flash" and the slider until the two land together.
 - **Your own sounds:** drop mp3, wav or m4a files into `sounds/spooky/`, `sounds/funny/` and `sounds/magic/` and reload. A recording plays in place of the built-in sound, over one of that kind's light shows; longer than 15 s is faded out.
 - **On the night:** laptop on its charger, lid open.
@@ -35,3 +35,7 @@ The same server has a second page, http://localhost:8031/glow (linked from the t
 - After changing `server.mjs`, `glow.mjs` or `scenes.mjs`, restart the server: `launchctl kickstart -k gui/$(id -u)/ca.paxbuttonica.halloween`.
 
 Seen running so far: the scenes on screen, and the engine against a pretend bridge. Not yet on the real lamps.
+
+## What is remembered, and where
+
+Everything is kept by the server in `~/Library/Application Support/PaxHalloween/`: the bridge's key (`hue.json`), the line of lamps and Porch glow's choices (`glow.json`), and the Halloween page's settings, button kinds and press count (`show.json`). So it is the same in the app, in a Chrome tab, and after the code is updated; nothing has to be set up twice. Both pages share the one line of lamps. A second argument to `server.mjs` names a different folder (tests use one, so they cannot touch the real lamps).
