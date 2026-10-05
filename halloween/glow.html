@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Porch glow</title>
+<style>
+  :root {
+    --bg: #05070c; --bg-2: #0b101b; --panel: #0e1320; --line: rgba(140, 190, 255, 0.15); --line-2: rgba(140, 190, 255, 0.32);
+    --text: #e8eef8; --muted: #93a0b8; --faint: #5d6880; --gold: #7fd4ff; --gold-2: #c9ecff; --ok: #5dff6a; --danger: #ff5468;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.5 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1120px; margin-inline: auto; display: grid; gap: 18px; }
+  h1 { font: 700 28px var(--font-d); margin: 0; }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow a { color: var(--muted); margin-left: 14px; text-decoration: none; } .eyebrow a:hover { color: var(--gold-2); }
+  .lede { color: var(--muted); max-width: 76ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 16px 18px 18px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1c2538, #121829); border: 1px solid var(--line-2); padding: 9px 14px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn.primary { color: var(--bg); background: linear-gradient(#c9ecff, #5fbdf0); border-color: transparent; }
+  .btn.sm { padding: 5px 9px; font-size: 11px; }
+  .btn:disabled { opacity: 0.35; cursor: default; }
+  .btn:focus-visible, .card:focus-visible, .tab:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  label.f span { color: var(--text); min-width: 4ch; font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 140px; accent-color: var(--gold); }
+  select, input[type=time] { background: var(--bg-2); color: var(--text); border: 1px solid var(--line-2); font: 500 13px var(--font-b); padding: 6px 8px; }
+  input[type=checkbox] { accent-color: var(--gold); }
+  .hint { color: var(--faint); font-size: 12.5px; margin: 0; }
+  .now { font: 600 18px var(--font-d); color: var(--gold-2); }
+  .now small { display: block; font: 400 13px var(--font-b); color: var(--muted); }
+  .sub { font: 600 11.5px var(--font-d); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 8px 0 0; display: flex; align-items: center; gap: 8px; }
+  .sub::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  /* A strip is the line of lamps: on the stage at full size, on every scene's card in miniature. */
+  .strip { display: flex; gap: var(--gap, 6px); justify-content: center; }
+  .strip i { --col: #000; --bri: 0.05; --ms: 1s; width: var(--d, 16px); height: var(--d, 16px); border-radius: 50%; background: #06080d; position: relative; flex: none; }
+  .strip i::after { content: ''; position: absolute; inset: 0; border-radius: 50%; background: var(--col); opacity: var(--bri); box-shadow: 0 0 calc(var(--d, 16px) * 0.6) calc(var(--d, 16px) * 0.12) var(--col); transition: background var(--ms) linear, opacity var(--ms) linear, box-shadow var(--ms) linear; }
+  .stage .strip { --d: 54px; --gap: 22px; padding: 14px 0 4px; flex-wrap: wrap; }
+  .stage .names { display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; }
+  .stage .names small { width: 54px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.25; overflow-wrap: anywhere; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+  .card { text-align: left; color: var(--text); background: linear-gradient(#141b2b, #0f1524); border: 1px solid var(--line); padding: 14px 14px 12px; cursor: pointer; display: grid; gap: 8px; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%); font: inherit; }
+  .card:hover { border-color: var(--gold); }
+  .card.on { border-color: var(--gold); background: linear-gradient(#1b2a40, #132034); }
+  .card b { font: 600 14px var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; }
+  .card.on b::after { content: ' · on'; color: var(--ok); }
+  .card small { color: var(--muted); font-size: 12px; line-height: 1.35; min-height: 2.7em; }
+  .card .strip { justify-content: flex-start; --d: 20px; --gap: 7px; }
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line-2); margin-bottom: -18px; }
+  .tab { font: 600 13px var(--font-d); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); background: none; border: 0; padding: 10px 18px; cursor: pointer; clip-path: polygon(9px 0, 100% 0, 100% 100%, 0 100%, 0 9px); }
+  .tab:hover { color: var(--gold-2); }
+  .tab[aria-selected="true"] { color: var(--bg); background: var(--gold); }
+  [data-panel][hidden] { display: none; }
+  .list { display: grid; }
+  .item { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .item .grow { flex: 1; min-width: 120px; }
+  .item .bad { color: var(--danger); font-size: 12px; }
+  .item .n { font: 700 12px var(--font-d); color: var(--bg); background: var(--gold); width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · off duty <a href="/">Halloween show →</a></div>
+    <h1>Porch glow</h1>
+    <p class="lede">Slow, living light for the lamps along the house. Pick a scene and it plays until you stop it or the schedule does; it runs in the background, so this window can be closed.</p>
+  </header>
+
+  <section class="panel chamfer stage"><div class="in chamfer">
+    <div class="row">
+      <button class="btn primary" id="stop" disabled>Stop and put the lamps back</button>
+      <div class="now" id="now">Nothing playing<small id="nowsub">Click a scene below.</small></div>
+    </div>
+    <div class="strip" id="stage"></div>
+    <div class="names" id="names"></div>
+    <div class="row">
+      <label class="f">Brightness <input type="range" id="bri" min="5" max="100" step="5"><span id="briv"></span></label>
+      <label class="f">Speed <input type="range" id="speed" min="25" max="400" step="25"><span id="speedv"></span></label>
+    </div>
+  </div></section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab" role="tab" data-tab="scenes">Scenes</button>
+    <button class="tab" role="tab" data-tab="lamps">Lamps</button>
+    <button class="tab" role="tab" data-tab="schedule">Schedule</button>
+  </nav>
+
+  <section class="panel chamfer" data-panel="scenes"><div class="in chamfer">
+    <div class="sub">Tonight</div>
+    <div class="cards" id="tonight"></div>
+    <div class="sub">Any night</div>
+    <div class="cards" id="any"></div>
+    <div class="sub">The calendar</div>
+    <div class="cards" id="calendar"></div>
+    <p class="hint">Every card is its scene, playing in miniature. The lamps move in slow strokes (each one is nudged every second or few), so these are moods, not flashes.</p>
+  </div></section>
+
+  <section class="panel chamfer" data-panel="lamps" hidden><div class="in chamfer">
+    <div class="row"><button class="btn sm" id="fromshow">Use the Halloween show's line</button><span class="hint" id="lampnote"></span></div>
+    <div class="list" id="lamplist"></div>
+    <p class="hint">The ticked lamps are a line: their order here is their order along the house, and the scenes are laid along it. How the lamps were is noted when a scene starts and put back when it stops. The bridge is paired from the Halloween show's Lamps tab.</p>
+  </div></section>
+
+  <section class="panel chamfer" data-panel="schedule" hidden><div class="in chamfer">
+    <div class="row">
+      <label class="f"><input type="checkbox" id="sen"> Come on by itself</label>
+      <label class="f">from <select id="son"><option value="sunset">sunset</option><option value="time">a set time</option></select><input type="time" id="sontime" value="19:00" hidden></label>
+      <label class="f">until <input type="time" id="soff"></label>
+      <label class="f">playing <select id="sscene"></select></label>
+    </div>
+    <p class="hint" id="snote"></p>
+  </div></section>
+</div>
+
+<script type="module">
+import { SCENES } from '/scenes.mjs';
+const $ = (id) => document.getElementById(id);
+const el = (tag, props = {}, ...kids) => { const e = Object.assign(document.createElement(tag), props); e.append(...kids); return e; };
+const post = (path, body) => fetch(path, { method: 'POST', body: JSON.stringify(body ?? {}) }).then((r) => r.json());
+
+let st = { lamps: [], bri: 70, speed: 100, schedule: { enabled: false, on: 'sunset', off: '23:00', scene: 'tonight' }, playing: null, tonight: { id: 'aurora', why: '' }, paired: false, sunset: null };
+let lights = {};                          // the bridge's lamps by id, for their names
+const CALENDAR = ['halloween', 'christmas', 'newyear', 'valentine', 'stpatrick', 'canada'];
+const byId = (id) => SCENES.find((s) => s.id === id);
+
+// Draw a scene on a row of dots the way the server plays it on the lamps: one dot at a time, round and round, each gliding
+// to what the scene says over the scene's step. Answers a function that stops it.
+function draw(dots, scene, speed = () => 100) {
+  const n = dots.length, step = Math.max(scene.step, n * 0.15), t0 = Date.now(); let k = 0, timer;
+  const stroke = () => {
+    const i = k++ % n, [h, s, v] = scene.at(n > 1 ? i / (n - 1) : 0.5, (Date.now() - t0) / 1000 * speed() / 100 + step, i, n), d = dots[i].style;
+    d.setProperty('--ms', step + 's'); d.setProperty('--col', `hsl(${h} ${s * 100}% ${100 - s * 50}%)`); d.setProperty('--bri', Math.max(0.05, v));
+    timer = setTimeout(stroke, step * 1000 / n);
+  };
+  stroke();
+  return () => clearTimeout(timer);
+}
+const strip = (n) => Array.from({ length: n }, () => el('i'));
+
+// ── the stage ───────────────────────────────────────────────────────────────
+let stopStage = () => {}, staged = null;
+function stage() {
+  const sc = byId(st.playing), ids = st.lamps.length ? st.lamps : Array.from({ length: 7 }, (_, i) => null);
+  $('stop').disabled = !sc;
+  $('now').firstChild.textContent = sc ? sc.name : 'Nothing playing';
+  $('nowsub').textContent = sc ? sc.what : !st.paired ? 'No Hue bridge is paired yet (do that from the Halloween show): the scenes can still be watched here.' : !st.lamps.length ? 'Choose the lamps first, under Lamps.' : 'Click a scene below.';
+  for (const c of document.querySelectorAll('.card')) c.classList.toggle('on', c.dataset.id === st.playing);
+  const key = `${st.playing}|${ids.join()}`; if (key === staged) return; staged = key;
+  stopStage(); const dots = strip(ids.length); $('stage').replaceChildren(...dots);
+  $('names').replaceChildren(...ids.map((id, i) => el('small', { textContent: id ? `${i + 1} · ${lights[id]?.name ?? id}` : '' })));
+  if (sc) stopStage = draw(dots, sc, () => st.speed);
+}
+
+// ── scenes ──────────────────────────────────────────────────────────────────
+function card(scene, note) {
+  const dots = strip(7), c = el('button', { className: 'card' }, el('div', { className: 'strip' }, ...dots), el('b', { textContent: scene.name }), el('small', { textContent: note ?? scene.what }));
+  c.dataset.id = scene.id; draw(dots, scene);
+  c.onclick = async () => {
+    if (!st.paired || !st.lamps.length) { st.playing = scene.id; return stage(); }     // nothing to play it on: show it on the stage
+    const r = await post('/api/glow/start', { scene: scene.id }); if (r.error) { $('nowsub').textContent = r.error; return; }
+    Object.assign(st, r); stage();
+  };
+  return c;
+}
+function cards() {
+  $('tonight').replaceChildren(card(byId(st.tonight.id), `${st.tonight.why} ${byId(st.tonight.id).what}.`));
+  $('any').replaceChildren(...SCENES.filter((s) => !CALENDAR.includes(s.id)).map((s) => card(s)));
+  $('calendar').replaceChildren(...SCENES.filter((s) => CALENDAR.includes(s.id)).map((s) => card(s)));
+}
+$('stop').onclick = async () => { if (st.paired && st.lamps.length) Object.assign(st, await post('/api/glow/stop')); st.playing = null; stage(); };
+
+// ── lamps ───────────────────────────────────────────────────────────────────
+const setLamps = async (ids) => { Object.assign(st, await post('/api/glow/config', { lamps: ids })); lampList(); stage(); };
+function lampList() {
+  const row = (id) => {
+    const at = st.lamps.indexOf(id), used = at >= 0, l = lights[id];
+    const tick = el('input', { type: 'checkbox', checked: used }); tick.onchange = () => setLamps(used ? st.lamps.filter((x) => x !== id) : [...st.lamps, id]);
+    const move = (d) => () => { const j = at + d; if (j < 0 || j >= st.lamps.length) return; const a = [...st.lamps]; [a[at], a[j]] = [a[j], a[at]]; setLamps(a); };
+    return el('div', { className: 'item' }, tick, ...(used ? [el('span', { className: 'n', textContent: at + 1 })] : []), el('span', { className: 'grow', textContent: l?.name ?? `Lamp ${id}` }), el('span', { className: 'bad', textContent: l && !l.state.reachable ? 'not reachable' : '' }),
+      ...(used ? [el('button', { className: 'btn sm', textContent: '▲', onclick: move(-1) }), el('button', { className: 'btn sm', textContent: '▼', onclick: move(1) })] : []));
+  };
+  const rest = Object.keys(lights).filter((id) => !st.lamps.includes(id));
+  $('lamplist').replaceChildren(...(!st.paired ? [] : [el('div', { className: 'sub', textContent: st.lamps.length ? 'In the glow, in order along the house' : 'In the glow: none yet, tick some below' }), ...st.lamps.map(row), el('div', { className: 'sub', textContent: 'Not in the glow' }), ...rest.map(row)]));
+  $('lampnote').textContent = st.paired ? '' : 'No Hue bridge is paired yet.';
+}
+// The Halloween show keeps its line of lamps in this browser; borrow it.
+$('fromshow').onclick = () => { const line = (JSON.parse(localStorage.getItem('halloween') || '{}').lamps ?? []).filter((l) => l.use && l.id).map((l) => l.id); if (line.length) setLamps(line); else $('lampnote').textContent = 'The Halloween show has no lamps ticked in this window.'; };
+
+// ── schedule ────────────────────────────────────────────────────────────────
+$('sscene').replaceChildren(el('option', { value: 'tonight', textContent: 'whatever suits the night' }), ...SCENES.map((s) => el('option', { value: s.id, textContent: s.name })));
+function schedule() {
+  const s = st.schedule;
+  $('sen').checked = s.enabled; $('son').value = s.on === 'sunset' ? 'sunset' : 'time'; $('sontime').hidden = s.on === 'sunset'; if (s.on !== 'sunset') $('sontime').value = s.on; $('soff').value = s.off; $('sscene').value = s.scene;
+  $('snote').textContent = `${s.enabled ? `On at ${s.on === 'sunset' ? `sunset (${st.sunset ?? '?'} today in Saskatoon)` : s.on}, off at ${s.off}.` : 'Off: scenes play only when you start one.'} The Mac has to be awake for it; stopping a scene by hand leaves it stopped until the next evening.`;
+}
+for (const id of ['sen', 'son', 'sontime', 'soff', 'sscene']) $(id).onchange = async () => { Object.assign(st, await post('/api/glow/config', { schedule: { enabled: $('sen').checked, on: $('son').value === 'sunset' ? 'sunset' : $('sontime').value, off: $('soff').value, scene: $('sscene').value } })); schedule(); };
+
+// ── sliders, tabs, and keeping up with the server ───────────────────────────
+for (const [id, unit] of [['bri', '%'], ['speed', '%']]) {
+  $(id).oninput = () => { st[id] = +$(id).value; $(id + 'v').textContent = st[id] + unit; };
+  $(id).onchange = () => post('/api/glow/config', { [id]: st[id] });
+}
+const sliders = () => { for (const id of ['bri', 'speed']) { $(id).value = st[id]; $(id + 'v').textContent = st[id] + '%'; } };
+const openTab = (name) => { localStorage.setItem('glowtab', name); for (const t of document.querySelectorAll('.tab')) t.setAttribute('aria-selected', String(t.dataset.tab === name)); for (const p of document.querySelectorAll('[data-panel]')) p.hidden = p.dataset.panel !== name; };
+for (const t of document.querySelectorAll('.tab')) t.onclick = () => openTab(t.dataset.tab);
+openTab(localStorage.getItem('glowtab') ?? 'scenes');
+
+async function refresh(first) {
+  const r = await fetch('/api/glow').then((x) => x.json()).catch(() => null); if (!r) return;
+  const preview = !r.paired || !r.lamps.length ? st.playing : r.playing;       // with nothing to play on, the stage is only a preview: keep it
+  Object.assign(st, r, { playing: preview });
+  if (first && st.paired) { const all = await fetch('/api/hue/bridge/lights').then((x) => x.json()).catch(() => null); if (all && !Array.isArray(all) && !all.error) lights = all; }
+  if (first) { cards(); sliders(); schedule(); lampList(); }
+  stage();
+}
+refresh(true);
+setInterval(refresh, 15000);
+</script>
+</body>
+</html>

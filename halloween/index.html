@@ -111,7 +111,7 @@
 <div class="wrap">
   <header class="top">
     <div>
-      <div class="eyebrow">Pax Buttonica · off duty</div>
+      <div class="eyebrow">Pax Buttonica · off duty <a href="/glow" style="color:var(--muted);margin-left:14px;text-decoration:none">Porch glow →</a></div>
       <h1>Halloween show</h1>
       <div class="chips">
         <button class="chip" id="chiphub" data-open="buttons">Hub</button>
@@ -707,6 +707,7 @@
     $('arm').textContent = 'Stop and put the lamps back'; $('arm').className = 'btn live big';
     const [h, m] = store.close.split(':').map(Number); const c = new Date(); c.setHours(h, m, 0, 0); closeAt = c > new Date() ? c : null;
     say('Waiting for a press.'); $('status').textContent = closeAt ? `Lights out at ${store.close}.` : store.close ? `It is already past ${store.close}: running until you stop it.` : '';
+    await fetch('/api/glow/stop', { method: 'POST' }).catch(() => {});   // the show takes the lamps over from an ambient scene, which first puts them back
     if (!store.snapshot) await L.snapshot();
     await L.group();
     L.idle(); B.idle();

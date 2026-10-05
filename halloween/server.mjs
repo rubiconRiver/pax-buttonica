@@ -7,13 +7,14 @@ import https from 'node:https';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { createGlow } from './glow.mjs';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || process.argv[2] || 8031);
 const HUE_FILE = path.join(dir, '.hue.json');   // { ip, key }: the bridge's address and this laptop's key to it; not committed
 const SOUNDS = path.join(dir, 'sounds');
-const TYPES = { '.html': 'text/html; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.aac': 'audio/aac', '.flac': 'audio/flac' };
-const AUDIO = new Set(Object.keys(TYPES).filter((e) => e !== '.html'));
+const TYPES = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg', '.aac': 'audio/aac', '.flac': 'audio/flac' };
+const AUDIO = new Set(Object.keys(TYPES).filter((e) => e !== '.html' && e !== '.mjs'));
 
 let hue = {};
 try { hue = JSON.parse(fs.readFileSync(HUE_FILE, 'utf8')); } catch {}
@@ -36,6 +37,9 @@ function bridgeOnce(mod, ip, method, p, body) {
 }
 const bridge = (ip, method, p, body) => bridgeOnce(https, ip, method, p, body).catch(() => bridgeOnce(http, ip, method, p, body));
 
+// Porch glow: ambient scenes on the lamps, played from here (glow.mjs).
+const glow = createGlow({ dir, call: (method, p, body) => (hue.key ? bridge(hue.ip, method, `/api/${hue.key}/${p}`, body) : Promise.reject(new Error('No bridge paired.'))) });
+
 const readBody = (req) => new Promise((resolve) => { let s = ''; req.on('data', (c) => { s += c; }); req.on('end', () => { try { resolve(s ? JSON.parse(s) : null); } catch { resolve(null); } }); });
 const json = (res, obj, code = 200) => { res.writeHead(code, { 'Content-Type': 'application/json' }); res.end(JSON.stringify(obj)); };
 
@@ -55,6 +59,12 @@ const server = http.createServer(async (req, res) => {
   const p = decodeURIComponent(url.pathname);
   try {
     if (p === '/' || p === '/index.html') { res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store' }); return res.end(fs.readFileSync(path.join(dir, 'index.html'))); }
+    if (p === '/glow') { res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store' }); return res.end(fs.readFileSync(path.join(dir, 'glow.html'))); }
+    if (p === '/scenes.mjs') { res.writeHead(200, { 'Content-Type': TYPES['.mjs'], 'Cache-Control': 'no-store' }); return res.end(fs.readFileSync(path.join(dir, 'scenes.mjs'))); }
+    if (p === '/api/glow') return json(res, { ...glow.status(), paired: Boolean(hue.key) });
+    if (p === '/api/glow/start' && req.method === 'POST') { await glow.start(((await readBody(req)) ?? {}).scene); return json(res, glow.status()); }
+    if (p === '/api/glow/stop' && req.method === 'POST') { await glow.stop(); return json(res, glow.status()); }
+    if (p === '/api/glow/config' && req.method === 'POST') { glow.configure((await readBody(req)) ?? {}); return json(res, glow.status()); }
     if (p === '/api/sounds') return json(res, listSounds());
     if (p === '/api/hue') return json(res, { ip: hue.ip ?? null, paired: Boolean(hue.key) });
     if (p === '/api/hue/find' && req.method === 'POST') {

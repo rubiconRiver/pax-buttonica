@@ -24,3 +24,14 @@ It mends itself: a hub that is unplugged and plugged back in is picked up again 
 The shows are the `SHOWS` list in `index.html`: each has a `sound` and a `lights` timeline. A new kind of button is one more entry in `ROLES`.
 
 Seen running so far: the page in simulation only. The hub, real buttons, the Hue bridge and a Bluetooth speaker have not been tried with it yet.
+
+## Porch glow
+
+The same server has a second page, http://localhost:8031/glow (linked from the top of the show's page): ambient scenes for the lamps on any night, no buttons needed. Northern lights, a campfire, a tide rolling along the house, fireflies, and a calendar set (jack-o'-lantern, Christmas lights, Canada Day…); "Tonight" picks one from the date. Every card plays its scene in miniature.
+
+- The scene is played by the server, not the page, so the window can be closed; it carries on after a restart. It can come on by itself at sunset (worked out for Saskatoon; `where` in `.glow.json`) or a set time, and go off at a set time. The Mac has to be awake.
+- Choose its lamps under Lamps, or borrow the Halloween show's line. Starting the Halloween show stops a running scene.
+- A scene is one function in `scenes.mjs`: `at(x, t, k, n)` answers the colour for the lamp at position `x` along the house at time `t`. Each lamp is nudged every `step` seconds and glides there, so scenes are slow by nature. Add one to the list and it appears on the page.
+- After changing `server.mjs`, `glow.mjs` or `scenes.mjs`, restart the server: `launchctl kickstart -k gui/$(id -u)/ca.paxbuttonica.halloween`.
+
+Seen running so far: the scenes on screen, and the engine against a pretend bridge. Not yet on the real lamps.
