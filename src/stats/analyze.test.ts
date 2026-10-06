@@ -26,7 +26,10 @@ describe('taking a game log apart', () => {
     const garett = s.players.find((p) => p.name === 'Garett')!;
     expect(garett.longest).toBeLessThan(5 * 60_000);
     expect(s.refusals.reduce((a, r) => a + r.n, 0)).toBe(157);
-    expect(s.refusals[0].why).toContain('own turn');
+    // Grouped by reason across everyone, the biggest is tapping on your own turn.
+    const byWhy = new Map<string, number>();
+    for (const r of s.refusals) byWhy.set(r.why, (byWhy.get(r.why) ?? 0) + r.n);
+    expect([...byWhy.entries()].sort((a, b) => b[1] - a[1])[0][0]).toContain('own turn');
   });
   it('speaks time plainly', () => {
     expect(spoken(46_140_000)).toBe('12 h 49 m');
