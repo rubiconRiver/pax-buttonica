@@ -161,3 +161,14 @@ The first full game ran on the six v2 buttons (bar cage, Atom's own switch, hub 
 ## Test order for the next mechanism (2026-10-04)
 
 Direction Garett is leaning to: keep the printed cap, cage and hex as they are, and put a bought 30 mm arcade button under the cage as the mechanism (spring, guide, switch), the Atom moved aside and no longer pressed; its switch on two wires to GND and G8 on the Atom's underside pins (the firmware already reads G8). A custom board (ESP32 module + 37 LEDs + charger on one ~56 mm board) was sketched as the step after, not started. Checked on DigiKey.ca today, all in stock, CAD: Adafruit 3491 (30 mm translucent arcade button with LED, takes 0.11" quick-connects) $3.91; Adafruit 1152 (0.11" quick-connect wire pairs, 10, ending in a 2-pin 0.1" socket) $7.73; Adafruit 1192 (60 mm) $9.30; Adafruit 1187 (100 mm) $15.55. PiShop.ca has the 30 mm at $3.75 and only the 0.25" wire pack. Not yet checked: a firmer, clickier 30 mm (Sanwa-type) from a Canadian shop; which wire size the 60 mm's switch takes.
+
+## v6: the cap on a Key Unit (2026-10-05)
+
+Drawn, clash-clean, not printed: `hardware/shell/make_shell_v6.py` → `stl-v6/`, six parts, all new (housing and lid are
+v2's made 9 mm deeper). The cap rides on an M5 Mechanical Key Unit; no printed part bends; the Atom hangs under the
+platform in a screwed-on cradle; hex, key and Atom share a Grove 1-to-3 splitter. See the shell README. Garett wanted
+the Printables box's solidity ("more solid, feels better") with our flat cap, "the hex is the deciding factor", and said
+not to worry about reusing v2's bottom. The DigiKey arcade buttons (arriving 2026-10-06) stay a feel reference: the
+30 mm one is 38 mm deep and makes the box about 80 mm tall, so it is not in this design. MEASURE on the first build:
+the switch's travel and click point, the switch housing's height above the case (9.4), the splitter's size (24 × 12 × 8
+assumed), and whether the blue switch returns the cap; a Box Navy/Jade is the fix if not.
