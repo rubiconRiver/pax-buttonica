@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg">
+<title>Pax Buttonica v6</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Oxanium:wght@500;600;700&display=swap">
+<style>
+  :root {
+    --bg: #04060b; --bg-2: #0a0e18; --panel: #0d121e; --line: rgba(150, 172, 225, 0.16); --line-2: rgba(150, 172, 225, 0.32);
+    --text: #e6ebf7; --muted: #8d97af; --faint: #5b6480; --gold: #f2b84b; --gold-2: #ffdf9a; --cyan: #5ad1ff;
+    --font-d: 'Oxanium', 'Eurostile', 'Avenir Next Condensed', system-ui, sans-serif;
+    --font-b: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --c: 12px; color-scheme: dark;
+  }
+  html { background: var(--bg); }
+  body { margin: 0; background: radial-gradient(1200px 600px at 50% -200px, var(--bg-2), var(--bg)) var(--bg); color: var(--text); font: 400 14px/1.55 var(--font-b); padding: 24px 16px 60px; }
+  .wrap { max-width: 1180px; margin-inline: auto; display: grid; gap: 16px; }
+  h1, h2, h3 { font-family: var(--font-d); margin: 0; text-wrap: balance; }
+  h1 { font-size: 30px; font-weight: 700; }
+  h2 { font-size: 20px; font-weight: 700; }
+  h3 { font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gold); }
+  .eyebrow { font: 600 12px/1 var(--font-d); letter-spacing: 0.16em; text-transform: uppercase; color: var(--gold); }
+  .lede { color: var(--muted); max-width: 74ch; margin: 6px 0 0; }
+  .chamfer { clip-path: polygon(var(--c) 0, 100% 0, 100% calc(100% - var(--c)), calc(100% - var(--c)) 100%, 0 100%, 0 var(--c)); }
+  .panel { background: var(--line-2); padding: 1px; }
+  .panel > .in { background: var(--panel); padding: 14px 16px 16px; display: grid; gap: 12px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .sep { width: 1px; height: 22px; background: var(--line-2); margin-inline: 4px; }
+  .btn { font: 600 12px var(--font-d); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text); background: linear-gradient(#1d2437, #121727); border: 1px solid var(--line-2); padding: 8px 13px; cursor: pointer; clip-path: polygon(7px 0, 100% 0, calc(100% - 7px) 100%, 0 100%); }
+  .btn:hover { border-color: var(--gold); color: var(--gold-2); }
+  .btn[aria-pressed="true"] { color: var(--bg); background: var(--gold); border-color: transparent; }
+  .btn.go { color: var(--bg); background: var(--cyan); border-color: transparent; }
+  .btn:focus-visible, .sw:focus-visible { outline: 2px solid var(--gold-2); outline-offset: 2px; }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  @media (max-width: 940px) { .layout { grid-template-columns: 1fr; } }
+  .stage { position: relative; width: 100%; aspect-ratio: 16 / 11; background: #05070c; border: 1px solid var(--line); overflow: hidden; }
+  .stage canvas { display: block; width: 100%; height: 100%; }
+  .stage .hint { position: absolute; left: 10px; bottom: 8px; color: var(--faint); font-size: 12px; pointer-events: none; }
+  .stage .loading { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); }
+  .sw { width: 26px; height: 26px; border-radius: 50%; border: 3px solid transparent; background: var(--sw); cursor: pointer; padding: 0; }
+  .sw[aria-checked="true"] { border-color: #fff; box-shadow: 0 0 12px var(--sw); }
+  label.f { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 13px; }
+  input[type=range] { width: 130px; accent-color: var(--gold); }
+  .about p { margin: 0; color: var(--muted); }
+  .about p b { color: var(--text); font-weight: 600; }
+  dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; margin: 0; font-size: 13px; }
+  dt { color: var(--faint); font: 600 11px var(--font-d); letter-spacing: 0.1em; text-transform: uppercase; padding-top: 2px; }
+  dd { margin: 0; color: var(--text); }
+  .parts { display: grid; gap: 4px; }
+  .parts label { display: flex; align-items: center; gap: 9px; font-size: 13px; color: var(--muted); cursor: pointer; }
+  .parts i { width: 12px; height: 12px; display: inline-block; border: 1px solid rgba(255, 255, 255, 0.25); }
+  .note { color: var(--faint); font-size: 12.5px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Pax Buttonica · shell v6</div>
+    <h1>The cap on a bought switch</h1>
+    <p class="lede">The same flat cap and the hex riding inside it, but nothing printed bends any more. The cap sits on an M5 Key Unit, a keyboard switch in a Grove case: its spring returns the cap, its click is the click, its own end stop takes the slap. The printed parts only guide. The cell and the Rider lie side by side on the lid as in v2; the Atom hangs under the platform above the Rider. Drawn round the real parts and checked at rest and pressed. Not printed yet.</p>
+  </header>
+
+  <section class="panel chamfer"><div class="in chamfer">
+    <div class="row">
+      <span role="radiogroup" aria-label="Player colour" class="row" id="swatches"></span>
+      <span class="sep"></span>
+      <button class="btn" data-state="turn" aria-pressed="true">Your turn</button>
+      <button class="btn" data-state="waiting">Waiting</button>
+      <button class="btn" data-state="card">Card played</button>
+      <button class="btn" data-state="score">Scoring</button>
+      <span class="sep"></span>
+      <button class="btn go" id="press">Press it</button>
+    </div>
+    <div class="layout">
+      <div>
+        <div class="stage" id="stage">
+          <div class="loading" id="loading">Loading…</div>
+          <span class="hint">drag to turn · scroll to zoom · click the cap to press it · grid squares are 10 mm</span>
+        </div>
+        <div class="row" style="margin-top: 10px">
+          <button class="btn" data-view="hero" aria-pressed="true">Hero</button>
+          <button class="btn" data-view="player">Player's seat</button>
+          <button class="btn" data-view="across">Across the table</button>
+          <button class="btn" data-view="top">Top</button>
+          <button class="btn" data-view="port">Port side</button>
+          <span class="sep"></span>
+          <button class="btn" id="cut" aria-pressed="false">Cut in half</button>
+          <label class="f">Pull apart <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
+        </div>
+      </div>
+      <aside class="about" style="display: grid; gap: 14px">
+        <div style="display: grid; gap: 8px">
+          <h2>What you are looking at</h2>
+          <p>The cap hangs on the housing's lip. Under it, a carrier (the old cage without its middle) holds the hex on ledges and has a bar across its ring that rests on the keycap. Press anywhere on the cap: the keycap goes down 4 mm, the switch clicks at about 2 and stops at 4, and the whole thing comes back on the switch's own spring. The collar round the key guides the cap's sleeve, as it does today.</p>
+        </div>
+        <dl>
+          <dt>Size</dt><dd>72 × 80 mm, 62 mm tall to the cap (v2: 50). The cap stands 17.5 above the lip</dd>
+          <dt>Press</dt><dd>4 mm on a keyboard switch; the switch is the stop</dd>
+          <dt>Print</dt><dd>Six parts: cap (transparent), carrier, platform, cradle, housing, lid. All new</dd>
+          <dt>Needs</dt><dd>Nothing new: a Key Unit, the Grove 1-to-3 splitter, two M3 screws</dd>
+          <dt>Feel</dt><dd>A keyboard key the size of your palm. A heavier clicky switch (Kailh Box Navy or Jade) drops in if the blue one is too light</dd>
+        </dl>
+        <div style="display: grid; gap: 6px">
+          <h3>Parts</h3>
+          <div class="parts" id="parts"></div>
+        </div>
+        <p class="note">To find out in a print: whether the blue switch lifts the cap, hex and carrier (about 30 g against about 35 g of spring), and where the hex's cable comes down through the carrier's ring. Sizes marked MEASURE in make_shell_v6.py: the switch's travel and click point, the splitter's footprint.</p>
+      </aside>
+    </div>
+  </div></section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const PLAYERS = [['Red', '#ff3b3b'], ['Orange', '#ff8a1f'], ['Yellow', '#ffd21f'], ['Green', '#2fe06b'], ['Blue', '#2f8cff'], ['Purple', '#a24bff'], ['Pink', '#ff5fc4'], ['White', '#e9f0ff']];
+  const CARD = '#2ec4b0';
+  const COLOURS = { cap: '#f4f6fb', carrier: '#4a505e', hex: '#123d1c', keycap: '#8a1e1e', key: '#d8d8d8', platform: '#30343e', splitter: '#d8d2b0', cradle: '#5a3f6e', atom: '#1f4b8f', housing: '#2a2d36', rider: '#2f9e44', cell: '#c9c77a', lid: '#1e2128' };
+  const LABELS = { cap: 'cap (transparent)', carrier: 'carrier: legs, ring and bar (black)', hex: 'NeoHEX', keycap: 'keycap', key: 'Key Unit and its plug', platform: 'platform: collar, key pegs (black)', splitter: 'Grove 1-to-3 splitter', cradle: 'cradle for the Atom (black)', atom: 'AtomS3, face down, and its two plugs', housing: 'housing (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (black)' };
+  const ORDER = ['cap', 'carrier', 'hex', 'keycap', 'key', 'platform', 'splitter', 'cradle', 'atom', 'housing', 'rider', 'cell', 'lid'];
+  const LIFT = { cap: 110, carrier: 86, hex: 86, keycap: 66, key: 58, platform: 48, splitter: 48, cradle: 34, atom: 30, housing: 20, rider: 8, cell: 8, lid: 0 };
+  const MOVING = new Set(['cap', 'carrier', 'hex', 'keycap']);
+  const PRINTED = new Set(['cap', 'carrier', 'platform', 'cradle', 'housing', 'lid']);
+
+  const stage = $('stage');
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x070a11, 1);
+  renderer.toneMapping = THREE.LinearToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.localClippingEnabled = true;
+  stage.appendChild(renderer.domElement);
+  const camera = new THREE.PerspectiveCamera(28, 1, 5, 3000);
+  const controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; controls.dampingFactor = 0.1; controls.maxPolarAngle = Math.PI * 0.495;
+  controls.autoRotate = true; controls.autoRotateSpeed = 0.7;
+  renderer.domElement.addEventListener('pointerdown', () => { controls.autoRotate = false; });
+  const scene = new THREE.Scene();
+  scene.fog = new THREE.Fog(0x070a11, 420, 1000);
+  scene.add(new THREE.HemisphereLight(0xb9c6ff, 0x0a0c12, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff2dd, 0.75); sun.position.set(150, 170, 170); sun.castShadow = true;
+  sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -90; sun.shadow.camera.right = 90; sun.shadow.camera.top = 90; sun.shadow.camera.bottom = -90; sun.shadow.camera.far = 600; sun.shadow.bias = -0.0005; sun.shadow.radius = 4;
+  scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x8fb0ff, 0.6); rim.position.set(-170, 80, -140); scene.add(rim);
+  const table = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshStandardMaterial({ color: 0x10141d, roughness: 0.85, metalness: 0 }));
+  table.rotation.x = -Math.PI / 2; table.receiveShadow = true; scene.add(table);
+  const grid = new THREE.GridHelper(400, 40, 0x232c46, 0x1a2135); grid.position.y = 0.03; grid.material.transparent = true; grid.material.opacity = 0.35; scene.add(grid);
+  const group = new THREE.Group(); group.rotation.x = -Math.PI / 2; scene.add(group);
+  const glow = new THREE.PointLight(0xff8a1f, 1, 190, 2); glow.castShadow = true; glow.shadow.mapSize.set(1024, 1024); glow.shadow.bias = -0.002; glow.shadow.camera.near = 2; glow.shadow.radius = 3; scene.add(glow);
+  const haloTex = (() => { const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d'); const r = g.createRadialGradient(128, 128, 0, 128, 128, 128); r.addColorStop(0, 'rgba(255,255,255,0.55)'); r.addColorStop(0.25, 'rgba(255,255,255,0.22)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, 256, 256); return new THREE.CanvasTexture(c); })();
+  const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: haloTex, color: 0xff8a1f, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }));
+  scene.add(halo);
+  const clip = new THREE.Plane(new THREE.Vector3(-1, 0, 0), 0);
+
+  const state = { colour: PLAYERS[1][1], light: 'turn', since: performance.now(), cut: false, explode: 0, hidden: new Set(), pressAt: -1e9 };
+  let meshes = {}, meta = null;
+
+  function geometry(d) {
+    let geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(d.v, 3));
+    geo.setIndex(d.i);
+    geo = geo.toNonIndexed();
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  async function load() {
+    const data = await (await fetch('v6/v6.json')).json();
+    meta = data.meta;
+    group.position.y = -meta.bottom;
+    for (const key of ORDER) {
+      const md = data.parts[key];
+      if (!md) continue;
+      const lit = key === 'cap';
+      const mat = new THREE.MeshStandardMaterial({ color: COLOURS[key], roughness: lit ? 0.35 : 0.62, metalness: 0.04, side: THREE.DoubleSide, transparent: lit, opacity: lit ? 0.93 : 1, clippingPlanes: [] });
+      const mesh = new THREE.Mesh(geometry(md), mat);
+      mesh.castShadow = !lit; mesh.receiveShadow = true;
+      mesh.userData.lift = LIFT[key] || 0; mesh.renderOrder = lit ? 2 : 1;
+      group.add(mesh); meshes[key] = mesh;
+      const row = document.createElement('label');
+      row.innerHTML = `<input type="checkbox" checked id="p-${key}"><i style="background:${COLOURS[key]}"></i>${LABELS[key]}${PRINTED.has(key) ? '' : ' <span class="note">· bought</span>'}`;
+      row.querySelector('input').onchange = (e) => { if (e.target.checked) state.hidden.delete(key); else state.hidden.add(key); apply(); };
+      $('parts').appendChild(row);
+    }
+    $('loading').style.display = 'none';
+    state.since = performance.now();
+    apply();
+  }
+
+  function apply() {
+    for (const [key, mesh] of Object.entries(meshes)) {
+      mesh.visible = !state.hidden.has(key);
+      mesh.userData.base = mesh.userData.lift * state.explode;
+      mesh.material.clippingPlanes = state.cut ? [clip] : [];
+      mesh.material.needsUpdate = true;
+      const box = $('p-' + key); if (box) box.checked = !state.hidden.has(key);
+    }
+  }
+
+  function level(t) {
+    switch (state.light) {
+      case 'waiting': return [0.06, state.colour];
+      case 'card': { const p = (t % 2000) / 2000; const l = p < 0.38 ? 1 : p < 0.5 ? 1 - (p - 0.38) / 0.12 * 0.95 : p < 0.88 ? 0.05 : 0.05 + (p - 0.88) / 0.12 * 0.95; return [l, CARD]; }
+      case 'score': { const p = (t % 1400) / 1400; return [0.35 + 0.65 * (1 - p) * (1 - p), state.colour]; }
+      default: { return [t < 4250 ? 0.34 + 0.66 * (0.5 - 0.5 * Math.cos(t / 1700 * 2 * Math.PI)) : 1, state.colour]; }
+    }
+  }
+
+  const white = new THREE.Color('#ffffff'), tmp = new THREE.Color(), dark = new THREE.Color();
+  function frame(now) { draw(now); requestAnimationFrame(frame); }
+  function draw(now) {
+    const w = stage.clientWidth, h = stage.clientHeight;
+    if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+    if (meta) {
+      const [l, colour] = level(now - state.since);
+      // a press: 4 mm down over the switch's travel, a click at 2, and back on the spring
+      const pt = now - state.pressAt;
+      const down = pt < 110 ? pt / 110 : pt < 330 ? 1 - (pt - 110) / 220 : 0;
+      const punch = pt < 260 ? 1 - pt / 260 : 0;
+      tmp.set(colour).lerp(white, punch * 0.8);
+      const L = Math.min(1, l + punch * 0.5);
+      const cap = meshes.cap;
+      if (cap) { cap.material.emissive.copy(tmp); cap.material.emissiveIntensity = 0.03 + 0.97 * L; dark.copy(tmp).multiplyScalar(0.3); cap.material.color.set('#e6e9ef').lerp(dark, L); }
+      if (meshes.hex) { meshes.hex.material.emissive.copy(tmp); meshes.hex.material.emissiveIntensity = 0.9 * L; }
+      for (const [key, mesh] of Object.entries(meshes)) {
+        mesh.position.set(0, 0, (mesh.userData.base || 0) - (MOVING.has(key) ? meta.travel * down : 0));
+      }
+      const lift = meshes.cap ? meshes.cap.userData.base || 0 : 0;
+      const cy = -meta.bottom + (meta.hex_top + meta.cap_top) / 2 + lift;
+      glow.color.copy(tmp); glow.intensity = meshes.cap && meshes.cap.visible ? 2.0 * L : 0; glow.position.set(0, cy + 8, 0);
+      halo.material.color.copy(tmp); halo.material.opacity = meshes.cap && meshes.cap.visible ? 0.75 * L : 0;
+      halo.position.set(0, cy, 0); const s = 70 + meta.cap_d * 0.8; halo.scale.set(s, s, 1);
+    }
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  const VIEWS = { hero: [130, 110, 160], player: [8, 140, 200], across: [-50, 40, -310], top: [0, 300, 0.01], port: [0, 60, -250] };
+  let reach = 1;
+  function frameUp() {
+    const dir = camera.position.clone().sub(controls.target).normalize();
+    controls.target.set(0, 28 + 50 * state.explode, 0);
+    camera.position.copy(controls.target).addScaledVector(dir, reach * (1 + 0.8 * state.explode));
+    controls.update();
+  }
+  function look(name) {
+    const [x, y, z] = VIEWS[name];
+    camera.position.set(x, y, z); controls.target.set(0, 28, 0); reach = camera.position.distanceTo(controls.target);
+    frameUp();
+    document.querySelectorAll('[data-view]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.view === name)));
+  }
+
+  function press() { state.pressAt = performance.now(); }
+  const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+  let downAt = null;
+  renderer.domElement.addEventListener('pointerdown', (e) => { downAt = [e.clientX, e.clientY]; });
+  renderer.domElement.addEventListener('pointerup', (e) => {
+    if (!downAt || Math.hypot(e.clientX - downAt[0], e.clientY - downAt[1]) > 5) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(mouse, camera);
+    if (meshes.cap && meshes.cap.visible && ray.intersectObject(meshes.cap).length) press();
+  });
+
+  for (const [name, hex] of PLAYERS) {
+    const b = document.createElement('button'); b.className = 'sw'; b.title = name; b.setAttribute('role', 'radio'); b.setAttribute('aria-label', name); b.setAttribute('aria-checked', String(hex === state.colour)); b.style.setProperty('--sw', hex);
+    b.onclick = () => { state.colour = hex; document.querySelectorAll('.sw').forEach((s) => s.setAttribute('aria-checked', String(s === b))); };
+    $('swatches').appendChild(b);
+  }
+  document.querySelectorAll('[data-state]').forEach((b) => { b.onclick = () => { state.light = b.dataset.state; state.since = performance.now(); document.querySelectorAll('[data-state]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); }; });
+  document.querySelectorAll('[data-view]').forEach((b) => { b.onclick = () => { controls.autoRotate = false; look(b.dataset.view); }; });
+  $('press').onclick = press;
+  $('cut').onclick = () => { state.cut = !state.cut; $('cut').setAttribute('aria-pressed', String(state.cut)); apply(); };
+  $('explode').oninput = (e) => { state.explode = +e.target.value; apply(); frameUp(); };
+
+  look('hero');
+  load().then(() => requestAnimationFrame(frame));
+  window.v6 = { look, draw, press, state, canvas: renderer.domElement };
+})();
+</script>
+</body>
+</html>
