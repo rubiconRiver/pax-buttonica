@@ -15,8 +15,11 @@ cap and the hex riding inside it.
   cradle    a tray screwed under the platform that the Atom slides into, face down, both its plugs toward the
             Rider's cable end. Two M3 screws, down through the platform.
   floor     closes the cap from below, as the Printables dome's floor does: a disc that pushes up into the cap's
-            skirt against a step (a dab of glue), with the hex standing on three short posts on its top, three legs
-            down into the platform's bosses (the guide), and its middle resting on the keycap (the pusher).
+            skirt against a step (a dab of glue), three legs down into the platform's bosses (the guide), and its
+            middle resting on the keycap (the pusher). Prints legs up.
+  stand     a three-armed spider that drops into a recess on the floor's top (a dab of glue), with a post at the end
+            of each arm that the hex stands on, a peg into each of its ear holes. Prints posts up. (One part with
+            the floor would have had towers on both faces and no face for the bed.)
   cap       the mini's cap profile with no sleeve and no cage sockets: just the shell, four short blocks on the
             ceiling that keep the hex on its posts, and the step inside the skirt the floor pushes up against.
 
@@ -89,13 +92,14 @@ FLOOR_Z1 = FLOOR_Z0 + FLOOR_T
 FLOOR_FIT = 0.1                            # radial, floor to the skirt's wider bore below the step
 STEP = 0.6                                 # the skirt is this much thinner below the step
 POST_D, PEG_D, PEG_H = 3.6, 1.8, 1.5       # three posts under the hex's ear holes (2 mm), pegs into them; thin, beside the sockets' block
+STAND_T, STAND_ARM_W, STAND_RECESS, STAND_FIT = 2.0, 6.0, 0.6, 0.15   # the spider: thickness, arm width, how deep it sits in the floor, play
 POST_ANGLES = (90, 210, 330)               # the hex's corners
-HEX_BOTTOM = FLOOR_Z1 + 0.3 + m.HEX_UNDER  # the hex's sockets clear the floor
+HEX_BOTTOM = FLOOR_Z1 + STAND_T - STAND_RECESS + 0.3 + m.HEX_UNDER   # the hex's sockets clear the stand's arms
 HEX_TOP = HEX_BOTTOM + m.HEX_BOARD_T
 INNER_TOP = HEX_TOP + m.LED_GAP
 CAP_TOP = INNER_TOP + m.CAP_TOP_T
 HOLD_H = INNER_TOP - (HEX_TOP + 0.3)       # the ceiling blocks reach down to just above the board
-CABLE_SLOT = (14.0, 8.0, 0.0, 11.0)        # sx, sy, cx, cy: through the floor, for the hex's plug; turn the hex to suit
+CABLE_SLOT = (14.0, 8.0, 0.0, -11.0)       # sx, sy, cx, cy: through the floor, for the hex's plug, between two arms of the stand; turn the hex to suit
 LEG_D, LEG_R, LEG_ANGLES = 5.5, 21.0, (96, 216, 336)      # turned 6 degrees so the back leg clears the cell's fence
 LEG_HOLE_D = 6.0
 LEG_BOTTOM = {96: -6.0, 216: -6.0, 336: 1.5}    # below the platform: two reach down over the cell; the third stops inside its
@@ -147,14 +151,25 @@ def cap():
     return shell + (blocks ^ cyl(2 * (inner_r - 0.3), 60, z=0, seg=m.SEG))
 
 
-def floor():
-    r = m.CAP_R - m.CAP_WALL + STEP - FLOOR_FIT
-    disc = cyl(2 * r, FLOOR_T, z=FLOOR_Z0, seg=m.SEG)
-    parts = [disc]
+def _spider(grow, z0, h):
+    arms = [box(0, -STAND_ARM_W / 2 - grow, z0, m.HEX_EAR_R + POST_D / 2 + grow, STAND_ARM_W + 2 * grow, h).rotate([0, 0, a]) for a in POST_ANGLES]
+    return union(arms + [cyl(STAND_ARM_W + 2 * grow + 2, h, z=z0, seg=48)])
+
+
+def stand():
+    z0 = FLOOR_Z1 - STAND_RECESS
+    solid = _spider(0.0, z0, STAND_T)
     for a in POST_ANGLES:
         x, y = m.HEX_EAR_R * math.cos(math.radians(a)), m.HEX_EAR_R * math.sin(math.radians(a))
-        parts.append(cyl(POST_D, HEX_BOTTOM - FLOOR_Z1 + 0.01, x, y, FLOOR_Z1 - 0.01, seg=32))
-        parts.append(cyl(PEG_D, HEX_BOTTOM - FLOOR_Z1 + PEG_H, x, y, FLOOR_Z1 - 0.01, seg=24))
+        solid += cyl(POST_D, HEX_BOTTOM - z0 - STAND_T + 0.01, x, y, z0 + STAND_T - 0.01, seg=32)
+        solid += cyl(PEG_D, HEX_BOTTOM - z0 - STAND_T + PEG_H, x, y, z0 + STAND_T - 0.01, seg=24)
+    return solid
+
+
+def floor():
+    r = m.CAP_R - m.CAP_WALL + STEP - FLOOR_FIT
+    disc = cyl(2 * r, FLOOR_T, z=FLOOR_Z0, seg=m.SEG) - _spider(STAND_FIT, FLOOR_Z1 - STAND_RECESS, STAND_RECESS + 1)
+    parts = [disc]
     for a in LEG_ANGLES:
         x, y = LEG_R * math.cos(math.radians(a)), LEG_R * math.sin(math.radians(a))
         zb = LEG_BOTTOM[a]
@@ -220,7 +235,7 @@ def bought(pressed=False):
 
 
 def printed_parts():
-    return {'housing': v2.housing(), 'platform': platform(), 'cradle': cradle(), 'lid': v2.lid(), 'floor': floor(), 'cap': cap()}
+    return {'housing': v2.housing(), 'platform': platform(), 'cradle': cradle(), 'lid': v2.lid(), 'floor': floor(), 'stand': stand(), 'cap': cap()}
 
 
 def _meets(a, b):
@@ -242,7 +257,7 @@ def check_and_write(printed, flipped, out_dir, label):
     for pressed in (False, True):
         state = {**printed, **bought(pressed)}
         drop = SWITCH_TRAVEL if pressed else 0.0
-        for k in ('cap', 'floor'):
+        for k in ('cap', 'floor', 'stand'):
             state[k] = state[k].translate([0, 0, -drop])
         names = list(state)
         for i, a in enumerate(names):
@@ -260,7 +275,7 @@ def check_and_write(printed, flipped, out_dir, label):
         clashes += 1
         print('  PROBLEM: the bosses catch the floor before the switch bottoms')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
-    colours = {'housing': '#3a3a40', 'platform': '#55555c', 'cradle': '#6a4a7a', 'lid': '#2a2a2e', 'floor': '#8a8a92', 'cap': '#ffffff',
+    colours = {'housing': '#3a3a40', 'platform': '#55555c', 'cradle': '#6a4a7a', 'lid': '#2a2a2e', 'floor': '#8a8a92', 'stand': '#b0b0b8', 'cap': '#ffffff',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'cell': '#8a8a55', 'rider': '#1b5e20', 'splitter': '#d8d8d8'}
     everything = dict(printed)
     everything.update(bought())
@@ -271,4 +286,4 @@ def check_and_write(printed, flipped, out_dir, label):
 if __name__ == '__main__':
     print(f'v6 box: {v2.W:.0f} x {v2.D:.0f} mm, {CAP_TOP - v2.BOTTOM:.1f} mm tall to the cap, housing {v2.TOP - v2.BOTTOM:.1f} mm, '
           f'cap shows {CAP_TOP - v2.TOP:.1f} above the lip ({CAP_TOP - v2.TOP - SWITCH_TRAVEL:.1f} pressed)')
-    check_and_write(printed_parts(), {'housing', 'cap', 'cradle', 'floor'}, os.path.join(HERE, OUT), OUT)
+    check_and_write(printed_parts(), {'housing', 'cap', 'cradle'}, os.path.join(HERE, OUT), OUT)   # the floor prints legs up as drawn; the stand posts up
