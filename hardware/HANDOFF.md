@@ -165,10 +165,12 @@ Direction Garett is leaning to: keep the printed cap, cage and hex as they are, 
 ## v6: the cap on a Key Unit (2026-10-05)
 
 Drawn, clash-clean, not printed: `hardware/shell/make_shell_v6.py` → `stl-v6/`, six parts, all new (housing and lid are
-v2's made 9 mm deeper). The cap rides on an M5 Mechanical Key Unit; no printed part bends; the Atom hangs under the
-platform in a screwed-on cradle; hex, key and Atom share a Grove 1-to-3 splitter. See the shell README. Garett wanted
-the Printables box's solidity ("more solid, feels better") with our flat cap, "the hex is the deciding factor", and said
-not to worry about reusing v2's bottom. The DigiKey arcade buttons (arriving 2026-10-06) stay a feel reference: the
-30 mm one is 38 mm deep and makes the box about 80 mm tall, so it is not in this design. MEASURE on the first build:
-the switch's travel and click point, the switch housing's height above the case (9.4), the splitter's size (24 × 12 × 8
-assumed), and whether the blue switch returns the cap; a Box Navy/Jade is the fix if not.
+v2's made 9 mm deeper), on the site at /v6.html. The cap rides on an M5 Mechanical Key Unit; no printed part bends;
+the cap is closed underneath by a floor with three guide legs (the Printables dome's idea; Garett rejected a first
+drawing with a carrier of legs inside the cap as "still looks like it has a cage"); the hex stands on three posts on
+the floor; the Atom hangs under the platform in a screwed-on cradle; hex, key and Atom share a Grove 1-to-3 splitter.
+See the shell README. The DigiKey arcade buttons (arriving 2026-10-06) stay a feel reference: the 30 mm one is 38 mm
+deep and makes the box about 80 mm tall, so it is not in this design. MEASURE on the first build: the switch's travel
+and click point, the switch housing's height above the case (9.4), the hex's ear holes (three, at alternate corners,
+16 mm out, 2 mm), the splitter's size (24 × 12 × 8 assumed), and whether the blue switch returns the cap; a Box
+Navy/Jade is the fix if not.

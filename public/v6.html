@@ -61,7 +61,7 @@
   <header>
     <div class="eyebrow">Pax Buttonica · shell v6</div>
     <h1>The cap on a bought switch</h1>
-    <p class="lede">The same flat cap and the hex riding inside it, but nothing printed bends any more. The cap sits on an M5 Key Unit, a keyboard switch in a Grove case: its spring returns the cap, its click is the click, its own end stop takes the slap. The printed parts only guide. The cell and the Rider lie side by side on the lid as in v2; the Atom hangs under the platform above the Rider. Drawn round the real parts and checked at rest and pressed. Not printed yet.</p>
+    <p class="lede">The same flat cap and the hex riding inside it, but nothing printed bends and nothing hangs inside the cap. Like the Printables dome: the cap is closed underneath by a floor with three legs, and sits on an M5 Key Unit, a keyboard switch in a Grove case. Its spring returns the cap, its click is the click, its own end stop takes the slap. The printed parts only guide. The cell and the Rider lie side by side on the lid as in v2; the Atom hangs under the platform above the Rider. Drawn round the real parts and checked at rest and pressed. Not printed yet.</p>
   </header>
 
   <section class="panel chamfer"><div class="in chamfer">
@@ -95,12 +95,12 @@
       <aside class="about" style="display: grid; gap: 14px">
         <div style="display: grid; gap: 8px">
           <h2>What you are looking at</h2>
-          <p>The cap hangs on the housing's lip. Under it, a carrier (the old cage without its middle) holds the hex on ledges and has a bar across its ring that rests on the keycap. Press anywhere on the cap: the keycap goes down 4 mm, the switch clicks at about 2 and stops at 4, and the whole thing comes back on the switch's own spring. The collar round the key guides the cap's sleeve, as it does today.</p>
+          <p>The cap hangs on the housing's lip. A floor closes it from below; the hex stands on three short posts on that floor, three legs go down from it into hollow bosses on the platform, and its middle rests on the keycap. Press anywhere on the cap: the keycap goes down 4 mm, the switch clicks at about 2 and stops at 4, and the whole thing comes back on the switch's own spring. The legs are the guide; the floor landing on the bosses is the backstop.</p>
         </div>
         <dl>
           <dt>Size</dt><dd>72 × 80 mm, 62 mm tall to the cap (v2: 50). The cap stands 17.5 above the lip</dd>
           <dt>Press</dt><dd>4 mm on a keyboard switch; the switch is the stop</dd>
-          <dt>Print</dt><dd>Six parts: cap (transparent), carrier, platform, cradle, housing, lid. All new</dd>
+          <dt>Print</dt><dd>Six parts: cap and floor (transparent), platform, cradle, housing, lid. All new</dd>
           <dt>Needs</dt><dd>Nothing new: a Key Unit, the Grove 1-to-3 splitter, two M3 screws</dd>
           <dt>Feel</dt><dd>A keyboard key the size of your palm. A heavier clicky switch (Kailh Box Navy or Jade) drops in if the blue one is too light</dd>
         </dl>
@@ -108,7 +108,7 @@
           <h3>Parts</h3>
           <div class="parts" id="parts"></div>
         </div>
-        <p class="note">To find out in a print: whether the blue switch lifts the cap, hex and carrier (about 30 g against about 35 g of spring), and where the hex's cable comes down through the carrier's ring. Sizes marked MEASURE in make_shell_v6.py: the switch's travel and click point, the splitter's footprint.</p>
+        <p class="note">To find out in a print: whether the blue switch lifts the cap, hex and floor (about 35 g against about 35 g of spring), and whether the hex's ear holes are where the three posts expect them. Sizes marked MEASURE in make_shell_v6.py: the switch's travel and click point, the splitter's footprint.</p>
       </aside>
     </div>
   </div></section>
@@ -121,12 +121,12 @@
   const $ = (id) => document.getElementById(id);
   const PLAYERS = [['Red', '#ff3b3b'], ['Orange', '#ff8a1f'], ['Yellow', '#ffd21f'], ['Green', '#2fe06b'], ['Blue', '#2f8cff'], ['Purple', '#a24bff'], ['Pink', '#ff5fc4'], ['White', '#e9f0ff']];
   const CARD = '#2ec4b0';
-  const COLOURS = { cap: '#f4f6fb', carrier: '#4a505e', hex: '#123d1c', keycap: '#8a1e1e', key: '#d8d8d8', platform: '#30343e', splitter: '#d8d2b0', cradle: '#5a3f6e', atom: '#1f4b8f', housing: '#2a2d36', rider: '#2f9e44', cell: '#c9c77a', lid: '#1e2128' };
-  const LABELS = { cap: 'cap (transparent)', carrier: 'carrier: legs, ring and bar (black)', hex: 'NeoHEX', keycap: 'keycap', key: 'Key Unit and its plug', platform: 'platform: collar, key pegs (black)', splitter: 'Grove 1-to-3 splitter', cradle: 'cradle for the Atom (black)', atom: 'AtomS3, face down, and its two plugs', housing: 'housing (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (black)' };
-  const ORDER = ['cap', 'carrier', 'hex', 'keycap', 'key', 'platform', 'splitter', 'cradle', 'atom', 'housing', 'rider', 'cell', 'lid'];
-  const LIFT = { cap: 110, carrier: 86, hex: 86, keycap: 66, key: 58, platform: 48, splitter: 48, cradle: 34, atom: 30, housing: 20, rider: 8, cell: 8, lid: 0 };
-  const MOVING = new Set(['cap', 'carrier', 'hex', 'keycap']);
-  const PRINTED = new Set(['cap', 'carrier', 'platform', 'cradle', 'housing', 'lid']);
+  const COLOURS = { cap: '#f4f6fb', floor: '#e8ecf4', hex: '#123d1c', keycap: '#8a1e1e', key: '#d8d8d8', platform: '#30343e', splitter: '#d8d2b0', cradle: '#5a3f6e', atom: '#1f4b8f', housing: '#2a2d36', rider: '#2f9e44', cell: '#c9c77a', lid: '#1e2128' };
+  const LABELS = { cap: 'cap (transparent)', floor: 'floor: posts for the hex, three legs (transparent)', hex: 'NeoHEX', keycap: 'keycap', key: 'Key Unit and its plug', platform: 'platform: bosses for the legs, key pegs (black)', splitter: 'Grove 1-to-3 splitter', cradle: 'cradle for the Atom (black)', atom: 'AtomS3, face down, and its two plugs', housing: 'housing (black)', rider: 'Rider and its three plugs', cell: 'cell', lid: 'lid (black)' };
+  const ORDER = ['cap', 'hex', 'floor', 'keycap', 'key', 'platform', 'splitter', 'cradle', 'atom', 'housing', 'rider', 'cell', 'lid'];
+  const LIFT = { cap: 110, hex: 92, floor: 76, keycap: 66, key: 58, platform: 48, splitter: 48, cradle: 34, atom: 30, housing: 20, rider: 8, cell: 8, lid: 0 };
+  const MOVING = new Set(['cap', 'floor', 'hex', 'keycap']);
+  const PRINTED = new Set(['cap', 'floor', 'platform', 'cradle', 'housing', 'lid']);
 
   const stage = $('stage');
   const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -179,10 +179,10 @@
     for (const key of ORDER) {
       const md = data.parts[key];
       if (!md) continue;
-      const lit = key === 'cap';
+      const lit = key === 'cap' || key === 'floor';
       const mat = new THREE.MeshStandardMaterial({ color: COLOURS[key], roughness: lit ? 0.35 : 0.62, metalness: 0.04, side: THREE.DoubleSide, transparent: lit, opacity: lit ? 0.93 : 1, clippingPlanes: [] });
       const mesh = new THREE.Mesh(geometry(md), mat);
-      mesh.castShadow = !lit; mesh.receiveShadow = true;
+      mesh.castShadow = key !== 'cap'; mesh.receiveShadow = true;
       mesh.userData.lift = LIFT[key] || 0; mesh.renderOrder = lit ? 2 : 1;
       group.add(mesh); meshes[key] = mesh;
       const row = document.createElement('label');

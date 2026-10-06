@@ -1,42 +1,48 @@
 """
 v6, the cap on a bought switch (2026-10-05). The first game showed the system works and the press is the weak
 part: the cap rode on the AtomS3's own tactile dome through a printed cage, peg and flexures, and the flexures
-broke. Here nothing printed bends. The cap rides on an M5 Mechanical Key Unit, a keyboard switch in a Grove case:
-its spring returns the cap, its click is the click, its own end stop is the stop, and a keyboard switch takes a
-slap all day. The printed parts only guide. It is the Printables "big red button" idea (a bought button under a
-printed cap, electronics in a box) with our flat cap and the hex riding inside it.
+broke. Here nothing printed bends and nothing hangs inside the cap. The cap rides on an M5 Mechanical Key Unit, a
+keyboard switch in a Grove case: its spring returns the cap, its click is the click, its own end stop is the stop,
+and a keyboard switch takes a slap all day. The printed parts only guide. It is the Printables "big red button"
+(a bought button under a printed top that is closed by a floor with three legs, electronics in a box) with our flat
+cap and the hex riding inside it.
 
   housing   v2's box, 72 x 80 with rounded corners, 9 mm deeper: the cell and the Rider lie side by side on the
             lid as before, and the Atom now hangs under the platform above the Rider. Prints upside down.
   lid       v2's lid with taller fences; they carry the platform.
-  platform  a plate across the box: the Key Unit stands on it in the middle on two pegs, the collar that guides
-            the cap's sleeve stands round the key (with a gap where the key's case and its cable pass), the Grove
-            splitter sits at the back, and the cradle screws on underneath.
+  platform  a plate across the box: the Key Unit stands on it in the middle on two pegs; three hollow bosses round
+            the key take the floor's legs; the Grove splitter sits at the back; the cradle screws on underneath.
   cradle    a tray screwed under the platform that the Atom slides into, face down, both its plugs toward the
             Rider's cable end. Two M3 screws, down through the platform.
-  carrier   replaces the cage: four legs that push up into the cap's sockets and hold the hex on ledges, a ring
-            round the keycap, and a bar across the ring that presses the keycap's top. No disc, no peg, no arms.
-  cap       the mini's cap, 3.4 mm taller inside, since the hex sits above the bar.
+  floor     closes the cap from below, as the Printables dome's floor does: a disc that pushes up into the cap's
+            skirt against a step (a dab of glue), with the hex standing on three short posts on its top, three legs
+            down into the platform's bosses (the guide), and its middle resting on the keycap (the pusher).
+  cap       the mini's cap profile with no sleeve and no cage sockets: just the shell, four short blocks on the
+            ceiling that keep the hex on its posts, and the step inside the skirt the floor pushes up against.
 
   .venv/bin/python make_shell_v6.py    ->  stl-v6/
 
-The press. At rest the cap hangs on the housing's lip with the bar just touching the keycap (no preload). A
+The press. At rest the cap hangs on the housing's lip with the floor just touching the keycap (no preload). A
 press moves the keycap: the switch clicks at about 2 mm and bottoms out at about 4 (MEASURE both), and that is
-the stop, through the switch, its case, the platform, the fences and the lid. The collar catches the cap's
-ceiling STOP_BELOW_LIP down as a backstop. If the switch's spring turns out too weak to lift the cap, hex and
-carrier (about 30 g; a blue switch starts at about 35 g), swap the switch for a heavier one: the Key Unit takes
-any MX-style switch.
+the stop, through the switch, its case, the platform, the fences and the lid. The floor lands on the bosses
+STOP_BELOW_LIP down as a backstop. If the switch's spring turns out too weak to lift the cap, hex and floor
+(about 35 g; a blue switch starts at about 35 g), swap the switch for a heavier one: the Key Unit takes any
+MX-style switch.
 
-Cables, all Grove: the hex's plug comes down through the carrier's ring beside the keycap, out under the cap's
-sleeve through the collar's gap at the front (-y), and round the collar to the splitter at the back; the key's
-cable leaves its case at the front and goes round the other side; the Atom's Grove cable comes up through a slot
-in the platform at the +x, -y corner. The Atom's USB-C and the Rider's USB-A both point at the -y wall, one above
-the other, and a short cable makes a U between them. Charging is the Rider's USB-C in the window, as v2.
+The guide. Three legs in three holes, like the dome's: a plunger binds when it is pressed more than half its
+guide length over the friction coefficient off centre, so the legs are long: 12 mm bosses above the platform,
+the platform, and 6 mm below it (two of them, over the cell, which is far down in this deeper box), 19.6 mm at rest. Dry PTFE
+on the legs if a corner press ever sticks, as on v2's collar.
+
+Cables, all Grove: the hex's plug comes down through a slot in the floor, out under the cap's skirt, and round to
+the splitter at the back; the key's cable leaves its case at the front and goes round the other side; the Atom's
+Grove cable comes up through a slot in the platform at the +x, -y corner. The Atom's USB-C and the Rider's USB-A
+both point at the -y wall, one above the other, and a short cable makes a U between them. Charging is the
+Rider's USB-C in the window, as v2.
 
 Assembly: Atom into the cradle (plugs toward -y), cradle screwed under the platform; key on its pegs, cable round
-the collar to the splitter; hex into the carrier's ledges, carrier up into the cap; cap into the housing from
-below (upside down), platform in with the key up into the cap, hex cable out the front gap to the splitter;
-lid as v2.
+to the splitter; hex onto the floor's posts with its plug through the slot, floor up into the cap (glue); cap into
+the housing from below (upside down), its legs into the bosses; platform in; hex cable out to the splitter; lid.
 
 Millimetres; z = 0 at the platform's top; the Key Unit's cable leaves toward -y.
 """
@@ -44,8 +50,6 @@ import importlib.util
 import math
 import os
 import sys
-
-from manifold3d import Manifold
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -60,8 +64,8 @@ def _load(name, path):
 
 
 v2 = _load('v2', 'make_shell_v2.py')
-m = v2.m                                   # the mini: cap, collar, helpers, bought-part sizes
-cyl, box, cbox, union = m.cyl, m.box, m.cbox, m.union
+m = v2.m                                   # the mini: helpers and bought-part sizes
+cyl, box, cbox, union, revolve = m.cyl, m.box, m.cbox, m.union, m.revolve
 
 OUT = 'stl-v6'
 
@@ -73,41 +77,47 @@ KEYCAP_W = m.KEYCAP[0]                     # 18 at its base
 SWITCH_HOUSING = (15.6, 9.4)               # the switch's upper housing: square, and its top above the case's bottom   MEASURE
 SWITCH_TRAVEL = 4.0                        # keycap top, rest to bottomed out                                        MEASURE
 SWITCH_CLICK = 2.0                         # and to the click                                                         MEASURE
-STOP_BELOW_LIP = SWITCH_TRAVEL + 0.3       # the collar catches the cap here if the switch has not already
-PRESS_GAP = 0.1                            # bar to keycap at rest: as near zero preload as a print allows
+STOP_BELOW_LIP = SWITCH_TRAVEL + 0.4       # the floor lands on the bosses here if the switch has not already stopped it
+PRESS_GAP = 0.1                            # floor to keycap at rest: as near zero preload as a print allows
 KEY_PEG_D, KEY_PEG_H = 4.5, 2.5            # into the case's two 4.85 mm holes
 KEY_PLUG = m.KEY_PLUG                      # 8: the cable's plug past the socket end
 
-# ── the carrier (the cage without its middle) and the stack above it ────────
-PAD_BOTTOM = m.PAD_BOTTOM                  # 12.5: the ring's underside, as the cage's plate was
-PAD_T = m.PAD_T                            # 2.5
-RING_R0 = 14.0                             # the ring's hole: the keycap (9), the switch housing (11) and a cable pass
-BAR_W, BAR_T = 12.0, 2.0                   # the bar across the ring that presses the keycap
-BAR_Z0 = KEYCAP_TOP + PRESS_GAP            # its underside, 16.4
-PLATE_CLEAR = m.PLATE_CLEAR                # 0.2: the ring, fully pressed, stays this far above the key's case
-HEX_BOTTOM = BAR_Z0 + BAR_T + 0.3 + m.HEX_UNDER      # the hex's sockets clear the bar
+# ── the floor, and the stack above it ───────────────────────────────────────
+FLOOR_T = 2.5
+FLOOR_Z0 = KEYCAP_TOP + PRESS_GAP          # its underside, 16.4: the pusher
+FLOOR_Z1 = FLOOR_Z0 + FLOOR_T
+FLOOR_FIT = 0.1                            # radial, floor to the skirt's wider bore below the step
+STEP = 0.6                                 # the skirt is this much thinner below the step
+POST_D, PEG_D, PEG_H = 3.6, 1.8, 1.5       # three posts under the hex's ear holes (2 mm), pegs into them; thin, beside the sockets' block
+POST_ANGLES = (90, 210, 330)               # the hex's corners
+HEX_BOTTOM = FLOOR_Z1 + 0.3 + m.HEX_UNDER  # the hex's sockets clear the floor
 HEX_TOP = HEX_BOTTOM + m.HEX_BOARD_T
 INNER_TOP = HEX_TOP + m.LED_GAP
 CAP_TOP = INNER_TOP + m.CAP_TOP_T
+HOLD_H = INNER_TOP - (HEX_TOP + 0.3)       # the ceiling blocks reach down to just above the board
+CABLE_SLOT = (14.0, 8.0, 0.0, 11.0)        # sx, sy, cx, cy: through the floor, for the hex's plug; turn the hex to suit
+LEG_D, LEG_R, LEG_ANGLES = 5.5, 21.0, (96, 216, 336)      # turned 6 degrees so the back leg clears the cell's fence
+LEG_HOLE_D = 6.0
+LEG_BOTTOM = {96: -6.0, 216: -6.0, 336: 1.5}    # below the platform: two reach down over the cell; the third stops inside its
+                                           # boss, since the Atom's plugs are under the platform there
+BOSS_D, BOSS_H = 9.5, 12.0                 # hollow bosses on the platform; the floor lands on them as the backstop
 
 # ── the box ─────────────────────────────────────────────────────────────────
 ATOM = m.ATOM                              # (24, 24, 9.5), hanging face down under the platform
 CRADLE_T = 1.2                             # the tray's plate against the platform's underside, and its walls
 CRADLE_PLAY = 0.3                          # round the Atom
-CRADLE_LIP = 0.5                           # the walls' bottom edges turn in this much: the Atom clicks past them
+CRADLE_LIP = 0.5                           # the -x wall's bottom edge turns in this much: the Atom clicks past it
 CRADLE_PAD = (7.0, 3.0)                    # screw pads under the plate: diameter, height
-ATOM_X0, ATOM_Y0 = 8.0, -8.0               # the Atom's -x, -y corner (it sits over the Rider; plugs out of its -y face)
+ATOM_X0, ATOM_Y0 = 8.0, -4.0               # the Atom's -x, -y corner (it sits over the Rider; plugs out of its -y face)
 ATOM_Z1 = -v2.PLATFORM_T - CRADLE_T - 0.2  # its top (its base, since it is face down)
 ATOM_Z0 = ATOM_Z1 - ATOM[2]
 CRADLE_X = (6.5, 32.8)                     # the plate; the tray's +x side is open, the housing's wall is 1 mm away
-CRADLE_Y = (-9.5, 26.0)
-CRADLE_SCREWS = ((16.0, 24.0), (29.0, 24.0))
+CRADLE_Y = (-5.5, 30.0)
+CRADLE_SCREWS = ((16.0, 28.0), (29.0, 28.0))
 GROVE_SLOT = (14.0, -32.0, 12.0, 12.0)     # x0, y0, sx, sy: the Atom's Grove cable comes up here
 SPLITTER = (24.0, 12.0, 8.0)               # Unit Hub 1-to-3, lying along x at the back                          MEASURE
-SPLITTER_AT = (-6.0, 30.0)                 # its centre; sockets on its ends, so plugs stand out along x. It sits between the collar and
-                                           # the back wall, on a strip of tape: there is no room for a fence of its own
+SPLITTER_AT = (-18.0, 30.0)                # its centre, on a strip of tape; sockets on its ends, so plugs stand out along x
 COMP_H = (-ATOM_Z0 + 0.5) + m.RIDER[2] + 0.3 - v2.PLATFORM_T    # the Rider's jack under the hanging Atom: 20.0
-COLLAR_GAP = (230, 310)                    # where the key's case and cable cross the collar's circle
 
 # v2's box, deeper. Its functions read these at call time.
 v2.COMP_H = COMP_H
@@ -115,55 +125,56 @@ v2.LID_Z = v2.PLATFORM_Z - v2.PLATFORM_T - COMP_H
 v2.BOTTOM = v2.LID_Z - v2.LID_T
 v2.FENCE_H = COMP_H - 0.3
 
-# the mini's cap and collar, read at call time too
-m.HEX_BOTTOM, m.HEX_TOP, m.INNER_TOP, m.CAP_TOP = HEX_BOTTOM, HEX_TOP, INNER_TOP, CAP_TOP
-m.COLLAR_GAPS = ((0, 1),)                  # the cap's sleeve: a full ring, nothing stands up into it any more
+assert BOSS_H < FLOOR_Z0 - SWITCH_TRAVEL, 'the floor must clear the bosses until the switch has bottomed'
+assert LEG_R + LEG_D / 2 < m.CAP_R - m.CAP_WALL - STEP - 1, 'the legs must stand inside the floor'
 
 
 def cap():
-    return m.cap()
+    """The mini's cap profile: flat top, 45-degree shoulder, skirt, flange. No sleeve. Inside: a step the floor pushes up
+    against, and four blocks on the ceiling that keep the hex down on its posts."""
+    k = m.CAP_WALL * math.sqrt(2)
+    inner_r = m.CAP_R - m.CAP_WALL
+    shoulder_z = CAP_TOP - m.CAP_CHAMFER
+    inner_shoulder_z = shoulder_z - k + m.CAP_WALL
+    fb, fl, fw = m.FLANGE_BOTTOM, m.FLANGE_LAND, m.FLANGE_W
+    shell = revolve([
+        (0, CAP_TOP), (m.CAP_R - m.CAP_CHAMFER, CAP_TOP), (m.CAP_R, shoulder_z),
+        (m.CAP_R, fb + fl + fw), (m.FLANGE_R, fb + fl), (m.FLANGE_R, fb),
+        (inner_r + STEP, fb), (inner_r + STEP, FLOOR_Z1), (inner_r, FLOOR_Z1), (inner_r, inner_shoulder_z),
+        (inner_r - (INNER_TOP - inner_shoulder_z), INNER_TOP), (0, INNER_TOP)])
+    w, t = m.CAGE_LEG
+    blocks = union(box(m.CAGE_R0 - 2.5, -w / 2 - 1, INNER_TOP - HOLD_H, t + 2.5, w + 2, HOLD_H + 0.01).rotate([0, 0, a]) for a in m.CAGE_ANGLES)
+    return shell + (blocks ^ cyl(2 * (inner_r - 0.3), 60, z=0, seg=m.SEG))
 
 
-def _collar(h):
-    m.COLLAR_H = h
-    g = m.COLLAR_GAPS
-    m.COLLAR_GAPS = (COLLAR_GAP,)
-    c = m.collar()
-    m.COLLAR_GAPS = g
-    return c
-
-
-def _meets(cap_solid, collar_solid):
-    """How far the cap drops from the lip before its ceiling lands on the collar."""
-    d = 0.0
-    while d < 10 and (cap_solid.translate([0, 0, -d]) ^ collar_solid).volume() < 0.05:
-        d += 0.05
-    return d
-
-
-def collar_height():
-    """The collar catches the cap STOP_BELOW_LIP + 0.1 below the lip: a hair past the switch's own stop."""
-    c = cap()
-    lo, hi = 6.0, INNER_TOP
-    for _ in range(14):
-        mid = (lo + hi) / 2
-        if _meets(c, _collar(mid)) > STOP_BELOW_LIP + 0.1:
-            lo = mid
-        else:
-            hi = mid
-    return lo
-
-
-COLLAR_H = collar_height()
+def floor():
+    r = m.CAP_R - m.CAP_WALL + STEP - FLOOR_FIT
+    disc = cyl(2 * r, FLOOR_T, z=FLOOR_Z0, seg=m.SEG)
+    parts = [disc]
+    for a in POST_ANGLES:
+        x, y = m.HEX_EAR_R * math.cos(math.radians(a)), m.HEX_EAR_R * math.sin(math.radians(a))
+        parts.append(cyl(POST_D, HEX_BOTTOM - FLOOR_Z1 + 0.01, x, y, FLOOR_Z1 - 0.01, seg=32))
+        parts.append(cyl(PEG_D, HEX_BOTTOM - FLOOR_Z1 + PEG_H, x, y, FLOOR_Z1 - 0.01, seg=24))
+    for a in LEG_ANGLES:
+        x, y = LEG_R * math.cos(math.radians(a)), LEG_R * math.sin(math.radians(a))
+        zb = LEG_BOTTOM[a]
+        parts.append(cyl(LEG_D, FLOOR_Z0 + 0.01 - zb - 1.0, x, y, zb + 1.0, seg=48))
+        parts.append(cyl(LEG_D - 1.6, 1.0, x, y, zb, d2=LEG_D, seg=48))                  # a chamfered tip finds its hole
+    sx, sy, cx, cy = CABLE_SLOT
+    return union(parts) - cbox(cx, cy, FLOOR_Z0 - 1, sx, sy, FLOOR_T + 2)
 
 
 def platform():
     solid = v2.rbox_prism(v2.IN - 2 * v2.PLATFORM_CLEAR, v2.INY - 2 * v2.PLATFORM_CLEAR, v2.CORNER_R - v2.WALL - v2.PLATFORM_CLEAR,
                           v2.PLATFORM_T, z=-v2.PLATFORM_T)
-    solid += _collar(COLLAR_H)
     for sx in (-1, 1):                                                   # the key's pegs
         solid += cyl(KEY_PEG_D, KEY_PEG_H, sx * m.KEY_HOLES[0] / 2, KEY_Y0 + m.KEY_HOLES[1], 0, seg=32)
-    cuts = [box(GROVE_SLOT[0], GROVE_SLOT[1], -v2.PLATFORM_T - 1, GROVE_SLOT[2], GROVE_SLOT[3], v2.PLATFORM_T + 2)]
+    cuts = []
+    for a in LEG_ANGLES:                                                 # the bosses, and the holes through them and the plate
+        x, y = LEG_R * math.cos(math.radians(a)), LEG_R * math.sin(math.radians(a))
+        solid += cyl(BOSS_D, BOSS_H, x, y, 0, seg=48) + cyl(BOSS_D + 1.5, 0.8, x, y, 0, d2=BOSS_D, seg=48)   # a small fillet; the key is close
+        cuts.append(cyl(LEG_HOLE_D, BOSS_H + v2.PLATFORM_T + 2, x, y, -v2.PLATFORM_T - 1, seg=48))
+    cuts.append(box(GROVE_SLOT[0], GROVE_SLOT[1], -v2.PLATFORM_T - 1, GROVE_SLOT[2], GROVE_SLOT[3], v2.PLATFORM_T + 2))
     cuts += [cyl(m.M3_CLEAR_D, v2.PLATFORM_T + 2, x, y, -v2.PLATFORM_T - 1, seg=24) for x, y in CRADLE_SCREWS]
     return solid - union(cuts)
 
@@ -187,23 +198,6 @@ def cradle():
     return plate + walls + lips + pads - cuts
 
 
-def carrier():
-    w, t = m.CAGE_LEG
-    top = INNER_TOP - 0.8
-    parts = []
-    for a in m.CAGE_ANGLES:
-        leg = box(m.CAGE_R0, -w / 2, PAD_BOTTOM, t, w, top - PAD_BOTTOM)
-        leg += box(m.CAGE_R0 - m.LEDGE, -w / 2, HEX_BOTTOM - 0.3 - 1.2, m.LEDGE + 0.01, w, 1.2)
-        parts.append(leg.rotate([0, 0, a]))
-    ring_r = m.CAGE_R0 + t
-    ring = cyl(2 * ring_r, PAD_T, z=PAD_BOTTOM, seg=m.SEG) - cyl(2 * RING_R0, PAD_T + 2, z=PAD_BOTTOM - 1, seg=m.SEG)
-    # the bar: across the ring on blocks, its underside PRESS_GAP above the keycap's top
-    bar = cbox(0, 0, BAR_Z0, 2 * ring_r, BAR_W, BAR_T)
-    blocks = cbox(0, 0, PAD_BOTTOM + PAD_T - 0.01, 2 * ring_r, BAR_W, BAR_Z0 - (PAD_BOTTOM + PAD_T) + 0.02) - cyl(2 * RING_R0, 20, z=PAD_BOTTOM, seg=m.SEG)
-    bar = (bar + blocks) ^ cyl(2 * ring_r, 60, z=0, seg=m.SEG)
-    return union(parts + [ring, bar])
-
-
 def bought(pressed=False):
     dz = -SWITCH_TRAVEL if pressed else 0.0
     parts = {k: v for k, v in v2.bought().items() if k in ('cell', 'rider')}
@@ -215,6 +209,7 @@ def bought(pressed=False):
     parts['keycap'] = cbox(0, 0, KEYCAP_TOP - m.KEYCAP_H + dz, KEYCAP_W, KEYCAP_W, m.KEYCAP_H - (KEYCAP_W - m.KEYCAP_TOP_W) / 2) \
         + cbox(0, 0, KEYCAP_TOP - (KEYCAP_W - m.KEYCAP_TOP_W) / 2 + dz, m.KEYCAP_TOP_W, m.KEYCAP_TOP_W, (KEYCAP_W - m.KEYCAP_TOP_W) / 2)
     hexboard = m.CrossSection.circle(m.HEX_FLAT / 2 / math.cos(math.radians(30)), 6).rotate(30).extrude(m.HEX_BOARD_T).translate([0, 0, HEX_BOTTOM + dz])
+    hexboard -= union(cyl(2.0, 4, m.HEX_EAR_R * math.cos(math.radians(a)), m.HEX_EAR_R * math.sin(math.radians(a)), HEX_BOTTOM - 1 + dz, seg=16) for a in POST_ANGLES)
     hexboard += cbox(0, 0, HEX_BOTTOM - m.HEX_UNDER + dz, m.HEX_SOCKETS[0], m.HEX_SOCKETS[1], m.HEX_UNDER)
     parts['hex'] = hexboard
     atom = box(ATOM_X0, ATOM_Y0, ATOM_Z0, *ATOM)
@@ -225,7 +220,15 @@ def bought(pressed=False):
 
 
 def printed_parts():
-    return {'housing': v2.housing(), 'platform': platform(), 'cradle': cradle(), 'lid': v2.lid(), 'carrier': carrier(), 'cap': cap()}
+    return {'housing': v2.housing(), 'platform': platform(), 'cradle': cradle(), 'lid': v2.lid(), 'floor': floor(), 'cap': cap()}
+
+
+def _meets(a, b):
+    """How far a drops before it lands on b."""
+    d = 0.0
+    while d < 12 and (a.translate([0, 0, -d]) ^ b).volume() < 0.05:
+        d += 0.05
+    return d
 
 
 def check_and_write(printed, flipped, out_dir, label):
@@ -236,13 +239,11 @@ def check_and_write(printed, flipped, out_dir, label):
         bb = out.bounding_box()
         print(f'  {name:9s} {bb[3] - bb[0]:6.1f} x {bb[4] - bb[1]:5.1f} x {bb[5] - bb[2]:5.1f} mm  {out.volume() / 1000:6.1f} cm3  genus {out.genus()}')
     clashes = 0
-    moving = ('cap', 'carrier', 'hex', 'keycap')
     for pressed in (False, True):
         state = {**printed, **bought(pressed)}
         drop = SWITCH_TRAVEL if pressed else 0.0
-        for k in moving:
-            if k in ('cap', 'carrier'):
-                state[k] = state[k].translate([0, 0, -drop])
+        for k in ('cap', 'floor'):
+            state[k] = state[k].translate([0, 0, -drop])
         names = list(state)
         for i, a in enumerate(names):
             for b in names[i + 1:]:
@@ -252,17 +253,14 @@ def check_and_write(printed, flipped, out_dir, label):
                 if overlap > 0.5:
                     clashes += 1
                     print(f'  CLASH {"pressed" if pressed else "at rest"}: {a} / {b}  {overlap:.1f} mm3')
-    # the stops, measured on the solids
-    c = printed['cap']
-    to_collar = _meets(c, _collar(COLLAR_H))
-    ring_to_case = (PAD_BOTTOM - SWITCH_TRAVEL) - KEY[2]
-    print(f'  press: bar {PRESS_GAP:.1f} above the keycap at rest; clicks at {SWITCH_CLICK:.1f}, the switch stops at {SWITCH_TRAVEL:.1f}, '
-          f'the collar would catch the cap at {to_collar:.2f}; the ring stays {ring_to_case:.2f} above the key case at the stop')
-    if to_collar < SWITCH_TRAVEL or ring_to_case < PLATE_CLEAR - 0.05:
+    to_boss = _meets(printed['floor'], printed['platform'])
+    print(f'  press: floor {PRESS_GAP:.1f} above the keycap at rest; clicks at {SWITCH_CLICK:.1f}, the switch stops at {SWITCH_TRAVEL:.1f}, '
+          f'the floor would land on the bosses at {to_boss:.2f}; legs in their holes {BOSS_H + v2.PLATFORM_T - min(LEG_BOTTOM.values()):.1f} at rest')
+    if to_boss < SWITCH_TRAVEL + 0.1:
         clashes += 1
-        print('  PROBLEM: the collar or the ring catches before the switch bottoms')
+        print('  PROBLEM: the bosses catch the floor before the switch bottoms')
     print('  clash check:', 'clean' if not clashes else f'{clashes} problem(s)')
-    colours = {'housing': '#3a3a40', 'platform': '#55555c', 'cradle': '#6a4a7a', 'lid': '#2a2a2e', 'carrier': '#8a8a92', 'cap': '#ffffff',
+    colours = {'housing': '#3a3a40', 'platform': '#55555c', 'cradle': '#6a4a7a', 'lid': '#2a2a2e', 'floor': '#8a8a92', 'cap': '#ffffff',
                'hex': '#2e7d32', 'key': '#e8e8e8', 'keycap': '#c62828', 'atom': '#1a3a6e', 'cell': '#8a8a55', 'rider': '#1b5e20', 'splitter': '#d8d8d8'}
     everything = dict(printed)
     everything.update(bought())
@@ -272,5 +270,5 @@ def check_and_write(printed, flipped, out_dir, label):
 
 if __name__ == '__main__':
     print(f'v6 box: {v2.W:.0f} x {v2.D:.0f} mm, {CAP_TOP - v2.BOTTOM:.1f} mm tall to the cap, housing {v2.TOP - v2.BOTTOM:.1f} mm, '
-          f'cap shows {CAP_TOP - v2.TOP:.1f} above the lip ({CAP_TOP - v2.TOP - SWITCH_TRAVEL:.1f} pressed), collar {COLLAR_H:.1f} tall')
-    check_and_write(printed_parts(), {'housing', 'cap', 'cradle'}, os.path.join(HERE, OUT), OUT)
+          f'cap shows {CAP_TOP - v2.TOP:.1f} above the lip ({CAP_TOP - v2.TOP - SWITCH_TRAVEL:.1f} pressed)')
+    check_and_write(printed_parts(), {'housing', 'cap', 'cradle', 'floor'}, os.path.join(HERE, OUT), OUT)

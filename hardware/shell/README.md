@@ -36,34 +36,40 @@ All three are clash-checked at rest and pressed, and viewable side by side at tr
 ## v6: the cap on a bought switch (make_shell_v6.py, stl-v6/; drawn 2026-10-05, not printed)
 
 The first game (2026-10-03) ran fine and the press was the weak part: the cap rode on the Atom's own tactile dome
-through a printed cage, peg and flexures, and the flexures broke. In v6 nothing printed bends. The cap rides on an
-**M5 Mechanical Key Unit** (a keyboard switch in a Grove case, which Garett already owns): its spring returns the
-cap, its click is the click, its own end stop is the stop, and the printed parts only guide. It is the idea of
-the Printables "big red button" box kept in `ref/` (a bought button under a printed top, electronics below) with
-our flat cap and the hex riding inside it.
+through a printed cage, peg and flexures, and the flexures broke. In v6 nothing printed bends and nothing hangs
+inside the cap. The cap rides on an **M5 Mechanical Key Unit** (a keyboard switch in a Grove case, which Garett
+already owns): its spring returns the cap, its click is the click, its own end stop is the stop, and the printed
+parts only guide. It is the Printables "big red button" box kept in `ref/` (a bought button under a printed top
+that is closed by a floor with three legs, electronics below) with our flat cap and the hex riding inside it.
+Garett's call after seeing a first drawing with a carrier of legs in the cap: "that still looks like it has a
+cage. can't we just have a flat thing like that other button?" So the floor.
 
 ![front cutaway](section-stl-v6-front.svg)
 
-What changed from v2, part by part: the **housing** and **lid** are v2's, 9 mm deeper; the **platform** carries
-the Key Unit in the middle on two pegs, the collar round it (with a gap at the front where the key's case and
-cable cross the circle), the Grove 1-to-3 splitter at the back on tape, and two M3 screws down into the
-**cradle**, a tray under the platform that the Atom slides into face down, above the Rider, both its plugs toward
-the -y wall where the Rider's USB-A plug also points (a short cable makes a U between them). The **carrier**
-replaces the cage: the same four legs into the cap's sockets and ledges for the hex, a ring round the keycap, and
-a bar across the ring that presses the keycap's top. The **cap** is the mini's, 3.4 mm taller inside because the
-hex sits above the bar. 72 × 80 and 62 mm tall to the cap (v2: 50); the cap shows 17.5 above the lip (14 in v2).
+Part by part: the **housing** and **lid** are v2's, 9 mm deeper. The **platform** carries the Key Unit in the
+middle on two pegs, three hollow bosses round it that take the floor's legs, the Grove 1-to-3 splitter at the back
+on tape, and two M3 screws down into the **cradle**, a tray under the platform that the Atom slides into face down,
+above the Rider, both its plugs toward the -y wall where the Rider's USB-A plug also points (a short cable makes a
+U between them). The **floor** closes the cap from below: a disc that pushes up into the cap's skirt against a step
+(a dab of glue), with the hex standing on three short posts on its top (pegs into the board's ear holes), three
+legs down into the platform's bosses, and its middle resting on the keycap. The **cap** is the mini's profile with
+no sleeve and no cage sockets: the shell, four short blocks on the ceiling that keep the hex down on its posts, and
+the step. Cap and floor print transparent, so what shows inside the cap is the hex on three thin posts. 72 × 80 and
+62 mm tall to the cap (v2: 50); the cap shows 17.5 above the lip (14 in v2).
 
-The press: at rest the cap hangs on the lip with the bar 0.1 above the keycap. The switch clicks at about 2 mm and
-bottoms at about 4 (both MEASURE), and that is the stop; the collar catches the cap 0.45 later as a backstop; the
-ring stays 0.5 above the key's case. All Grove, no soldering: hex → splitter, key → splitter, splitter → Atom.
+The press: at rest the cap hangs on the lip with the floor 0.1 above the keycap. The switch clicks at about 2 mm and
+bottoms at about 4 (both MEASURE), and that is the stop; the floor lands on the bosses 0.45 later as a backstop. The
+guide is the three legs: 12 mm bosses above the platform, the platform, and 6 mm below it for two of them (the
+third stops inside its boss, over the Atom's plugs), 19.6 mm at rest, more than v2's collar had. All Grove, no
+soldering: hex → splitter, key → splitter, splitter → Atom.
 
 Why not the 30 mm arcade button from the DigiKey order: its body hangs 33 mm below the plate it mounts in and its
 wire terminals are under that, so the box would be about 80 mm tall or 100 wide. The Key Unit is 8 mm tall.
 
-Two things to find out on the first print. Whether the blue switch lifts the cap, hex and carrier (about 30 g;
-the switch starts at about 35 g): if not, any MX-style switch drops into the Key Unit, and a heavy clicky one
-(Kailh Box Navy or Jade, about 90 g) would feel best anyway. And the hex's cable: its underside plug has to come
-down through the carrier's ring beside the keycap and the bar; turn the hex in its ledges until it does.
+To find out on the first print: whether the blue switch lifts the cap, hex and floor (about 35 g; the switch starts
+at about 35 g): if not, any MX-style switch drops into the Key Unit, and a heavy clicky one (Kailh Box Navy or
+Jade, about 90 g) would feel best anyway. Whether the hex's ear holes are at three alternate corners 16 mm out, as
+drawn. And whether the legs slide freely in their bosses (0.25 mm radial, as the collar had): dry PTFE if not.
 
 ## The press: why the bars broke, and the stop on the Atom (2026-10-01)
 
