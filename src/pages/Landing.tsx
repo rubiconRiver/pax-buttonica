@@ -74,6 +74,7 @@ export function Landing() {
           <a href="#wiring">How it's wired</a>
           <Link to="/standard">Button standard</Link>
           <Link to="/hardware">Build guide</Link>
+          <Link to="/stats">Game stats</Link>
           <Link to="/demo" className="btn btn--sm btn--gold">Live demo</Link>
         </div>
       </nav>

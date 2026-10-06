@@ -30,7 +30,7 @@ E2E_PORT=5217 npm run e2e           # when another worktree's dev server holds 5
 | `rewind.spec.ts` | The game as an action log: undo and redo, rewinding from a line of the Ship's log, a phone keeping its seat through a rewind, the referee's levers, downloading the log during and after a game, another laptop picking up the log. |
 | `profiles.spec.ts` | Saved players against a stand-in for the database (`api.ts`): newest edit wins, deletions travel, offline catches up later, clip uploads. |
 | `safety.spec.ts` | Game-night safety nets: a saved game that breaks the table shows a crash screen (across reloads) from which the log can be saved and the last action undone, with nothing lost; a held Ctrl+Z undoes once and names what it undid, with a Redo; Ctrl+Z while typing is the text box's own; the host screen and phones keep a wake lock. |
-| `pages.spec.ts` | Every page renders; navigation; the documents; the parts list arithmetic and memory; nothing scrolls sideways on a phone. |
+| `pages.spec.ts` | Every page renders; navigation; the documents; the parts list arithmetic and memory; the game stats page (a real game's log replayed: sortable players, rounds that open up, explanations on hover); nothing scrolls sideways on a phone. |
 
 ## How the tests work
 

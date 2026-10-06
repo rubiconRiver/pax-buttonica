@@ -9,6 +9,7 @@ import { Parts } from './pages/Parts';
 import { Landing } from './pages/Landing';
 import { ButtonLink } from './pages/ButtonLink';
 import { Play } from './pages/Play';
+import { Stats } from './pages/Stats';
 import { Standard } from './pages/Standard';
 
 export function App() {
@@ -28,6 +29,7 @@ export function App() {
       <Route path="/join" element={<Join />} />
       <Route path="/join/:code" element={<Join />} />
       <Route path="/b/:id" element={<ButtonLink />} />
+      <Route path="/stats" element={<Stats />} />
       <Route path="/standard" element={<Standard />} />
       <Route path="/hardware" element={<Standard doc="hardware" />} />
       <Route path="/button" element={<ButtonConcept />} />

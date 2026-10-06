@@ -1,0 +1,8785 @@
+{
+ "format": "pax-buttonica-game-log/1",
+ "exportedAt": "2026-10-06T15:41:59.598Z",
+ "code": "V28W",
+ "players": [
+  "Branson",
+  "Jason",
+  "Garett",
+  "Devon",
+  "Cam",
+  "Alan"
+ ],
+ "notes": "Replay: state = base; for each event in order, state = reduce(state, event.action). Times are ms since the epoch. auto = the app did it by itself; noop = the action was refused or changed nothing.",
+ "base": {
+  "code": "V28W",
+  "phase": "strategy",
+  "round": 1,
+  "vpTarget": 14,
+  "players": [
+   {
+    "name": "Branson",
+    "color": "green",
+    "intro": {
+     "id": "warp-in",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "warp-out",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Naaz-Rokha Alliance",
+    "profileId": "f2f09fc4-18a4-4e4c-b720-a654fabbf740",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   },
+   {
+    "name": "Jason",
+    "color": "purple",
+    "intro": {
+     "id": "herald",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "stand-down",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Empyrean",
+    "profileId": "22f2ddfb-ca52-43bd-8567-c4f4bd9c6b54",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   },
+   {
+    "name": "Garett",
+    "color": "orange",
+    "intro": {
+     "id": "war-drums",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "mic-drop",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Yssaril Tribes",
+    "profileId": "c51dc97b-4a1a-419b-a484-573226e77246",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   },
+   {
+    "name": "Devon",
+    "faction": "The Embers of Muaat",
+    "color": "red",
+    "intro": {
+     "kind": "jingle",
+     "id": "council-bell"
+    },
+    "outro": {
+     "kind": "jingle",
+     "id": "sealed"
+    },
+    "buttons": 1,
+    "profileId": "0b764150-ab79-4c19-bb2e-036201d5c3bc",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   },
+   {
+    "name": "Cam",
+    "color": "yellow",
+    "intro": {
+     "id": "warp-in",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "warp-out",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Yin Brotherhood",
+    "profileId": "79b192e7-ea41-4cd4-8685-8a89d6b0aa34",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   },
+   {
+    "name": "Alan",
+    "faction": "The Barony of Letnev",
+    "color": "black",
+    "intro": {
+     "kind": "jingle",
+     "id": "trade-wind"
+    },
+    "outro": {
+     "kind": "jingle",
+     "id": "stand-down"
+    },
+    "buttons": 1,
+    "profileId": "da3c1fec-49e6-4f83-a0c3-d524a1213656",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [],
+    "usedCards": [],
+    "passed": false,
+    "timeMs": 0,
+    "turns": 0
+   }
+  ],
+  "speaker": 0,
+  "zeroToken": null,
+  "custodiansRemoved": false,
+  "objectives": [],
+  "laws": [],
+  "idSeq": 0,
+  "primaryStage": true,
+  "pickOrder": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "pickIdx": 0,
+  "tradeGoods": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0
+  ],
+  "active": null,
+  "actedThisTurn": false,
+  "strategyPlay": null,
+  "choosingCard": false,
+  "statusStep": "tidy",
+  "scoringOrder": [],
+  "scoringIdx": 0,
+  "ready": [],
+  "fanfareMs": 4000,
+  "scoreInOrder": true,
+  "agenda": null,
+  "winner": null,
+  "bindings": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "devices": {},
+  "seating": {
+   "next": 0,
+   "resume": false
+  },
+  "clockStartedAt": null,
+  "clockBanked": 0,
+  "paused": false,
+  "fx": [
+   {
+    "kind": "phase",
+    "note": "strategy",
+    "id": 1
+   }
+  ],
+  "fxSeq": 1,
+  "log": [
+   {
+    "id": 1,
+    "round": 1,
+    "text": "Round 1 — strategy phase. Branson is speaker.",
+    "tone": "info"
+   }
+  ],
+  "logSeq": 1
+ },
+ "events": [
+  {
+   "at": 1791040872935,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791040872935
+   }
+  },
+  {
+   "at": 1791040879106,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791040879106
+   }
+  },
+  {
+   "at": 1791040889143,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791040889143
+   }
+  },
+  {
+   "at": 1791040896888,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791040896888
+   },
+   "noop": true
+  },
+  {
+   "at": 1791040917866,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791040917866
+   }
+  },
+  {
+   "at": 1791040925215,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791040925215
+   }
+  },
+  {
+   "at": 1791040928543,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791040928543
+   }
+  },
+  {
+   "at": 1791041045066,
+   "action": {
+    "type": "IDENTIFY",
+    "dev": "web-1737eea1",
+    "profileId": "c51dc97b-4a1a-419b-a484-573226e77246",
+    "at": 1791041045066
+   },
+   "auto": true
+  },
+  {
+   "at": 1791041196870,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041196870
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041198108,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041198108
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041199370,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791041199370
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041199921,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791041199921
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041201081,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041201081
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041201575,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041201575
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041272967,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041272967
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041273477,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041273477
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041281825,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791041281825
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041283975,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041283975
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041289546,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041289546
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041289925,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791041289925
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041299277,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041299277
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041299688,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041299688
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041379429,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041379429
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041384669,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041384669
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041385107,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041385107
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041386280,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041386280
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041386952,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041386952
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041387395,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041387395
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041389419,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041389419
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041389893,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041389893
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041390708,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791041390708
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041391014,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791041391014
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041392675,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791041392675
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041393749,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791041393749
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041447467,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041447467
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041448735,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041448735
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041449249,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041449249
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041449734,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791041449734
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041472564,
+   "action": {
+    "type": "IDENTIFY",
+    "dev": "web-3c1b20cd",
+    "profileId": "22f2ddfb-ca52-43bd-8567-c4f4bd9c6b54",
+    "at": 1791041472564
+   },
+   "auto": true
+  },
+  {
+   "at": 1791041477067,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "web-3c1b20cd",
+    "input": "tap",
+    "at": 1791041477067
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041478562,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "web-3c1b20cd",
+    "input": "tap",
+    "at": 1791041478562
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041659224,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041659224
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041660949,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041660949
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041661373,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791041661373
+   },
+   "noop": true
+  },
+  {
+   "at": 1791041661670,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791041661670
+   },
+   "noop": true
+  },
+  {
+   "at": 1791042659316,
+   "action": {
+    "type": "SET_STATUS_FLOW",
+    "fanfareMs": 4000,
+    "scoreInOrder": true,
+    "quietAgenda": false
+   },
+   "auto": true
+  },
+  {
+   "at": 1791043150679,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 5,
+    "at": 1791043150679
+   }
+  },
+  {
+   "at": 1791043152262,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 7,
+    "at": 1791043152262
+   }
+  },
+  {
+   "at": 1791043154512,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 3,
+    "at": 1791043154512
+   }
+  },
+  {
+   "at": 1791043157462,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 6,
+    "at": 1791043157462
+   }
+  },
+  {
+   "at": 1791043160028,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 2,
+    "at": 1791043160028
+   }
+  },
+  {
+   "at": 1791043200744,
+   "action": {
+    "type": "PICK_CARD",
+    "card": 4,
+    "at": 1791043200744
+   }
+  },
+  {
+   "at": 1791043358416,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791043358416
+   }
+  },
+  {
+   "at": 1791043417812,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791043417812
+   }
+  },
+  {
+   "at": 1791043519450,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791043519450
+   }
+  },
+  {
+   "at": 1791043633038,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791043633038
+   }
+  },
+  {
+   "at": 1791043651427,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791043651427
+   },
+   "noop": true
+  },
+  {
+   "at": 1791043651583,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791043651583
+   }
+  },
+  {
+   "at": 1791043825842,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791043825842
+   }
+  },
+  {
+   "at": 1791043829839,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791043829839
+   }
+  },
+  {
+   "at": 1791043831344,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791043831344
+   }
+  },
+  {
+   "at": 1791043832075,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791043832075
+   }
+  },
+  {
+   "at": 1791043836460,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791043836460
+   }
+  },
+  {
+   "at": 1791043845451,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791043845451
+   }
+  },
+  {
+   "at": 1791043851555,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791043851555
+   }
+  },
+  {
+   "at": 1791043928393,
+   "action": {
+    "name": "Raise a Fleet",
+    "text": "Have 5 or more non-fighter ships in 1 system.",
+    "type": "REVEAL_OBJECTIVE",
+    "stage": 1,
+    "points": 1
+   }
+  },
+  {
+   "at": 1791043936886,
+   "action": {
+    "name": "Found Research Outposts",
+    "text": "Control 3 planets with technology specialties.",
+    "type": "REVEAL_OBJECTIVE",
+    "stage": 1,
+    "points": 1
+   }
+  },
+  {
+   "at": 1791043965837,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791043965837
+   }
+  },
+  {
+   "at": 1791044021278,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044021278
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044024202,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044024202
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044025834,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044025834
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044027612,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791044027612
+   }
+  },
+  {
+   "at": 1791044083774,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791044083774
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044083930,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791044083930
+   }
+  },
+  {
+   "at": 1791044132768,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791044132768
+   }
+  },
+  {
+   "at": 1791044150412,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044150412
+   }
+  },
+  {
+   "at": 1791044152564,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791044152564
+   }
+  },
+  {
+   "at": 1791044205288,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791044205288
+   }
+  },
+  {
+   "at": 1791044211997,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791044211997
+   }
+  },
+  {
+   "at": 1791044213547,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791044213547
+   }
+  },
+  {
+   "at": 1791044290095,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791044290095
+   }
+  },
+  {
+   "at": 1791044298714,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791044298714
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044298918,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791044298918
+   }
+  },
+  {
+   "at": 1791044344086,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791044344086
+   }
+  },
+  {
+   "at": 1791044345545,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791044345545
+   }
+  },
+  {
+   "at": 1791044345962,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791044345962
+   }
+  },
+  {
+   "at": 1791044346174,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791044346174
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044353662,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044353662
+   }
+  },
+  {
+   "at": 1791044354107,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791044354107
+   }
+  },
+  {
+   "at": 1791044406850,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791044406850
+   }
+  },
+  {
+   "at": 1791044416039,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791044416039
+   }
+  },
+  {
+   "at": 1791044419750,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791044419750
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044419964,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791044419964
+   }
+  },
+  {
+   "at": 1791044478273,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791044478273
+   }
+  },
+  {
+   "at": 1791044478927,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791044478927
+   }
+  },
+  {
+   "at": 1791044480800,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791044480800
+   }
+  },
+  {
+   "at": 1791044519699,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791044519699
+   }
+  },
+  {
+   "at": 1791044523352,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791044523352
+   }
+  },
+  {
+   "at": 1791044524944,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791044524944
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044530691,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791044530691
+   }
+  },
+  {
+   "at": 1791044533809,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791044533809
+   }
+  },
+  {
+   "at": 1791044730172,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791044730172
+   }
+  },
+  {
+   "at": 1791044869214,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791044869214
+   },
+   "noop": true
+  },
+  {
+   "at": 1791044872113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791044872113
+   }
+  },
+  {
+   "at": 1791045030568,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791045030568
+   }
+  },
+  {
+   "at": 1791045136314,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791045136314
+   }
+  },
+  {
+   "at": 1791045286826,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791045286826
+   }
+  },
+  {
+   "at": 1791045353831,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791045353831
+   }
+  },
+  {
+   "at": 1791045532431,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791045532431
+   }
+  },
+  {
+   "at": 1791045566398,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791045566398
+   }
+  },
+  {
+   "at": 1791045658714,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791045658714
+   }
+  },
+  {
+   "at": 1791045702438,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791045702438
+   }
+  },
+  {
+   "at": 1791045752625,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791045752625
+   }
+  },
+  {
+   "at": 1791045790037,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791045790037
+   }
+  },
+  {
+   "at": 1791045867082,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791045867082
+   }
+  },
+  {
+   "at": 1791045874251,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791045874251
+   },
+   "noop": true
+  },
+  {
+   "at": 1791045874435,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791045874435
+   }
+  },
+  {
+   "at": 1791045908705,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791045908705
+   }
+  },
+  {
+   "at": 1791045910314,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791045910314
+   }
+  },
+  {
+   "at": 1791045910867,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791045910867
+   }
+  },
+  {
+   "at": 1791045911013,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791045911013
+   }
+  },
+  {
+   "at": 1791045911821,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791045911821
+   }
+  },
+  {
+   "at": 1791045914880,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791045914880
+   }
+  },
+  {
+   "at": 1791045945145,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791045945145
+   },
+   "noop": true
+  },
+  {
+   "at": 1791045946836,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791045946836
+   }
+  },
+  {
+   "at": 1791046004144,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046004144
+   }
+  },
+  {
+   "at": 1791046050684,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791046050684
+   }
+  },
+  {
+   "at": 1791046060159,
+   "action": {
+    "type": "PASS",
+    "at": 1791046060159
+   }
+  },
+  {
+   "at": 1791046108489,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791046108489
+   }
+  },
+  {
+   "at": 1791046166194,
+   "action": {
+    "type": "PASS",
+    "at": 1791046166194
+   }
+  },
+  {
+   "at": 1791046346539,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791046346539
+   }
+  },
+  {
+   "at": 1791046390667,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046390667
+   }
+  },
+  {
+   "at": 1791046396898,
+   "action": {
+    "at": 1791046396898,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791046412611,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791046412611
+   }
+  },
+  {
+   "at": 1791046417452,
+   "action": {
+    "at": 1791046417452,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791046434989,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046434989
+   }
+  },
+  {
+   "at": 1791046478499,
+   "action": {
+    "type": "SET_CUSTODIANS",
+    "removed": true
+   }
+  },
+  {
+   "at": 1791046495024,
+   "action": {
+    "at": 1791046495024,
+    "seat": 0,
+    "type": "ADD_EXTRA",
+    "label": "Custodians of Mecatol Rex",
+    "points": 1
+   }
+  },
+  {
+   "at": 1791046500254,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791046500254
+   }
+  },
+  {
+   "at": 1791046505434,
+   "action": {
+    "type": "SET_CUSTODIANS",
+    "removed": false
+   }
+  },
+  {
+   "at": 1791046507522,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046507522
+   }
+  },
+  {
+   "at": 1791046511500,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791046511500
+   }
+  },
+  {
+   "at": 1791046515433,
+   "action": {
+    "at": 1791046515433,
+    "type": "PASS"
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046516567,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046516567
+   }
+  },
+  {
+   "at": 1791046519527,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791046519527
+   }
+  },
+  {
+   "at": 1791046522738,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791046522738
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046522914,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791046522914
+   }
+  },
+  {
+   "at": 1791046525401,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791046525401
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046526252,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791046526252
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046527342,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791046527342
+   }
+  },
+  {
+   "at": 1791046528180,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791046528180
+   }
+  },
+  {
+   "at": 1791046528990,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791046528990
+   }
+  },
+  {
+   "at": 1791046586937,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791046586937
+   }
+  },
+  {
+   "at": 1791046588380,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791046588380
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046592912,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791046592912
+   }
+  },
+  {
+   "at": 1791046593431,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791046593431
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046595415,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791046595415
+   }
+  },
+  {
+   "at": 1791046597929,
+   "action": {
+    "at": 1791046597929,
+    "type": "PASS"
+   },
+   "noop": true
+  },
+  {
+   "at": 1791046607935,
+   "action": {
+    "at": 1791046607935,
+    "type": "END_TURN"
+   }
+  },
+  {
+   "at": 1791046609440,
+   "action": {
+    "at": 1791046609440,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791046610940,
+   "action": {
+    "at": 1791046610940,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791046614956,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791046614956
+   },
+   "auto": true
+  },
+  {
+   "at": 1791046624681,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791046624681
+   }
+  },
+  {
+   "at": 1791046633025,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791046633025
+   }
+  },
+  {
+   "at": 1791046641822,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791046641822
+   }
+  },
+  {
+   "at": 1791046643344,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791046643344
+   }
+  },
+  {
+   "at": 1791046649470,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791046649470
+   }
+  },
+  {
+   "at": 1791046650195,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791046650195
+   }
+  },
+  {
+   "at": 1791047343948,
+   "action": {
+    "at": 1791047343948,
+    "type": "READY_ALL"
+   }
+  },
+  {
+   "at": 1791047536956,
+   "action": {
+    "at": 1791047536956,
+    "card": 4,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047711454,
+   "action": {
+    "at": 1791047711454,
+    "card": 8,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047714449,
+   "action": {
+    "at": 1791047714449,
+    "card": 1,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047717476,
+   "action": {
+    "at": 1791047717476,
+    "card": 7,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047720453,
+   "action": {
+    "at": 1791047720453,
+    "card": 5,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047724955,
+   "action": {
+    "at": 1791047724955,
+    "card": 6,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791047759155,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791047759155
+   },
+   "noop": true
+  },
+  {
+   "at": 1791047759291,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791047759291
+   }
+  },
+  {
+   "at": 1791047803595,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791047803595
+   }
+  },
+  {
+   "at": 1791047831847,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791047831847
+   }
+  },
+  {
+   "at": 1791047834444,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791047834444
+   }
+  },
+  {
+   "at": 1791047933027,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791047933027
+   }
+  },
+  {
+   "at": 1791047954684,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791047954684
+   }
+  },
+  {
+   "at": 1791048018210,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791048018210
+   }
+  },
+  {
+   "at": 1791048021098,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791048021098
+   }
+  },
+  {
+   "at": 1791048028286,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791048028286
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048028496,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791048028496
+   }
+  },
+  {
+   "at": 1791048158277,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791048158277
+   }
+  },
+  {
+   "at": 1791048160554,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791048160554
+   }
+  },
+  {
+   "at": 1791048162117,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048162117
+   }
+  },
+  {
+   "at": 1791048163436,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791048163436
+   }
+  },
+  {
+   "at": 1791048167944,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791048167944
+   }
+  },
+  {
+   "at": 1791048174013,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791048174013
+   }
+  },
+  {
+   "at": 1791048192098,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791048192098
+   }
+  },
+  {
+   "at": 1791048209796,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048209796
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048210816,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048210816
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048212002,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048212002
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048212299,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791048212299
+   }
+  },
+  {
+   "at": 1791048305125,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048305125
+   }
+  },
+  {
+   "at": 1791048309514,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791048309514
+   }
+  },
+  {
+   "at": 1791048310622,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791048310622
+   }
+  },
+  {
+   "at": 1791048311321,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791048311321
+   }
+  },
+  {
+   "at": 1791048311737,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791048311737
+   }
+  },
+  {
+   "at": 1791048314130,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791048314130
+   }
+  },
+  {
+   "at": 1791048314704,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048314704
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048336893,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791048336893
+   }
+  },
+  {
+   "at": 1791048413605,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791048413605
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048413790,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791048413790
+   }
+  },
+  {
+   "at": 1791048560972,
+   "action": {
+    "at": 1791048560972,
+    "type": "PRIMARY_DONE"
+   }
+  },
+  {
+   "at": 1791048564811,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791048564811
+   }
+  },
+  {
+   "at": 1791048564964,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791048564964
+   }
+  },
+  {
+   "at": 1791048565959,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791048565959
+   }
+  },
+  {
+   "at": 1791048567430,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791048567430
+   }
+  },
+  {
+   "at": 1791048873068,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791048873068
+   }
+  },
+  {
+   "at": 1791048881560,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791048881560
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048887544,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791048887544
+   }
+  },
+  {
+   "at": 1791048963319,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791048963319
+   },
+   "noop": true
+  },
+  {
+   "at": 1791048963624,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791048963624
+   }
+  },
+  {
+   "at": 1791049033453,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791049033453
+   }
+  },
+  {
+   "at": 1791049036964,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791049036964
+   }
+  },
+  {
+   "at": 1791049038097,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791049038097
+   }
+  },
+  {
+   "at": 1791049038839,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791049038839
+   }
+  },
+  {
+   "at": 1791049041293,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791049041293
+   }
+  },
+  {
+   "at": 1791049045472,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791049045472
+   }
+  },
+  {
+   "at": 1791049048043,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791049048043
+   }
+  },
+  {
+   "at": 1791049273870,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791049273870
+   },
+   "noop": true
+  },
+  {
+   "at": 1791049275442,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791049275442
+   }
+  },
+  {
+   "at": 1791049394045,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791049394045
+   }
+  },
+  {
+   "at": 1791049739833,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791049739833
+   }
+  },
+  {
+   "at": 1791049792642,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791049792642
+   }
+  },
+  {
+   "at": 1791049842745,
+   "action": {
+    "type": "SET_PRIMARY_STAGE",
+    "on": false
+   }
+  },
+  {
+   "at": 1791049861080,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791049861080
+   }
+  },
+  {
+   "at": 1791050064275,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791050064275
+   }
+  },
+  {
+   "at": 1791050112357,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791050112357
+   },
+   "noop": true
+  },
+  {
+   "at": 1791050112541,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791050112541
+   }
+  },
+  {
+   "at": 1791050133657,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791050133657
+   }
+  },
+  {
+   "at": 1791050166892,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791050166892
+   }
+  },
+  {
+   "at": 1791050171452,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791050171452
+   }
+  },
+  {
+   "at": 1791050197009,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791050197009
+   }
+  },
+  {
+   "at": 1791050233177,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791050233177
+   },
+   "noop": true
+  },
+  {
+   "at": 1791050234979,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791050234979
+   },
+   "noop": true
+  },
+  {
+   "at": 1791050240868,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791050240868
+   }
+  },
+  {
+   "at": 1791050241113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791050241113
+   }
+  },
+  {
+   "at": 1791050282490,
+   "action": {
+    "at": 1791050282490,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791050460499,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791050460499
+   }
+  },
+  {
+   "at": 1791050482642,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791050482642
+   }
+  },
+  {
+   "at": 1791050505764,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791050505764
+   }
+  },
+  {
+   "at": 1791050608877,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791050608877
+   }
+  },
+  {
+   "at": 1791050692919,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791050692919
+   }
+  },
+  {
+   "at": 1791050849009,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791050849009
+   }
+  },
+  {
+   "at": 1791051023728,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791051023728
+   }
+  },
+  {
+   "at": 1791051036973,
+   "action": {
+    "at": 1791051036973,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791051102890,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791051102890
+   }
+  },
+  {
+   "at": 1791051142754,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791051142754
+   }
+  },
+  {
+   "at": 1791051177631,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791051177631
+   }
+  },
+  {
+   "at": 1791051197190,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051197190
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051197797,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051197797
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051198250,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051198250
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051198771,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051198771
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051199165,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791051199165
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051199890,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051199890
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051200433,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051200433
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051200890,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051200890
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051201208,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791051201208
+   },
+   "noop": true
+  },
+  {
+   "at": 1791051265988,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791051265988
+   }
+  },
+  {
+   "at": 1791051363375,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791051363375
+   }
+  },
+  {
+   "at": 1791051418809,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791051418809
+   }
+  },
+  {
+   "at": 1791051438452,
+   "action": {
+    "at": 1791051438452,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791051441953,
+   "action": {
+    "at": 1791051441953,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791051522277,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791051522277
+   }
+  },
+  {
+   "at": 1791051525439,
+   "action": {
+    "at": 1791051525439,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791051580443,
+   "action": {
+    "at": 1791051580443,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791051584462,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791051584462
+   },
+   "auto": true
+  },
+  {
+   "at": 1791051601164,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791051601164
+   }
+  },
+  {
+   "at": 1791051635096,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791051635096
+   }
+  },
+  {
+   "at": 1791051642684,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791051642684
+   }
+  },
+  {
+   "at": 1791051657585,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791051657585
+   }
+  },
+  {
+   "at": 1791051694506,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791051694506
+   }
+  },
+  {
+   "at": 1791051732295,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791051732295
+   }
+  },
+  {
+   "at": 1791052834943,
+   "action": {
+    "at": 1791052834943,
+    "type": "READY_ALL"
+   }
+  },
+  {
+   "at": 1791052893471,
+   "action": {
+    "at": 1791052893471,
+    "card": 3,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791052982452,
+   "action": {
+    "at": 1791052982452,
+    "card": 6,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791052989455,
+   "action": {
+    "at": 1791052989455,
+    "card": 5,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791052996452,
+   "action": {
+    "at": 1791052996452,
+    "card": 1,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791052998443,
+   "action": {
+    "at": 1791052998443,
+    "card": 7,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791053000945,
+   "action": {
+    "at": 1791053000945,
+    "card": 8,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791053005959,
+   "action": {
+    "at": 1791053005959,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791054512172,
+   "action": {
+    "at": 1791054512172,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791054693261,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791054693261
+   },
+   "noop": true
+  },
+  {
+   "at": 1791054693509,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791054693509
+   }
+  },
+  {
+   "at": 1791054705023,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791054705023
+   }
+  },
+  {
+   "at": 1791054706303,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791054706303
+   }
+  },
+  {
+   "at": 1791054727217,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791054727217
+   }
+  },
+  {
+   "at": 1791054773113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791054773113
+   }
+  },
+  {
+   "at": 1791054779487,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791054779487
+   }
+  },
+  {
+   "at": 1791054795947,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791054795947
+   }
+  },
+  {
+   "at": 1791055034241,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791055034241
+   }
+  },
+  {
+   "at": 1791055038374,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791055038374
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055038531,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791055038531
+   }
+  },
+  {
+   "at": 1791055083154,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791055083154
+   }
+  },
+  {
+   "at": 1791055087040,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791055087040
+   }
+  },
+  {
+   "at": 1791055103445,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791055103445
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055106890,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791055106890
+   }
+  },
+  {
+   "at": 1791055107194,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791055107194
+   }
+  },
+  {
+   "at": 1791055107200,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055107200
+   }
+  },
+  {
+   "at": 1791055110167,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791055110167
+   }
+  },
+  {
+   "at": 1791055553826,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055553826
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055554004,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791055554004
+   }
+  },
+  {
+   "at": 1791055554183,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055554183
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055576422,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791055576422
+   }
+  },
+  {
+   "at": 1791055632808,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791055632808
+   }
+  },
+  {
+   "at": 1791055644521,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791055644521
+   }
+  },
+  {
+   "at": 1791055646285,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055646285
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055652965,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791055652965
+   }
+  },
+  {
+   "at": 1791055682235,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791055682235
+   }
+  },
+  {
+   "at": 1791055710352,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055710352
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055711596,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791055711596
+   }
+  },
+  {
+   "at": 1791055724398,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791055724398
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055724724,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791055724724
+   }
+  },
+  {
+   "at": 1791055813969,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791055813969
+   }
+  },
+  {
+   "at": 1791055814745,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791055814745
+   }
+  },
+  {
+   "at": 1791055847773,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791055847773
+   }
+  },
+  {
+   "at": 1791055849383,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791055849383
+   }
+  },
+  {
+   "at": 1791055852182,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791055852182
+   }
+  },
+  {
+   "at": 1791055853689,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791055853689
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055855997,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791055855997
+   }
+  },
+  {
+   "at": 1791055897202,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791055897202
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055963012,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791055963012
+   },
+   "noop": true
+  },
+  {
+   "at": 1791055965217,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791055965217
+   }
+  },
+  {
+   "at": 1791056108341,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791056108341
+   }
+  },
+  {
+   "at": 1791056310929,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791056310929
+   }
+  },
+  {
+   "at": 1791056340748,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791056340748
+   }
+  },
+  {
+   "at": 1791056372759,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791056372759
+   }
+  },
+  {
+   "at": 1791056474441,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791056474441
+   }
+  },
+  {
+   "at": 1791056815119,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791056815119
+   }
+  },
+  {
+   "at": 1791057013497,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791057013497
+   }
+  },
+  {
+   "at": 1791057077655,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791057077655
+   }
+  },
+  {
+   "at": 1791057157724,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791057157724
+   }
+  },
+  {
+   "at": 1791057183987,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791057183987
+   }
+  },
+  {
+   "at": 1791057531783,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791057531783
+   }
+  },
+  {
+   "at": 1791057653219,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791057653219
+   },
+   "noop": true
+  },
+  {
+   "at": 1791057653477,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791057653477
+   }
+  },
+  {
+   "at": 1791057667477,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791057667477
+   }
+  },
+  {
+   "at": 1791057698285,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791057698285
+   }
+  },
+  {
+   "at": 1791057700380,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791057700380
+   },
+   "noop": true
+  },
+  {
+   "at": 1791057700991,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791057700991
+   }
+  },
+  {
+   "at": 1791057701024,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791057701024
+   }
+  },
+  {
+   "at": 1791057703014,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791057703014
+   }
+  },
+  {
+   "at": 1791057710507,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791057710507
+   }
+  },
+  {
+   "at": 1791057774158,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791057774158
+   }
+  },
+  {
+   "at": 1791057832922,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791057832922
+   },
+   "noop": true
+  },
+  {
+   "at": 1791057833134,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791057833134
+   }
+  },
+  {
+   "at": 1791057835917,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791057835917
+   }
+  },
+  {
+   "at": 1791057901038,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791057901038
+   }
+  },
+  {
+   "at": 1791057902217,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791057902217
+   }
+  },
+  {
+   "at": 1791057903825,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791057903825
+   }
+  },
+  {
+   "at": 1791057905878,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791057905878
+   }
+  },
+  {
+   "at": 1791057969953,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791057969953
+   }
+  },
+  {
+   "at": 1791058062538,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791058062538
+   }
+  },
+  {
+   "at": 1791058166184,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791058166184
+   }
+  },
+  {
+   "at": 1791058258476,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791058258476
+   }
+  },
+  {
+   "at": 1791058356772,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791058356772
+   },
+   "noop": true
+  },
+  {
+   "at": 1791058357091,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791058357091
+   },
+   "noop": true
+  },
+  {
+   "at": 1791058361594,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791058361594
+   }
+  },
+  {
+   "at": 1791058512426,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791058512426
+   }
+  },
+  {
+   "at": 1791058610953,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791058610953
+   }
+  },
+  {
+   "at": 1791058657577,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791058657577
+   }
+  },
+  {
+   "at": 1791058972903,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791058972903
+   }
+  },
+  {
+   "at": 1791059044924,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791059044924
+   }
+  },
+  {
+   "at": 1791059068413,
+   "action": {
+    "at": 1791059068413,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059227411,
+   "action": {
+    "at": 1791059227411,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059230908,
+   "action": {
+    "at": 1791059230908,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059239816,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791059239816
+   }
+  },
+  {
+   "at": 1791059268931,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791059268931
+   }
+  },
+  {
+   "at": 1791059274909,
+   "action": {
+    "at": 1791059274909,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059339585,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791059339585
+   }
+  },
+  {
+   "at": 1791059372811,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791059372811
+   }
+  },
+  {
+   "at": 1791059438920,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791059438920
+   }
+  },
+  {
+   "at": 1791059549921,
+   "action": {
+    "at": 1791059549921,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059551912,
+   "action": {
+    "at": 1791059551912,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791059555924,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791059555924
+   },
+   "auto": true
+  },
+  {
+   "at": 1791059586323,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791059586323
+   }
+  },
+  {
+   "at": 1791059621035,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791059621035
+   }
+  },
+  {
+   "at": 1791059639801,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791059639801
+   }
+  },
+  {
+   "at": 1791059669332,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791059669332
+   }
+  },
+  {
+   "at": 1791059678801,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791059678801
+   }
+  },
+  {
+   "at": 1791059733530,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791059733530
+   }
+  },
+  {
+   "at": 1791060580435,
+   "action": {
+    "at": 1791060580435,
+    "type": "READY_ALL"
+   }
+  },
+  {
+   "at": 1791060688446,
+   "action": {
+    "at": 1791060688446,
+    "card": 1,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791060880430,
+   "action": {
+    "at": 1791060880430,
+    "card": 7,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791060882446,
+   "action": {
+    "at": 1791060882446,
+    "card": 8,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791060884446,
+   "action": {
+    "at": 1791060884446,
+    "card": 5,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791060892430,
+   "action": {
+    "at": 1791060892430,
+    "card": 4,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791060913943,
+   "action": {
+    "at": 1791060913943,
+    "card": 6,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791061087946,
+   "action": {
+    "at": 1791061087946,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791061144103,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791061144103
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061218629,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791061218629
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061218843,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791061218843
+   }
+  },
+  {
+   "at": 1791061222312,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061222312
+   }
+  },
+  {
+   "at": 1791061274505,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791061274505
+   }
+  },
+  {
+   "at": 1791061298438,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791061298438
+   }
+  },
+  {
+   "at": 1791061313544,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791061313544
+   }
+  },
+  {
+   "at": 1791061317435,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791061317435
+   }
+  },
+  {
+   "at": 1791061396177,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791061396177
+   }
+  },
+  {
+   "at": 1791061459019,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791061459019
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061464867,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791061464867
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061465145,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791061465145
+   }
+  },
+  {
+   "at": 1791061473886,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791061473886
+   }
+  },
+  {
+   "at": 1791061505192,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791061505192
+   }
+  },
+  {
+   "at": 1791061557987,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791061557987
+   }
+  },
+  {
+   "at": 1791061579784,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791061579784
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061590003,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061590003
+   }
+  },
+  {
+   "at": 1791061594868,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791061594868
+   }
+  },
+  {
+   "at": 1791061596670,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791061596670
+   }
+  },
+  {
+   "at": 1791061611167,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791061611167
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061612311,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791061612311
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061612531,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791061612531
+   }
+  },
+  {
+   "at": 1791061619231,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061619231
+   }
+  },
+  {
+   "at": 1791061655410,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791061655410
+   }
+  },
+  {
+   "at": 1791061693126,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791061693126
+   }
+  },
+  {
+   "at": 1791061762113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791061762113
+   }
+  },
+  {
+   "at": 1791061802424,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791061802424
+   }
+  },
+  {
+   "at": 1791061809950,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791061809950
+   }
+  },
+  {
+   "at": 1791061830383,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061830383
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061833490,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061833490
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061833815,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791061833815
+   }
+  },
+  {
+   "at": 1791061932679,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791061932679
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061932948,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791061932948
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061943020,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791061943020
+   }
+  },
+  {
+   "at": 1791061949140,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791061949140
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061955328,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791061955328
+   },
+   "noop": true
+  },
+  {
+   "at": 1791061964233,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791061964233
+   }
+  },
+  {
+   "at": 1791061983544,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791061983544
+   }
+  },
+  {
+   "at": 1791061985695,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791061985695
+   }
+  },
+  {
+   "at": 1791062040966,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791062040966
+   }
+  },
+  {
+   "at": 1791062118243,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791062118243
+   },
+   "noop": true
+  },
+  {
+   "at": 1791062118618,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791062118618
+   },
+   "noop": true
+  },
+  {
+   "at": 1791062120955,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791062120955
+   }
+  },
+  {
+   "at": 1791062324084,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791062324084
+   }
+  },
+  {
+   "at": 1791062430473,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791062430473
+   }
+  },
+  {
+   "at": 1791062586723,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791062586723
+   }
+  },
+  {
+   "at": 1791062768984,
+   "action": {
+    "at": 1791062768984,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791062780442,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791062780442
+   }
+  },
+  {
+   "at": 1791062843331,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791062843331
+   }
+  },
+  {
+   "at": 1791062892156,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791062892156
+   }
+  },
+  {
+   "at": 1791063211201,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791063211201
+   }
+  },
+  {
+   "at": 1791063254129,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791063254129
+   },
+   "noop": true
+  },
+  {
+   "at": 1791063254284,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791063254284
+   }
+  },
+  {
+   "at": 1791063261669,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791063261669
+   }
+  },
+  {
+   "at": 1791063283662,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791063283662
+   },
+   "noop": true
+  },
+  {
+   "at": 1791063309386,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791063309386
+   }
+  },
+  {
+   "at": 1791063311720,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791063311720
+   }
+  },
+  {
+   "at": 1791063323570,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791063323570
+   }
+  },
+  {
+   "at": 1791063325634,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791063325634
+   }
+  },
+  {
+   "at": 1791063334728,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791063334728
+   }
+  },
+  {
+   "at": 1791063449415,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791063449415
+   }
+  },
+  {
+   "at": 1791063562473,
+   "action": {
+    "at": 1791063562473,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791063635691,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791063635691
+   }
+  },
+  {
+   "at": 1791063697976,
+   "action": {
+    "at": 1791063697976,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791063727880,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791063727880
+   },
+   "noop": true
+  },
+  {
+   "at": 1791063732293,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791063732293
+   },
+   "noop": true
+  },
+  {
+   "at": 1791063732466,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791063732466
+   }
+  },
+  {
+   "at": 1791063735840,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791063735840
+   }
+  },
+  {
+   "at": 1791063757674,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791063757674
+   }
+  },
+  {
+   "at": 1791063759406,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791063759406
+   }
+  },
+  {
+   "at": 1791063767644,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791063767644
+   }
+  },
+  {
+   "at": 1791063773805,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791063773805
+   }
+  },
+  {
+   "at": 1791063847356,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791063847356
+   },
+   "noop": true
+  },
+  {
+   "at": 1791063849195,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791063849195
+   }
+  },
+  {
+   "at": 1791063979810,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791063979810
+   }
+  },
+  {
+   "at": 1791064108682,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791064108682
+   }
+  },
+  {
+   "at": 1791064245223,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791064245223
+   }
+  },
+  {
+   "at": 1791064293305,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791064293305
+   }
+  },
+  {
+   "at": 1791064339314,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791064339314
+   }
+  },
+  {
+   "at": 1791064395148,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791064395148
+   }
+  },
+  {
+   "at": 1791064599736,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791064599736
+   }
+  },
+  {
+   "at": 1791064687287,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791064687287
+   }
+  },
+  {
+   "at": 1791064796540,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791064796540
+   }
+  },
+  {
+   "at": 1791064819423,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791064819423
+   }
+  },
+  {
+   "at": 1791064991908,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791064991908
+   }
+  },
+  {
+   "at": 1791065112385,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791065112385
+   }
+  },
+  {
+   "at": 1791065184454,
+   "action": {
+    "at": 1791065184454,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791065292684,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791065292684
+   }
+  },
+  {
+   "at": 1791065344733,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791065344733
+   }
+  },
+  {
+   "at": 1791065556448,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791065556448
+   }
+  },
+  {
+   "at": 1791066244963,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791066244963
+   },
+   "noop": true
+  },
+  {
+   "at": 1791066246149,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791066246149
+   }
+  },
+  {
+   "at": 1791066279456,
+   "action": {
+    "at": 1791066279456,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791066369457,
+   "action": {
+    "at": 1791066369457,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791066371456,
+   "action": {
+    "at": 1791066371456,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791066375476,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791066375476
+   },
+   "auto": true
+  },
+  {
+   "at": 1791066399862,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791066399862
+   }
+  },
+  {
+   "at": 1791066450802,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791066450802
+   }
+  },
+  {
+   "at": 1791066560283,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791066560283
+   }
+  },
+  {
+   "at": 1791066565754,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791066565754
+   }
+  },
+  {
+   "at": 1791066567747,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791066567747
+   }
+  },
+  {
+   "at": 1791066597839,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791066597839
+   }
+  },
+  {
+   "at": 1791068017437,
+   "action": {
+    "at": 1791068017437,
+    "type": "READY_ALL"
+   }
+  },
+  {
+   "at": 1791068938560,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791068938560
+   },
+   "noop": true
+  },
+  {
+   "at": 1791069009961,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791069009961
+   },
+   "noop": true
+  },
+  {
+   "at": 1791069011976,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791069011976
+   },
+   "noop": true
+  },
+  {
+   "at": 1791069015685,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791069015685
+   },
+   "noop": true
+  },
+  {
+   "at": 1791069055887,
+   "action": {
+    "at": 1791069055887,
+    "card": 8,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069059395,
+   "action": {
+    "at": 1791069059395,
+    "card": 5,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069060891,
+   "action": {
+    "at": 1791069060891,
+    "card": 3,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069076887,
+   "action": {
+    "at": 1791069076887,
+    "card": 1,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069092890,
+   "action": {
+    "at": 1791069092890,
+    "card": 2,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069097884,
+   "action": {
+    "at": 1791069097884,
+    "card": 4,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791069104896,
+   "action": {
+    "at": 1791069104896,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791069135403,
+   "action": {
+    "at": 1791069135403,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791069145883,
+   "action": {
+    "at": 1791069145883,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791069348892,
+   "action": {
+    "at": 1791069348892,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791069493415,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791069493415
+   }
+  },
+  {
+   "at": 1791069601812,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791069601812
+   }
+  },
+  {
+   "at": 1791069676640,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791069676640
+   }
+  },
+  {
+   "at": 1791069687365,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791069687365
+   },
+   "noop": true
+  },
+  {
+   "at": 1791069687595,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791069687595
+   }
+  },
+  {
+   "at": 1791069750033,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791069750033
+   }
+  },
+  {
+   "at": 1791069783269,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791069783269
+   }
+  },
+  {
+   "at": 1791069788866,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791069788866
+   }
+  },
+  {
+   "at": 1791069799484,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791069799484
+   }
+  },
+  {
+   "at": 1791069865901,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791069865901
+   }
+  },
+  {
+   "at": 1791069871796,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791069871796
+   }
+  },
+  {
+   "at": 1791069969926,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791069969926
+   }
+  },
+  {
+   "at": 1791070548095,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791070548095
+   }
+  },
+  {
+   "at": 1791070709867,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791070709867
+   }
+  },
+  {
+   "at": 1791070846722,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791070846722
+   }
+  },
+  {
+   "at": 1791070875293,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791070875293
+   }
+  },
+  {
+   "at": 1791070969742,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791070969742
+   },
+   "noop": true
+  },
+  {
+   "at": 1791070970832,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791070970832
+   },
+   "noop": true
+  },
+  {
+   "at": 1791070971026,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791070971026
+   },
+   "noop": true
+  },
+  {
+   "at": 1791070975544,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791070975544
+   }
+  },
+  {
+   "at": 1791071199465,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791071199465
+   },
+   "noop": true
+  },
+  {
+   "at": 1791071199632,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791071199632
+   }
+  },
+  {
+   "at": 1791071337080,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791071337080
+   }
+  },
+  {
+   "at": 1791071337104,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791071337104
+   }
+  },
+  {
+   "at": 1791071337238,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791071337238
+   },
+   "noop": true
+  },
+  {
+   "at": 1791071340118,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791071340118
+   }
+  },
+  {
+   "at": 1791071345496,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791071345496
+   }
+  },
+  {
+   "at": 1791071347153,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791071347153
+   }
+  },
+  {
+   "at": 1791071350905,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791071350905
+   }
+  },
+  {
+   "at": 1791071933769,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791071933769
+   }
+  },
+  {
+   "at": 1791072311746,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791072311746
+   },
+   "noop": true
+  },
+  {
+   "at": 1791072312108,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791072312108
+   }
+  },
+  {
+   "at": 1791072317201,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791072317201
+   }
+  },
+  {
+   "at": 1791072370170,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791072370170
+   }
+  },
+  {
+   "at": 1791072371986,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791072371986
+   }
+  },
+  {
+   "at": 1791072375560,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791072375560
+   }
+  },
+  {
+   "at": 1791072378788,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791072378788
+   }
+  },
+  {
+   "at": 1791072387113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791072387113
+   }
+  },
+  {
+   "at": 1791072575187,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791072575187
+   }
+  },
+  {
+   "at": 1791072649428,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791072649428
+   }
+  },
+  {
+   "at": 1791072922360,
+   "action": {
+    "at": 1791072922360,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791072956397,
+   "action": {
+    "at": 1791072956397,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791073719903,
+   "action": {
+    "at": 1791073719903,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791074182246,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791074182246
+   }
+  },
+  {
+   "at": 1791074229886,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791074229886
+   }
+  },
+  {
+   "at": 1791074815037,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791074815037
+   }
+  },
+  {
+   "at": 1791074837645,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791074837645
+   }
+  },
+  {
+   "at": 1791074897501,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791074897501
+   }
+  },
+  {
+   "at": 1791075107378,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791075107378
+   }
+  },
+  {
+   "at": 1791075109903,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791075109903
+   },
+   "noop": true
+  },
+  {
+   "at": 1791075110153,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791075110153
+   }
+  },
+  {
+   "at": 1791075129727,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791075129727
+   }
+  },
+  {
+   "at": 1791075130101,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791075130101
+   },
+   "noop": true
+  },
+  {
+   "at": 1791075249011,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791075249011
+   }
+  },
+  {
+   "at": 1791075251246,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791075251246
+   }
+  },
+  {
+   "at": 1791075254207,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791075254207
+   }
+  },
+  {
+   "at": 1791075303232,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791075303232
+   }
+  },
+  {
+   "at": 1791075342018,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791075342018
+   }
+  },
+  {
+   "at": 1791075413514,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791075413514
+   }
+  },
+  {
+   "at": 1791075431928,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791075431928
+   }
+  },
+  {
+   "at": 1791075597736,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791075597736
+   },
+   "noop": true
+  },
+  {
+   "at": 1791075597918,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791075597918
+   }
+  },
+  {
+   "at": 1791075601502,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791075601502
+   }
+  },
+  {
+   "at": 1791075645536,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791075645536
+   },
+   "noop": true
+  },
+  {
+   "at": 1791075651156,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791075651156
+   }
+  },
+  {
+   "at": 1791075656687,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791075656687
+   }
+  },
+  {
+   "at": 1791075679731,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791075679731
+   }
+  },
+  {
+   "at": 1791075687814,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791075687814
+   }
+  },
+  {
+   "at": 1791075691846,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791075691846
+   }
+  },
+  {
+   "at": 1791075862390,
+   "action": {
+    "at": 1791075862390,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791075895956,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791075895956
+   }
+  },
+  {
+   "at": 1791075939034,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791075939034
+   }
+  },
+  {
+   "at": 1791076226876,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791076226876
+   }
+  },
+  {
+   "at": 1791076288458,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791076288458
+   }
+  },
+  {
+   "at": 1791076348946,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791076348946
+   }
+  },
+  {
+   "at": 1791076524018,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791076524018
+   }
+  },
+  {
+   "at": 1791076546113,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791076546113
+   },
+   "noop": true
+  },
+  {
+   "at": 1791076546363,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791076546363
+   }
+  },
+  {
+   "at": 1791076580501,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791076580501
+   },
+   "noop": true
+  },
+  {
+   "at": 1791076582879,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791076582879
+   }
+  },
+  {
+   "at": 1791076586629,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791076586629
+   }
+  },
+  {
+   "at": 1791076588494,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791076588494
+   }
+  },
+  {
+   "at": 1791076593535,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791076593535
+   }
+  },
+  {
+   "at": 1791076610429,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791076610429
+   },
+   "noop": true
+  },
+  {
+   "at": 1791076610893,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791076610893
+   }
+  },
+  {
+   "at": 1791076613622,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791076613622
+   }
+  },
+  {
+   "at": 1791076800764,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791076800764
+   }
+  },
+  {
+   "at": 1791076833385,
+   "action": {
+    "at": 1791076833385,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791076921897,
+   "action": {
+    "at": 1791076921897,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791077031157,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791077031157
+   }
+  },
+  {
+   "at": 1791077047701,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791077047701
+   }
+  },
+  {
+   "at": 1791077068380,
+   "action": {
+    "at": 1791077068380,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791077224001,
+   "action": {
+    "at": 1791077224001,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791077228025,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791077228025
+   },
+   "auto": true
+  },
+  {
+   "at": 1791077267154,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791077267154
+   }
+  },
+  {
+   "at": 1791077288360,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791077288360
+   }
+  },
+  {
+   "at": 1791077358383,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791077358383
+   }
+  },
+  {
+   "at": 1791077378630,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791077378630
+   }
+  },
+  {
+   "at": 1791077477228,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791077477228
+   }
+  },
+  {
+   "at": 1791077477919,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791077477919
+   }
+  },
+  {
+   "at": 1791077482226,
+   "action": {
+    "at": 1791077482226,
+    "type": "READY_ALL"
+   }
+  },
+  {
+   "at": 1791077489885,
+   "action": {
+    "at": 1791077489885,
+    "type": "PAUSE"
+   }
+  },
+  {
+   "at": 1791077518169,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791077518169
+   },
+   "noop": true
+  },
+  {
+   "at": 1791077523255,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791077523255
+   },
+   "noop": true
+  },
+  {
+   "at": 1791078526843,
+   "action": {
+    "at": 1791078526843,
+    "card": 7,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791078565881,
+   "action": {
+    "at": 1791078565881,
+    "card": 3,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791078568336,
+   "action": {
+    "at": 1791078568336,
+    "card": 8,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791078572844,
+   "action": {
+    "at": 1791078572844,
+    "card": 1,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791078577852,
+   "action": {
+    "at": 1791078577852,
+    "card": 4,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791078579344,
+   "action": {
+    "at": 1791078579344,
+    "card": 6,
+    "type": "PICK_CARD"
+   }
+  },
+  {
+   "at": 1791079258814,
+   "action": {
+    "at": 1791079258814,
+    "type": "RESUME"
+   }
+  },
+  {
+   "at": 1791079464987,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791079464987
+   },
+   "noop": true
+  },
+  {
+   "at": 1791079465207,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "double",
+    "at": 1791079465207
+   }
+  },
+  {
+   "at": 1791079469310,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791079469310
+   }
+  },
+  {
+   "at": 1791079516364,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791079516364
+   }
+  },
+  {
+   "at": 1791079561336,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791079561336
+   }
+  },
+  {
+   "at": 1791079562883,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791079562883
+   }
+  },
+  {
+   "at": 1791079640830,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791079640830
+   },
+   "noop": true
+  },
+  {
+   "at": 1791079691982,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791079691982
+   }
+  },
+  {
+   "at": 1791079698841,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791079698841
+   }
+  },
+  {
+   "at": 1791080092665,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791080092665
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080094317,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791080094317
+   }
+  },
+  {
+   "at": 1791080181266,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791080181266
+   }
+  },
+  {
+   "at": 1791080225896,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080225896
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080227779,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080227779
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080228780,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080228780
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080230575,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080230575
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080230854,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791080230854
+   }
+  },
+  {
+   "at": 1791080272483,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791080272483
+   }
+  },
+  {
+   "at": 1791080292695,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791080292695
+   }
+  },
+  {
+   "at": 1791080360756,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791080360756
+   }
+  },
+  {
+   "at": 1791080396897,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791080396897
+   }
+  },
+  {
+   "at": 1791080471481,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791080471481
+   }
+  },
+  {
+   "at": 1791080535000,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080535000
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080535162,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791080535162
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080539062,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791080539062
+   }
+  },
+  {
+   "at": 1791080870533,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791080870533
+   }
+  },
+  {
+   "at": 1791080890606,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791080890606
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080890760,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "double",
+    "at": 1791080890760
+   }
+  },
+  {
+   "at": 1791080894836,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791080894836
+   }
+  },
+  {
+   "at": 1791080895017,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791080895017
+   },
+   "noop": true
+  },
+  {
+   "at": 1791080968440,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791080968440
+   }
+  },
+  {
+   "at": 1791081024233,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791081024233
+   }
+  },
+  {
+   "at": 1791081081854,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791081081854
+   }
+  },
+  {
+   "at": 1791081085025,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791081085025
+   }
+  },
+  {
+   "at": 1791081087247,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791081087247
+   }
+  },
+  {
+   "at": 1791081526267,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791081526267
+   }
+  },
+  {
+   "at": 1791081556791,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791081556791
+   },
+   "noop": true
+  },
+  {
+   "at": 1791081591784,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791081591784
+   },
+   "noop": true
+  },
+  {
+   "at": 1791081592004,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "double",
+    "at": 1791081592004
+   }
+  },
+  {
+   "at": 1791081593711,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791081593711
+   }
+  },
+  {
+   "at": 1791081594774,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791081594774
+   }
+  },
+  {
+   "at": 1791081596052,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791081596052
+   }
+  },
+  {
+   "at": 1791081596842,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791081596842
+   }
+  },
+  {
+   "at": 1791081641159,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791081641159
+   }
+  },
+  {
+   "at": 1791081641446,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791081641446
+   },
+   "noop": true
+  },
+  {
+   "at": 1791081681831,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791081681831
+   }
+  },
+  {
+   "at": 1791081685703,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791081685703
+   },
+   "noop": true
+  },
+  {
+   "at": 1791081685891,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791081685891
+   }
+  },
+  {
+   "at": 1791081698405,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791081698405
+   }
+  },
+  {
+   "at": 1791081721147,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791081721147
+   }
+  },
+  {
+   "at": 1791081785284,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791081785284
+   },
+   "noop": true
+  },
+  {
+   "at": 1791081794003,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791081794003
+   }
+  },
+  {
+   "at": 1791081794293,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791081794293
+   }
+  },
+  {
+   "at": 1791081794329,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791081794329
+   }
+  },
+  {
+   "at": 1791081800017,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791081800017
+   }
+  },
+  {
+   "at": 1791082301741,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791082301741
+   }
+  },
+  {
+   "at": 1791082315825,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791082315825
+   },
+   "noop": true
+  },
+  {
+   "at": 1791082317114,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "tap",
+    "at": 1791082317114
+   },
+   "noop": true
+  },
+  {
+   "at": 1791082317359,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "double",
+    "at": 1791082317359
+   }
+  },
+  {
+   "at": 1791082327465,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791082327465
+   }
+  },
+  {
+   "at": 1791082327760,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "double",
+    "at": 1791082327760
+   },
+   "noop": true
+  },
+  {
+   "at": 1791082393676,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "tap",
+    "at": 1791082393676
+   }
+  },
+  {
+   "at": 1791082482664,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791082482664
+   }
+  },
+  {
+   "at": 1791082496284,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791082496284
+   }
+  },
+  {
+   "at": 1791082515195,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791082515195
+   },
+   "noop": true
+  },
+  {
+   "at": 1791082562615,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791082562615
+   }
+  },
+  {
+   "at": 1791082564349,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791082564349
+   }
+  },
+  {
+   "at": 1791082762851,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791082762851
+   }
+  },
+  {
+   "at": 1791083184288,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791083184288
+   }
+  },
+  {
+   "at": 1791083242677,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791083242677
+   }
+  },
+  {
+   "at": 1791083758172,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791083758172
+   }
+  },
+  {
+   "at": 1791083831655,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791083831655
+   }
+  },
+  {
+   "at": 1791084234245,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791084234245
+   }
+  },
+  {
+   "at": 1791084371187,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791084371187
+   }
+  },
+  {
+   "at": 1791084740174,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "hold",
+    "at": 1791084740174
+   }
+  },
+  {
+   "at": 1791084754855,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "hold",
+    "at": 1791084754855
+   }
+  },
+  {
+   "at": 1791084861879,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791084861879
+   },
+   "noop": true
+  },
+  {
+   "at": 1791084864382,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791084864382
+   }
+  },
+  {
+   "at": 1791084911933,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "tap",
+    "at": 1791084911933
+   },
+   "noop": true
+  },
+  {
+   "at": 1791084912190,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "double",
+    "at": 1791084912190
+   },
+   "noop": true
+  },
+  {
+   "at": 1791084914047,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C5A8",
+    "input": "hold",
+    "at": 1791084914047
+   }
+  },
+  {
+   "at": 1791085012331,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791085012331
+   }
+  },
+  {
+   "at": 1791085040867,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791085040867
+   }
+  },
+  {
+   "at": 1791085394821,
+   "action": {
+    "at": 1791085394821,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085476298,
+   "action": {
+    "at": 1791085476298,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085626297,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "hold",
+    "at": 1791085626297
+   }
+  },
+  {
+   "at": 1791085638324,
+   "action": {
+    "at": 1791085638324,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085693795,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F558F0",
+    "input": "hold",
+    "at": 1791085693795
+   }
+  },
+  {
+   "at": 1791085709444,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4F4EC",
+    "input": "hold",
+    "at": 1791085709444
+   }
+  },
+  {
+   "at": 1791085768782,
+   "action": {
+    "at": 1791085768782,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085770801,
+   "action": {
+    "at": 1791085770801,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085941778,
+   "action": {
+    "at": 1791085941778,
+    "type": "PASS"
+   }
+  },
+  {
+   "at": 1791085945802,
+   "action": {
+    "type": "FANFARE_DONE",
+    "at": 1791085945802
+   },
+   "auto": true
+  },
+  {
+   "at": 1791085961227,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F4C1C0",
+    "input": "tap",
+    "at": 1791085961227
+   }
+  },
+  {
+   "at": 1791085966811,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791085966811
+   }
+  },
+  {
+   "at": 1791085984120,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "441BF6F504F8",
+    "input": "tap",
+    "at": 1791085984120
+   }
+  },
+  {
+   "at": 1791086997088,
+   "action": {
+    "type": "DEVICE_INPUT",
+    "dev": "E072A1E52B30",
+    "input": "tap",
+    "at": 1791086997088
+   },
+   "noop": true
+  }
+ ],
+ "final": {
+  "code": "V28W",
+  "phase": "status",
+  "round": 6,
+  "vpTarget": 14,
+  "players": [
+   {
+    "name": "Branson",
+    "color": "green",
+    "intro": {
+     "id": "warp-in",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "warp-out",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Naaz-Rokha Alliance",
+    "profileId": "f2f09fc4-18a4-4e4c-b720-a654fabbf740",
+    "vp": 1,
+    "secrets": [],
+    "extras": [
+     {
+      "label": "Custodians of Mecatol Rex",
+      "points": 1
+     }
+    ],
+    "cards": [
+     7
+    ],
+    "usedCards": [
+     7
+    ],
+    "passed": true,
+    "timeMs": 6200432,
+    "turns": 44
+   },
+   {
+    "name": "Jason",
+    "color": "purple",
+    "intro": {
+     "id": "herald",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "stand-down",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Empyrean",
+    "profileId": "22f2ddfb-ca52-43bd-8567-c4f4bd9c6b54",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [
+     3
+    ],
+    "usedCards": [
+     3
+    ],
+    "passed": true,
+    "timeMs": 5477855,
+    "turns": 38
+   },
+   {
+    "name": "Garett",
+    "color": "orange",
+    "intro": {
+     "id": "war-drums",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "mic-drop",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Yssaril Tribes",
+    "profileId": "c51dc97b-4a1a-419b-a484-573226e77246",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [
+     8
+    ],
+    "usedCards": [
+     8
+    ],
+    "passed": true,
+    "timeMs": 3614046,
+    "turns": 39
+   },
+   {
+    "name": "Devon",
+    "faction": "The Embers of Muaat",
+    "color": "red",
+    "intro": {
+     "kind": "jingle",
+     "id": "council-bell"
+    },
+    "outro": {
+     "kind": "jingle",
+     "id": "sealed"
+    },
+    "buttons": 1,
+    "profileId": "0b764150-ab79-4c19-bb2e-036201d5c3bc",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [
+     1
+    ],
+    "usedCards": [
+     1
+    ],
+    "passed": true,
+    "timeMs": 6996383,
+    "turns": 39
+   },
+   {
+    "name": "Cam",
+    "color": "yellow",
+    "intro": {
+     "id": "warp-in",
+     "kind": "jingle"
+    },
+    "outro": {
+     "id": "warp-out",
+     "kind": "jingle"
+    },
+    "buttons": 1,
+    "faction": "The Yin Brotherhood",
+    "profileId": "79b192e7-ea41-4cd4-8685-8a89d6b0aa34",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [
+     4
+    ],
+    "usedCards": [
+     4
+    ],
+    "passed": true,
+    "timeMs": 4087671,
+    "turns": 41
+   },
+   {
+    "name": "Alan",
+    "faction": "The Barony of Letnev",
+    "color": "black",
+    "intro": {
+     "kind": "jingle",
+     "id": "trade-wind"
+    },
+    "outro": {
+     "kind": "jingle",
+     "id": "stand-down"
+    },
+    "buttons": 1,
+    "profileId": "da3c1fec-49e6-4f83-a0c3-d524a1213656",
+    "vp": 0,
+    "secrets": [],
+    "extras": [],
+    "cards": [
+     6
+    ],
+    "usedCards": [
+     6
+    ],
+    "passed": true,
+    "timeMs": 3522585,
+    "turns": 25
+   }
+  ],
+  "speaker": 0,
+  "zeroToken": null,
+  "custodiansRemoved": false,
+  "objectives": [
+   {
+    "id": "o1",
+    "stage": 1,
+    "name": "Raise a Fleet",
+    "text": "Have 5 or more non-fighter ships in 1 system.",
+    "points": 1,
+    "scoredBy": [],
+    "round": 1
+   },
+   {
+    "id": "o2",
+    "stage": 1,
+    "name": "Found Research Outposts",
+    "text": "Control 3 planets with technology specialties.",
+    "points": 1,
+    "scoredBy": [],
+    "round": 1
+   }
+  ],
+  "laws": [],
+  "idSeq": 2,
+  "primaryStage": false,
+  "pickOrder": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5
+  ],
+  "pickIdx": 6,
+  "tradeGoods": [
+   0,
+   1,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0
+  ],
+  "active": null,
+  "actedThisTurn": false,
+  "strategyPlay": null,
+  "choosingCard": false,
+  "statusStep": "scoring",
+  "scoringOrder": [
+   3,
+   1,
+   4,
+   5,
+   0,
+   2
+  ],
+  "scoringIdx": 3,
+  "ready": [
+   false,
+   false,
+   false,
+   false,
+   false,
+   false
+  ],
+  "fanfareMs": 4000,
+  "scoreInOrder": true,
+  "agenda": null,
+  "winner": null,
+  "bindings": [
+   "441BF6F558F0",
+   "E072A1E52B30",
+   "441BF6F4F4EC",
+   "441BF6F4C1C0",
+   "441BF6F504F8",
+   "441BF6F4C5A8"
+  ],
+  "devices": {
+   "441BF6F558F0": "f2f09fc4-18a4-4e4c-b720-a654fabbf740",
+   "E072A1E52B30": "22f2ddfb-ca52-43bd-8567-c4f4bd9c6b54",
+   "441BF6F4F4EC": "c51dc97b-4a1a-419b-a484-573226e77246",
+   "441BF6F4C1C0": "0b764150-ab79-4c19-bb2e-036201d5c3bc",
+   "441BF6F504F8": "79b192e7-ea41-4cd4-8685-8a89d6b0aa34",
+   "441BF6F4C5A8": "da3c1fec-49e6-4f83-a0c3-d524a1213656",
+   "web-1737eea1": "c51dc97b-4a1a-419b-a484-573226e77246",
+   "web-3c1b20cd": "22f2ddfb-ca52-43bd-8567-c4f4bd9c6b54"
+  },
+  "seating": null,
+  "clockStartedAt": null,
+  "clockBanked": 0,
+  "paused": false,
+  "fx": [],
+  "fxSeq": 980,
+  "log": [
+   {
+    "id": 1,
+    "round": 1,
+    "text": "Round 1 — strategy phase. Branson is speaker.",
+    "tone": "info"
+   },
+   {
+    "id": 2,
+    "round": 1,
+    "text": "Branson claims seat 1.",
+    "seat": 0,
+    "event": 0
+   },
+   {
+    "id": 3,
+    "round": 1,
+    "text": "Jason claims seat 2.",
+    "seat": 1,
+    "event": 1
+   },
+   {
+    "id": 4,
+    "round": 1,
+    "text": "Garett claims seat 3.",
+    "seat": 2,
+    "event": 2
+   },
+   {
+    "id": 5,
+    "round": 1,
+    "text": "Devon claims seat 4.",
+    "seat": 3,
+    "event": 4
+   },
+   {
+    "id": 6,
+    "round": 1,
+    "text": "Cam claims seat 5.",
+    "seat": 4,
+    "event": 5
+   },
+   {
+    "id": 7,
+    "round": 1,
+    "text": "Alan claims seat 6.",
+    "seat": 5,
+    "event": 6
+   },
+   {
+    "id": 8,
+    "round": 1,
+    "text": "Everyone is seated.",
+    "tone": "info",
+    "event": 6
+   },
+   {
+    "id": 9,
+    "round": 1,
+    "text": "Garett's phone joins alongside their button.",
+    "seat": 2,
+    "event": 7
+   },
+   {
+    "id": 10,
+    "round": 1,
+    "text": "Jason's phone joins alongside their button.",
+    "seat": 1,
+    "event": 38
+   },
+   {
+    "id": 11,
+    "round": 1,
+    "text": "Branson takes 5 · Trade.",
+    "seat": 0,
+    "card": 5,
+    "event": 46
+   },
+   {
+    "id": 12,
+    "round": 1,
+    "text": "Jason takes 7 · Technology.",
+    "seat": 1,
+    "card": 7,
+    "event": 47
+   },
+   {
+    "id": 13,
+    "round": 1,
+    "text": "Garett takes 3 · Politics.",
+    "seat": 2,
+    "card": 3,
+    "event": 48
+   },
+   {
+    "id": 14,
+    "round": 1,
+    "text": "Devon takes 6 · Warfare.",
+    "seat": 3,
+    "card": 6,
+    "event": 49
+   },
+   {
+    "id": 15,
+    "round": 1,
+    "text": "Cam takes 2 · Diplomacy.",
+    "seat": 4,
+    "card": 2,
+    "event": 50
+   },
+   {
+    "id": 16,
+    "round": 1,
+    "text": "Alan takes 4 · Construction.",
+    "seat": 5,
+    "card": 4,
+    "event": 51
+   },
+   {
+    "id": 17,
+    "round": 1,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 51
+   },
+   {
+    "id": 18,
+    "round": 1,
+    "text": "Devon plays 6 · Warfare.",
+    "seat": 3,
+    "card": 6,
+    "tone": "good",
+    "event": 57
+   },
+   {
+    "id": 19,
+    "round": 1,
+    "text": "Devon is done with the primary — secondaries are open.",
+    "seat": 3,
+    "card": 6,
+    "event": 58
+   },
+   {
+    "id": 20,
+    "round": 1,
+    "text": "Everyone has responded to Warfare.",
+    "event": 63
+   },
+   {
+    "id": 21,
+    "round": 1,
+    "text": "Objective revealed: Raise a Fleet.",
+    "tone": "info",
+    "event": 65
+   },
+   {
+    "id": 22,
+    "round": 1,
+    "text": "Objective revealed: Found Research Outposts.",
+    "tone": "info",
+    "event": 66
+   },
+   {
+    "id": 23,
+    "round": 1,
+    "text": "Garett plays 3 · Politics.",
+    "seat": 2,
+    "card": 3,
+    "tone": "good",
+    "event": 73
+   },
+   {
+    "id": 24,
+    "round": 1,
+    "text": "Garett is done with the primary — secondaries are open.",
+    "seat": 2,
+    "card": 3,
+    "event": 74
+   },
+   {
+    "id": 25,
+    "round": 1,
+    "text": "Everyone has responded to Politics.",
+    "event": 79
+   },
+   {
+    "id": 26,
+    "round": 1,
+    "text": "Alan plays 4 · Construction.",
+    "seat": 5,
+    "card": 4,
+    "tone": "good",
+    "event": 82
+   },
+   {
+    "id": 27,
+    "round": 1,
+    "text": "Alan is done with the primary — secondaries are open.",
+    "seat": 5,
+    "card": 4,
+    "event": 83
+   },
+   {
+    "id": 28,
+    "round": 1,
+    "text": "Everyone has responded to Construction.",
+    "event": 89
+   },
+   {
+    "id": 29,
+    "round": 1,
+    "text": "Branson plays 5 · Trade.",
+    "seat": 0,
+    "card": 5,
+    "tone": "good",
+    "event": 92
+   },
+   {
+    "id": 30,
+    "round": 1,
+    "text": "Branson is done with the primary — secondaries are open.",
+    "seat": 0,
+    "card": 5,
+    "event": 93
+   },
+   {
+    "id": 31,
+    "round": 1,
+    "text": "Everyone has responded to Trade.",
+    "event": 99
+   },
+   {
+    "id": 32,
+    "round": 1,
+    "text": "Jason plays 7 · Technology.",
+    "seat": 1,
+    "card": 7,
+    "tone": "good",
+    "event": 116
+   },
+   {
+    "id": 33,
+    "round": 1,
+    "text": "Jason is done with the primary — secondaries are open.",
+    "seat": 1,
+    "card": 7,
+    "event": 117
+   },
+   {
+    "id": 34,
+    "round": 1,
+    "text": "Everyone has responded to Technology.",
+    "event": 122
+   },
+   {
+    "id": 35,
+    "round": 1,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 127
+   },
+   {
+    "id": 36,
+    "round": 1,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 129
+   },
+   {
+    "id": 37,
+    "round": 1,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 132
+   },
+   {
+    "id": 38,
+    "round": 1,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 134
+   },
+   {
+    "id": 39,
+    "round": 1,
+    "text": "Custodians removed — the agenda phase is unlocked.",
+    "tone": "info",
+    "event": 136
+   },
+   {
+    "id": 40,
+    "round": 1,
+    "text": "Branson: +1 for Custodians of Mecatol Rex.",
+    "seat": 0,
+    "tone": "good",
+    "event": 137
+   },
+   {
+    "id": 41,
+    "round": 1,
+    "text": "Branson is on 1 of 14.",
+    "seat": 0,
+    "tone": "good",
+    "event": 137
+   },
+   {
+    "id": 42,
+    "round": 1,
+    "text": "Custodians restored.",
+    "tone": "info",
+    "event": 139
+   },
+   {
+    "id": 43,
+    "round": 1,
+    "text": "Cam: can't pass with an unplayed strategy card",
+    "seat": 4,
+    "tone": "warn",
+    "event": 142
+   },
+   {
+    "id": 44,
+    "round": 1,
+    "text": "Cam plays 2 · Diplomacy.",
+    "seat": 4,
+    "card": 2,
+    "tone": "good",
+    "event": 146
+   },
+   {
+    "id": 45,
+    "round": 1,
+    "text": "Cam is done with the primary — secondaries are open.",
+    "seat": 4,
+    "card": 2,
+    "event": 149
+   },
+   {
+    "id": 46,
+    "round": 1,
+    "text": "Cam: waiting on Alan",
+    "seat": 4,
+    "tone": "warn",
+    "event": 155
+   },
+   {
+    "id": 47,
+    "round": 1,
+    "text": "Everyone has responded to Diplomacy.",
+    "event": 156
+   },
+   {
+    "id": 48,
+    "round": 1,
+    "text": "Cam: already acted this turn — hold to end it",
+    "seat": 4,
+    "tone": "warn",
+    "event": 157
+   },
+   {
+    "id": 49,
+    "round": 1,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 159
+   },
+   {
+    "id": 50,
+    "round": 1,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 160
+   },
+   {
+    "id": 51,
+    "round": 1,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 160
+   },
+   {
+    "id": 52,
+    "round": 1,
+    "text": "Scoring, in initiative order: Cam, Garett, Alan, Branson, Devon, Jason.",
+    "tone": "info",
+    "event": 161
+   },
+   {
+    "id": 53,
+    "round": 1,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 162
+   },
+   {
+    "id": 54,
+    "round": 1,
+    "text": "Garett is done scoring.",
+    "seat": 2,
+    "event": 163
+   },
+   {
+    "id": 55,
+    "round": 1,
+    "text": "Alan is done scoring.",
+    "seat": 5,
+    "event": 164
+   },
+   {
+    "id": 56,
+    "round": 1,
+    "text": "Branson is done scoring.",
+    "seat": 0,
+    "event": 165
+   },
+   {
+    "id": 57,
+    "round": 1,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 166
+   },
+   {
+    "id": 58,
+    "round": 1,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 167
+   },
+   {
+    "id": 59,
+    "round": 1,
+    "text": "Scoring is done — tidy up, then tap in.",
+    "tone": "info",
+    "event": 167
+   },
+   {
+    "id": 60,
+    "round": 2,
+    "text": "Round 2 — strategy phase. Branson is speaker.",
+    "tone": "info",
+    "event": 168
+   },
+   {
+    "id": 61,
+    "round": 2,
+    "text": "Branson takes 4 · Construction.",
+    "seat": 0,
+    "card": 4,
+    "event": 169
+   },
+   {
+    "id": 62,
+    "round": 2,
+    "text": "Jason takes 8 · Imperial (+1 trade good).",
+    "seat": 1,
+    "card": 8,
+    "event": 170
+   },
+   {
+    "id": 63,
+    "round": 2,
+    "text": "Garett takes 1 · Leadership (+1 trade good).",
+    "seat": 2,
+    "card": 1,
+    "event": 171
+   },
+   {
+    "id": 64,
+    "round": 2,
+    "text": "Devon takes 7 · Technology.",
+    "seat": 3,
+    "card": 7,
+    "event": 172
+   },
+   {
+    "id": 65,
+    "round": 2,
+    "text": "Cam takes 5 · Trade.",
+    "seat": 4,
+    "card": 5,
+    "event": 173
+   },
+   {
+    "id": 66,
+    "round": 2,
+    "text": "Alan takes 6 · Warfare.",
+    "seat": 5,
+    "card": 6,
+    "event": 174
+   },
+   {
+    "id": 67,
+    "round": 2,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 174
+   },
+   {
+    "id": 68,
+    "round": 2,
+    "text": "Garett plays 1 · Leadership.",
+    "seat": 2,
+    "card": 1,
+    "tone": "good",
+    "event": 176
+   },
+   {
+    "id": 69,
+    "round": 2,
+    "text": "Garett is done with the primary — secondaries are open.",
+    "seat": 2,
+    "card": 1,
+    "event": 177
+   },
+   {
+    "id": 70,
+    "round": 2,
+    "text": "Everyone has responded to Leadership.",
+    "event": 182
+   },
+   {
+    "id": 71,
+    "round": 2,
+    "text": "Branson plays 4 · Construction.",
+    "seat": 0,
+    "card": 4,
+    "tone": "good",
+    "event": 185
+   },
+   {
+    "id": 72,
+    "round": 2,
+    "text": "Branson is done with the primary — secondaries are open.",
+    "seat": 0,
+    "card": 4,
+    "event": 186
+   },
+   {
+    "id": 73,
+    "round": 2,
+    "text": "Everyone has responded to Construction.",
+    "event": 191
+   },
+   {
+    "id": 74,
+    "round": 2,
+    "text": "Cam plays 5 · Trade.",
+    "seat": 4,
+    "card": 5,
+    "tone": "good",
+    "event": 196
+   },
+   {
+    "id": 75,
+    "round": 2,
+    "text": "Cam is done with the primary — secondaries are open.",
+    "seat": 4,
+    "card": 5,
+    "event": 197
+   },
+   {
+    "id": 76,
+    "round": 2,
+    "text": "Everyone has responded to Trade.",
+    "event": 202
+   },
+   {
+    "id": 77,
+    "round": 2,
+    "text": "Alan plays 6 · Warfare.",
+    "seat": 5,
+    "card": 6,
+    "tone": "good",
+    "event": 206
+   },
+   {
+    "id": 78,
+    "round": 2,
+    "text": "Alan is done with the primary — secondaries are open.",
+    "seat": 5,
+    "card": 6,
+    "event": 207
+   },
+   {
+    "id": 79,
+    "round": 2,
+    "text": "Everyone has responded to Warfare.",
+    "event": 212
+   },
+   {
+    "id": 80,
+    "round": 2,
+    "text": "Devon plays 7 · Technology.",
+    "seat": 3,
+    "card": 7,
+    "tone": "good",
+    "event": 216
+   },
+   {
+    "id": 81,
+    "round": 2,
+    "text": "Devon is done with the primary — secondaries are open.",
+    "seat": 3,
+    "card": 7,
+    "event": 217
+   },
+   {
+    "id": 82,
+    "round": 2,
+    "text": "Everyone has responded to Technology.",
+    "event": 222
+   },
+   {
+    "id": 83,
+    "round": 2,
+    "text": "Jason plays 8 · Imperial.",
+    "seat": 1,
+    "card": 8,
+    "tone": "good",
+    "event": 233
+   },
+   {
+    "id": 84,
+    "round": 2,
+    "text": "Jason: waiting on Alan",
+    "seat": 1,
+    "tone": "warn",
+    "event": 239
+   },
+   {
+    "id": 85,
+    "round": 2,
+    "text": "Everyone has responded to Imperial.",
+    "event": 240
+   },
+   {
+    "id": 86,
+    "round": 2,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 242
+   },
+   {
+    "id": 87,
+    "round": 2,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 250
+   },
+   {
+    "id": 88,
+    "round": 2,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 266
+   },
+   {
+    "id": 89,
+    "round": 2,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 267
+   },
+   {
+    "id": 90,
+    "round": 2,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 269
+   },
+   {
+    "id": 91,
+    "round": 2,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 270
+   },
+   {
+    "id": 92,
+    "round": 2,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 270
+   },
+   {
+    "id": 93,
+    "round": 2,
+    "text": "Scoring, in initiative order: Garett, Branson, Cam, Alan, Devon, Jason.",
+    "tone": "info",
+    "event": 271
+   },
+   {
+    "id": 94,
+    "round": 2,
+    "text": "Garett is done scoring.",
+    "seat": 2,
+    "event": 272
+   },
+   {
+    "id": 95,
+    "round": 2,
+    "text": "Branson is done scoring.",
+    "seat": 0,
+    "event": 273
+   },
+   {
+    "id": 96,
+    "round": 2,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 274
+   },
+   {
+    "id": 97,
+    "round": 2,
+    "text": "Alan is done scoring.",
+    "seat": 5,
+    "event": 275
+   },
+   {
+    "id": 98,
+    "round": 2,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 276
+   },
+   {
+    "id": 99,
+    "round": 2,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 277
+   },
+   {
+    "id": 100,
+    "round": 2,
+    "text": "Scoring is done — tidy up, then tap in.",
+    "tone": "info",
+    "event": 277
+   },
+   {
+    "id": 101,
+    "round": 3,
+    "text": "Round 3 — strategy phase. Branson is speaker.",
+    "tone": "info",
+    "event": 278
+   },
+   {
+    "id": 102,
+    "round": 3,
+    "text": "Branson takes 3 · Politics (+1 trade good).",
+    "seat": 0,
+    "card": 3,
+    "event": 279
+   },
+   {
+    "id": 103,
+    "round": 3,
+    "text": "Jason takes 6 · Warfare.",
+    "seat": 1,
+    "card": 6,
+    "event": 280
+   },
+   {
+    "id": 104,
+    "round": 3,
+    "text": "Garett takes 5 · Trade.",
+    "seat": 2,
+    "card": 5,
+    "event": 281
+   },
+   {
+    "id": 105,
+    "round": 3,
+    "text": "Devon takes 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "event": 282
+   },
+   {
+    "id": 106,
+    "round": 3,
+    "text": "Cam takes 7 · Technology.",
+    "seat": 4,
+    "card": 7,
+    "event": 283
+   },
+   {
+    "id": 107,
+    "round": 3,
+    "text": "Alan takes 8 · Imperial.",
+    "seat": 5,
+    "card": 8,
+    "event": 284
+   },
+   {
+    "id": 108,
+    "round": 3,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 284
+   },
+   {
+    "id": 109,
+    "round": 3,
+    "text": "Devon plays 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "tone": "good",
+    "event": 288
+   },
+   {
+    "id": 110,
+    "round": 3,
+    "text": "Everyone has responded to Leadership.",
+    "event": 293
+   },
+   {
+    "id": 111,
+    "round": 3,
+    "text": "Garett plays 5 · Trade.",
+    "seat": 2,
+    "card": 5,
+    "tone": "good",
+    "event": 297
+   },
+   {
+    "id": 112,
+    "round": 3,
+    "text": "Everyone has responded to Trade.",
+    "event": 303
+   },
+   {
+    "id": 113,
+    "round": 3,
+    "text": "Jason plays 6 · Warfare.",
+    "seat": 1,
+    "card": 6,
+    "tone": "good",
+    "event": 306
+   },
+   {
+    "id": 114,
+    "round": 3,
+    "text": "Everyone has responded to Warfare.",
+    "event": 313
+   },
+   {
+    "id": 115,
+    "round": 3,
+    "text": "Cam plays 7 · Technology.",
+    "seat": 4,
+    "card": 7,
+    "tone": "good",
+    "event": 317
+   },
+   {
+    "id": 116,
+    "round": 3,
+    "text": "Everyone has responded to Technology.",
+    "event": 322
+   },
+   {
+    "id": 117,
+    "round": 3,
+    "text": "Alan plays 8 · Imperial.",
+    "seat": 5,
+    "card": 8,
+    "tone": "good",
+    "event": 340
+   },
+   {
+    "id": 118,
+    "round": 3,
+    "text": "Everyone has responded to Imperial.",
+    "event": 346
+   },
+   {
+    "id": 119,
+    "round": 3,
+    "text": "Branson plays 3 · Politics.",
+    "seat": 0,
+    "card": 3,
+    "tone": "good",
+    "event": 350
+   },
+   {
+    "id": 120,
+    "round": 3,
+    "text": "Everyone has responded to Politics.",
+    "event": 355
+   },
+   {
+    "id": 121,
+    "round": 3,
+    "text": "Alan: no strategy card left to play",
+    "seat": 5,
+    "tone": "warn",
+    "event": 361
+   },
+   {
+    "id": 122,
+    "round": 3,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 368
+   },
+   {
+    "id": 123,
+    "round": 3,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 369
+   },
+   {
+    "id": 124,
+    "round": 3,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 370
+   },
+   {
+    "id": 125,
+    "round": 3,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 373
+   },
+   {
+    "id": 126,
+    "round": 3,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 377
+   },
+   {
+    "id": 127,
+    "round": 3,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 378
+   },
+   {
+    "id": 128,
+    "round": 3,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 378
+   },
+   {
+    "id": 129,
+    "round": 3,
+    "text": "Scoring, in initiative order: Devon, Branson, Garett, Jason, Cam, Alan.",
+    "tone": "info",
+    "event": 379
+   },
+   {
+    "id": 130,
+    "round": 3,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 380
+   },
+   {
+    "id": 131,
+    "round": 3,
+    "text": "Branson is done scoring.",
+    "seat": 0,
+    "event": 381
+   },
+   {
+    "id": 132,
+    "round": 3,
+    "text": "Garett is done scoring.",
+    "seat": 2,
+    "event": 382
+   },
+   {
+    "id": 133,
+    "round": 3,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 383
+   },
+   {
+    "id": 134,
+    "round": 3,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 384
+   },
+   {
+    "id": 135,
+    "round": 3,
+    "text": "Alan is done scoring.",
+    "seat": 5,
+    "event": 385
+   },
+   {
+    "id": 136,
+    "round": 3,
+    "text": "Scoring is done — tidy up, then tap in.",
+    "tone": "info",
+    "event": 385
+   },
+   {
+    "id": 137,
+    "round": 4,
+    "text": "Round 4 — strategy phase. Branson is speaker.",
+    "tone": "info",
+    "event": 386
+   },
+   {
+    "id": 138,
+    "round": 4,
+    "text": "Branson takes 1 · Leadership.",
+    "seat": 0,
+    "card": 1,
+    "event": 387
+   },
+   {
+    "id": 139,
+    "round": 4,
+    "text": "Jason takes 7 · Technology.",
+    "seat": 1,
+    "card": 7,
+    "event": 388
+   },
+   {
+    "id": 140,
+    "round": 4,
+    "text": "Garett takes 8 · Imperial.",
+    "seat": 2,
+    "card": 8,
+    "event": 389
+   },
+   {
+    "id": 141,
+    "round": 4,
+    "text": "Devon takes 5 · Trade.",
+    "seat": 3,
+    "card": 5,
+    "event": 390
+   },
+   {
+    "id": 142,
+    "round": 4,
+    "text": "Cam takes 4 · Construction (+1 trade good).",
+    "seat": 4,
+    "card": 4,
+    "event": 391
+   },
+   {
+    "id": 143,
+    "round": 4,
+    "text": "Alan takes 6 · Warfare.",
+    "seat": 5,
+    "card": 6,
+    "event": 392
+   },
+   {
+    "id": 144,
+    "round": 4,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 392
+   },
+   {
+    "id": 145,
+    "round": 4,
+    "text": "Branson plays 1 · Leadership.",
+    "seat": 0,
+    "card": 1,
+    "tone": "good",
+    "event": 396
+   },
+   {
+    "id": 146,
+    "round": 4,
+    "text": "Everyone has responded to Leadership.",
+    "event": 401
+   },
+   {
+    "id": 147,
+    "round": 4,
+    "text": "Cam plays 4 · Construction.",
+    "seat": 4,
+    "card": 4,
+    "tone": "good",
+    "event": 405
+   },
+   {
+    "id": 148,
+    "round": 4,
+    "text": "Cam: waiting on Branson, Alan",
+    "seat": 4,
+    "tone": "warn",
+    "event": 409
+   },
+   {
+    "id": 149,
+    "round": 4,
+    "text": "Everyone has responded to Construction.",
+    "event": 411
+   },
+   {
+    "id": 150,
+    "round": 4,
+    "text": "Devon plays 5 · Trade.",
+    "seat": 3,
+    "card": 5,
+    "tone": "good",
+    "event": 415
+   },
+   {
+    "id": 151,
+    "round": 4,
+    "text": "Everyone has responded to Trade.",
+    "event": 420
+   },
+   {
+    "id": 152,
+    "round": 4,
+    "text": "Alan plays 6 · Warfare.",
+    "seat": 5,
+    "card": 6,
+    "tone": "good",
+    "event": 424
+   },
+   {
+    "id": 153,
+    "round": 4,
+    "text": "Alan: waiting on Branson, Jason, Garett, Devon",
+    "seat": 5,
+    "tone": "warn",
+    "event": 428
+   },
+   {
+    "id": 154,
+    "round": 4,
+    "text": "Alan: waiting on Branson, Jason, Garett, Devon",
+    "seat": 5,
+    "tone": "warn",
+    "event": 429
+   },
+   {
+    "id": 155,
+    "round": 4,
+    "text": "Everyone has responded to Warfare.",
+    "event": 433
+   },
+   {
+    "id": 156,
+    "round": 4,
+    "text": "Garett plays 8 · Imperial.",
+    "seat": 2,
+    "card": 8,
+    "tone": "good",
+    "event": 446
+   },
+   {
+    "id": 157,
+    "round": 4,
+    "text": "Everyone has responded to Imperial.",
+    "event": 452
+   },
+   {
+    "id": 158,
+    "round": 4,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 455
+   },
+   {
+    "id": 159,
+    "round": 4,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 457
+   },
+   {
+    "id": 160,
+    "round": 4,
+    "text": "Jason plays 7 · Technology.",
+    "seat": 1,
+    "card": 7,
+    "tone": "good",
+    "event": 460
+   },
+   {
+    "id": 161,
+    "round": 4,
+    "text": "Everyone has responded to Technology.",
+    "event": 465
+   },
+   {
+    "id": 162,
+    "round": 4,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 480
+   },
+   {
+    "id": 163,
+    "round": 4,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 486
+   },
+   {
+    "id": 164,
+    "round": 4,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 487
+   },
+   {
+    "id": 165,
+    "round": 4,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 488
+   },
+   {
+    "id": 166,
+    "round": 4,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 488
+   },
+   {
+    "id": 167,
+    "round": 4,
+    "text": "Scoring, in initiative order: Branson, Cam, Devon, Alan, Jason, Garett.",
+    "tone": "info",
+    "event": 489
+   },
+   {
+    "id": 168,
+    "round": 4,
+    "text": "Branson is done scoring.",
+    "seat": 0,
+    "event": 490
+   },
+   {
+    "id": 169,
+    "round": 4,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 491
+   },
+   {
+    "id": 170,
+    "round": 4,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 492
+   },
+   {
+    "id": 171,
+    "round": 4,
+    "text": "Alan is done scoring.",
+    "seat": 5,
+    "event": 493
+   },
+   {
+    "id": 172,
+    "round": 4,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 494
+   },
+   {
+    "id": 173,
+    "round": 4,
+    "text": "Garett is done scoring.",
+    "seat": 2,
+    "event": 495
+   },
+   {
+    "id": 174,
+    "round": 4,
+    "text": "Scoring is done — tidy up, then tap in.",
+    "tone": "info",
+    "event": 495
+   },
+   {
+    "id": 175,
+    "round": 5,
+    "text": "Round 5 — strategy phase. Branson is speaker.",
+    "tone": "info",
+    "event": 496
+   },
+   {
+    "id": 176,
+    "round": 5,
+    "text": "Branson takes 8 · Imperial.",
+    "seat": 0,
+    "card": 8,
+    "event": 501
+   },
+   {
+    "id": 177,
+    "round": 5,
+    "text": "Jason takes 5 · Trade.",
+    "seat": 1,
+    "card": 5,
+    "event": 502
+   },
+   {
+    "id": 178,
+    "round": 5,
+    "text": "Garett takes 3 · Politics (+1 trade good).",
+    "seat": 2,
+    "card": 3,
+    "event": 503
+   },
+   {
+    "id": 179,
+    "round": 5,
+    "text": "Devon takes 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "event": 504
+   },
+   {
+    "id": 180,
+    "round": 5,
+    "text": "Cam takes 2 · Diplomacy (+3 trade goods).",
+    "seat": 4,
+    "card": 2,
+    "event": 505
+   },
+   {
+    "id": 181,
+    "round": 5,
+    "text": "Alan takes 4 · Construction.",
+    "seat": 5,
+    "card": 4,
+    "event": 506
+   },
+   {
+    "id": 182,
+    "round": 5,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 506
+   },
+   {
+    "id": 183,
+    "round": 5,
+    "text": "Alan plays 4 · Construction.",
+    "seat": 5,
+    "card": 4,
+    "tone": "good",
+    "event": 515
+   },
+   {
+    "id": 184,
+    "round": 5,
+    "text": "Everyone has responded to Construction.",
+    "event": 520
+   },
+   {
+    "id": 185,
+    "round": 5,
+    "text": "Alan: no strategy card left to play",
+    "seat": 5,
+    "tone": "warn",
+    "event": 529
+   },
+   {
+    "id": 186,
+    "round": 5,
+    "text": "Jason plays 5 · Trade.",
+    "seat": 1,
+    "card": 5,
+    "tone": "good",
+    "event": 532
+   },
+   {
+    "id": 187,
+    "round": 5,
+    "text": "Everyone has responded to Trade.",
+    "event": 538
+   },
+   {
+    "id": 188,
+    "round": 5,
+    "text": "Devon plays 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "tone": "good",
+    "event": 542
+   },
+   {
+    "id": 189,
+    "round": 5,
+    "text": "Everyone has responded to Leadership.",
+    "event": 547
+   },
+   {
+    "id": 190,
+    "round": 5,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 551
+   },
+   {
+    "id": 191,
+    "round": 5,
+    "text": "Branson plays 8 · Imperial.",
+    "seat": 0,
+    "card": 8,
+    "tone": "good",
+    "event": 561
+   },
+   {
+    "id": 192,
+    "round": 5,
+    "text": "Everyone has responded to Imperial.",
+    "event": 567
+   },
+   {
+    "id": 193,
+    "round": 5,
+    "text": "Garett plays 3 · Politics.",
+    "seat": 2,
+    "card": 3,
+    "tone": "good",
+    "event": 572
+   },
+   {
+    "id": 194,
+    "round": 5,
+    "text": "Everyone has responded to Politics.",
+    "event": 578
+   },
+   {
+    "id": 195,
+    "round": 5,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 580
+   },
+   {
+    "id": 196,
+    "round": 5,
+    "text": "Cam plays 2 · Diplomacy.",
+    "seat": 4,
+    "card": 2,
+    "tone": "good",
+    "event": 588
+   },
+   {
+    "id": 197,
+    "round": 5,
+    "text": "Everyone has responded to Diplomacy.",
+    "event": 595
+   },
+   {
+    "id": 198,
+    "round": 5,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 598
+   },
+   {
+    "id": 199,
+    "round": 5,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 599
+   },
+   {
+    "id": 200,
+    "round": 5,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 602
+   },
+   {
+    "id": 201,
+    "round": 5,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 603
+   },
+   {
+    "id": 202,
+    "round": 5,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 603
+   },
+   {
+    "id": 203,
+    "round": 5,
+    "text": "Scoring, in initiative order: Devon, Cam, Garett, Alan, Jason, Branson.",
+    "tone": "info",
+    "event": 604
+   },
+   {
+    "id": 204,
+    "round": 5,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 605
+   },
+   {
+    "id": 205,
+    "round": 5,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 606
+   },
+   {
+    "id": 206,
+    "round": 5,
+    "text": "Garett is done scoring.",
+    "seat": 2,
+    "event": 607
+   },
+   {
+    "id": 207,
+    "round": 5,
+    "text": "Alan is done scoring.",
+    "seat": 5,
+    "event": 608
+   },
+   {
+    "id": 208,
+    "round": 5,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 609
+   },
+   {
+    "id": 209,
+    "round": 5,
+    "text": "Branson is done scoring.",
+    "seat": 0,
+    "event": 610
+   },
+   {
+    "id": 210,
+    "round": 5,
+    "text": "Scoring is done — tidy up, then tap in.",
+    "tone": "info",
+    "event": 610
+   },
+   {
+    "id": 211,
+    "round": 6,
+    "text": "Round 6 — strategy phase. Branson is speaker.",
+    "tone": "info",
+    "event": 611
+   },
+   {
+    "id": 212,
+    "round": 6,
+    "text": "Branson takes 7 · Technology (+1 trade good).",
+    "seat": 0,
+    "card": 7,
+    "event": 615
+   },
+   {
+    "id": 213,
+    "round": 6,
+    "text": "Jason takes 3 · Politics.",
+    "seat": 1,
+    "card": 3,
+    "event": 616
+   },
+   {
+    "id": 214,
+    "round": 6,
+    "text": "Garett takes 8 · Imperial.",
+    "seat": 2,
+    "card": 8,
+    "event": 617
+   },
+   {
+    "id": 215,
+    "round": 6,
+    "text": "Devon takes 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "event": 618
+   },
+   {
+    "id": 216,
+    "round": 6,
+    "text": "Cam takes 4 · Construction.",
+    "seat": 4,
+    "card": 4,
+    "event": 619
+   },
+   {
+    "id": 217,
+    "round": 6,
+    "text": "Alan takes 6 · Warfare (+1 trade good).",
+    "seat": 5,
+    "card": 6,
+    "event": 620
+   },
+   {
+    "id": 218,
+    "round": 6,
+    "text": "Action phase begins.",
+    "tone": "info",
+    "event": 620
+   },
+   {
+    "id": 219,
+    "round": 6,
+    "text": "Devon plays 1 · Leadership.",
+    "seat": 3,
+    "card": 1,
+    "tone": "good",
+    "event": 623
+   },
+   {
+    "id": 220,
+    "round": 6,
+    "text": "Devon: waiting on Jason",
+    "seat": 3,
+    "tone": "warn",
+    "event": 628
+   },
+   {
+    "id": 221,
+    "round": 6,
+    "text": "Everyone has responded to Leadership.",
+    "event": 629
+   },
+   {
+    "id": 222,
+    "round": 6,
+    "text": "Alan plays 6 · Warfare.",
+    "seat": 5,
+    "card": 6,
+    "tone": "good",
+    "event": 638
+   },
+   {
+    "id": 223,
+    "round": 6,
+    "text": "Everyone has responded to Warfare.",
+    "event": 643
+   },
+   {
+    "id": 224,
+    "round": 6,
+    "text": "Garett plays 8 · Imperial.",
+    "seat": 2,
+    "card": 8,
+    "tone": "good",
+    "event": 649
+   },
+   {
+    "id": 225,
+    "round": 6,
+    "text": "Everyone has responded to Imperial.",
+    "event": 655
+   },
+   {
+    "id": 226,
+    "round": 6,
+    "text": "Jason plays 3 · Politics.",
+    "seat": 1,
+    "card": 3,
+    "tone": "good",
+    "event": 660
+   },
+   {
+    "id": 227,
+    "round": 6,
+    "text": "Everyone has responded to Politics.",
+    "event": 665
+   },
+   {
+    "id": 228,
+    "round": 6,
+    "text": "Cam plays 4 · Construction.",
+    "seat": 4,
+    "card": 4,
+    "tone": "good",
+    "event": 669
+   },
+   {
+    "id": 229,
+    "round": 6,
+    "text": "Everyone has responded to Construction.",
+    "event": 675
+   },
+   {
+    "id": 230,
+    "round": 6,
+    "text": "Branson plays 7 · Technology.",
+    "seat": 0,
+    "card": 7,
+    "tone": "good",
+    "event": 680
+   },
+   {
+    "id": 231,
+    "round": 6,
+    "text": "Branson: waiting on Jason",
+    "seat": 0,
+    "tone": "warn",
+    "event": 686
+   },
+   {
+    "id": 232,
+    "round": 6,
+    "text": "Everyone has responded to Technology.",
+    "event": 687
+   },
+   {
+    "id": 233,
+    "round": 6,
+    "text": "Alan: no strategy card left to play",
+    "seat": 5,
+    "tone": "warn",
+    "event": 701
+   },
+   {
+    "id": 234,
+    "round": 6,
+    "text": "Devon passes.",
+    "seat": 3,
+    "event": 705
+   },
+   {
+    "id": 235,
+    "round": 6,
+    "text": "Jason passes.",
+    "seat": 1,
+    "event": 706
+   },
+   {
+    "id": 236,
+    "round": 6,
+    "text": "Alan passes.",
+    "seat": 5,
+    "event": 708
+   },
+   {
+    "id": 237,
+    "round": 6,
+    "text": "Cam passes.",
+    "seat": 4,
+    "event": 711
+   },
+   {
+    "id": 238,
+    "round": 6,
+    "text": "Branson passes.",
+    "seat": 0,
+    "event": 712
+   },
+   {
+    "id": 239,
+    "round": 6,
+    "text": "Garett passes.",
+    "seat": 2,
+    "event": 713
+   },
+   {
+    "id": 240,
+    "round": 6,
+    "text": "Everyone has passed — status phase.",
+    "tone": "info",
+    "event": 713
+   },
+   {
+    "id": 241,
+    "round": 6,
+    "text": "Scoring, in initiative order: Devon, Jason, Cam, Alan, Branson, Garett.",
+    "tone": "info",
+    "event": 714
+   },
+   {
+    "id": 242,
+    "round": 6,
+    "text": "Devon is done scoring.",
+    "seat": 3,
+    "event": 715
+   },
+   {
+    "id": 243,
+    "round": 6,
+    "text": "Jason is done scoring.",
+    "seat": 1,
+    "event": 716
+   },
+   {
+    "id": 244,
+    "round": 6,
+    "text": "Cam is done scoring.",
+    "seat": 4,
+    "event": 717
+   }
+  ],
+  "logSeq": 244,
+  "quietAgenda": false
+ }
+}

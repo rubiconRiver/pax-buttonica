@@ -11,6 +11,7 @@ test('every page renders, with a heading, and nothing in the console', async ({ 
     ['/join', /Your phone is the button/],
     ['/parts', /Everything to buy/],
     ['/standard', /./],
+    ['/stats', /at the table/],
     ['/hardware', /./],
     ['/button', /./],
     ['/bench', /Is this thing on\?/],
@@ -150,4 +151,21 @@ test.describe('on a phone-sized screen', () => {
       expect(overflow, `${path} is ${overflow}px wider than the screen`).toBeLessThanOrEqual(1);
     }
   });
+});
+
+test('the game stats page: a real game replayed, with explanations on hover and things to click into', async ({ page }) => {
+  await page.goto('/stats');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('12 h 49 m at the table');
+  await expect(page.locator('.stats__seat')).toHaveText(['Branson', 'Jason', 'Garett', 'Devon', 'Cam', 'Alan']);
+  // Players, sorted by time on the clock, then by typical turn.
+  const rows = page.locator('section', { has: page.getByRole('heading', { name: /Player by player/ }) }).locator('tbody .stats__who');
+  await expect(rows.first()).toHaveText('Branson');
+  await page.getByRole('button', { name: 'Typical turn' }).click();
+  await expect(rows.first()).toHaveText('Devon');
+  // Every heading explains itself.
+  await expect(page.locator('.tip[data-tip*="median"]').first()).toBeAttached();
+  // A round opens up.
+  await page.getByRole('button', { name: /^R3 / }).click();
+  await expect(page.locator('.round__detail .stats__who')).toHaveCount(6);
+  await expect(page.locator('.legend').first()).toContainText('Paused');
 });

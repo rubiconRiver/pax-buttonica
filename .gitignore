@@ -11,3 +11,4 @@ firmware/*/build
 firmware/soak-logs
 halloween/.hue.json
 halloween/.glow.json
+/pax-buttonica-*.json

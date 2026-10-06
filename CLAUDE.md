@@ -12,6 +12,7 @@ Private GitHub repo: rubiconRiver/pax-buttonica. Owner: Garett (Canada; knows so
 | `src/` (rest) | Vite + React + TS app: simulated buttons, demo, play, scoreboard, phones-as-buttons |
 | `api/` | Vercel functions on Neon Postgres: `game` (the record, by code), `actions` (phones' inbox), `profiles`, `clips`. No auth yet, by choice |
 | `docs/` | `BUTTON_STANDARD.md` (wire protocol), `HARDWARE.md` (build guide), `SHOPPING.md`; the first two are rendered on the site at `/standard` and `/hardware` |
+| `src/stats/` | `analyze.ts` takes a downloaded game log apart (phases, turns, waiting, pauses, refused presses); `/stats` shows the first game night's log, `game-V28W.json` |
 | `e2e/`, `video/` | Playwright browser tests, and the scripted recording of the demo video |
 | `halloween/` | The buttons' night off: a local-only show (Hue lamps, speaker, buttons through the hub) plus Porch glow at `/glow`, ambient lamp scenes played by the server (`scenes.mjs`, `glow.mjs`); run with `node halloween/server.mjs` or installed as an app by `install.sh`; never deployed, see its README |
 | `firmware/` | Arduino sketches: `hub/`, `button/` (+ `config.h`) |
