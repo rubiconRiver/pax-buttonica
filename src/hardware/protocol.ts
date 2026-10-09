@@ -20,7 +20,8 @@ export interface DeviceCaps {
   audio: 'tones' | 'none';
 }
 
-export type Gesture = 'tap' | 'double' | 'hold';
+/** `down` is the instant the big button closes (firmware 0.3.16 on); a `tap` or `hold` follows. The game ignores it; the buzzer races on it. */
+export type Gesture = 'tap' | 'double' | 'hold' | 'down';
 
 export type FromDevice =
   | { t: 'hub'; v: number; fw: string }
@@ -43,8 +44,9 @@ export type ToDevice =
   /**
    * Light levels, each 0–100, a share of the button's full output: `bright` your move and every steady light, `dim`
    * waiting, `fx` the one-shots (a brightness, not a turn effect). `pulse`: how to draw "your move" (default: breathe).
+   * `ps`: 0 keeps the button's radio always on (every light lands at once, at a cost in battery), 1 lets it sleep between windows.
    */
-  | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; dim?: number; fx?: number; pulse?: TurnLook }
+  | { t: 'cfg'; dev: string; hold: number; flash?: number; bright?: number; dim?: number; fx?: number; pulse?: TurnLook; ps?: 0 | 1 }
   | { t: 'id'; dev: string };
 
 /**
@@ -53,6 +55,7 @@ export type ToDevice =
  * harmless until the standard gives them a job.
  */
 export function inputFor(b: number, e: Gesture): DeviceInput | null {
+  if (e === 'down') return null;
   if (b === 0) return e;
   if (e !== 'tap') return null;
   if (b === 1) return 'strategy';

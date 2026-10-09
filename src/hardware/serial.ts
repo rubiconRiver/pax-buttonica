@@ -6,7 +6,7 @@ import { levelsOf, type DeviceOutput, type TurnLook } from '../engine/outputs';
 import type { DeviceInput } from '../engine/types';
 import { createStore } from '../state/createStore';
 import { settingsStore } from '../state/settings';
-import { inputFor, ledFrame, type DeviceCaps, type FromDevice, type ToDevice } from './protocol';
+import { inputFor, ledFrame, type DeviceCaps, type FromDevice, type Gesture, type ToDevice } from './protocol';
 
 // Minimal Web Serial typings (not yet in TypeScript's DOM lib).
 interface SerialPortLike {
@@ -63,6 +63,10 @@ let connecting: Promise<void> | null = null;
 /** The last hub's tidy-up, so its port is closed before anything tries to open it again. */
 let closing: Promise<void> = Promise.resolve();
 let onInput: ((dev: string, input: DeviceInput) => void) | null = null;
+/** Every raw gesture, with the moment its line arrived over USB (`performance.now()`): for pages that race buttons. */
+let onGesture: ((dev: string, b: number, e: Gesture, at: number) => void) | null = null;
+/** A page that owns the table's settings for its own purposes (the buzzer) supplies each button's cfg itself. */
+let cfgOverride: ((dev: string) => ToDevice) | null = null;
 let logSeq = 0;
 const lastFrames = new Map<string, string>();
 /** Buttons whose last light said a hold means nothing right now (`h: 0`). */
@@ -83,6 +87,7 @@ const lookOf = (dev: string): TurnLook => prefs.get(dev)?.look ?? settingsStore.
 
 /** Everything a button is configured with: hold and blink times and light levels for the table, look and brightness for its seat. */
 function cfgFrame(dev: string): ToDevice {
+  if (cfgOverride) return cfgOverride(dev);
   const settings = settingsStore.get();
   const { turn, waiting, effects } = levelsOf(settings);
   const mine = prefs.get(dev);
@@ -102,6 +107,20 @@ function cfgFrame(dev: string): ToDevice {
 /** Inputs are reported by device id; the game decides which seat that is. */
 export function setInputHandler(fn: typeof onInput) {
   onInput = fn;
+}
+
+/** Raw gestures (`down` included) with their arrival time, for a page that orders presses rather than interprets them. */
+export function setGestureHandler(fn: typeof onGesture) {
+  onGesture = fn;
+}
+
+/**
+ * Take over what every button is configured with. The frame is sent to each button now and again whenever a button says
+ * hello; `null` hands the settings back to the game (and sends the game's cfg to every button).
+ */
+export function setCfgOverride(fn: typeof cfgOverride) {
+  cfgOverride = fn;
+  for (const d of hubStatus.get().devices) sendToDevice(cfgFrame(d.dev));
 }
 
 function record(dir: 'in' | 'out', text: string) {
@@ -153,7 +172,7 @@ function patch(dev: string, next: Partial<HubDevice>) {
   }
 }
 
-function handle(msg: FromDevice) {
+function handle(msg: FromDevice, at: number) {
   switch (msg.t) {
     case 'hub':
       hubStatus.set((s) => ({ ...s, hubFw: msg.fw }));
@@ -179,6 +198,7 @@ function handle(msg: FromDevice) {
       break;
     case 'btn': {
       patch(msg.dev, { lost: false });
+      onGesture?.(msg.dev, msg.b, msg.e, at);
       const input = inputFor(msg.b, msg.e);
       if (input) onInput?.(msg.dev, input);
       break;
@@ -207,6 +227,8 @@ async function readLoop(p: SerialPortLike) {
     try {
       for (;;) {
         const { value, done } = await r.read();
+        // Stamped as the chunk lands: lines in one chunk share the stamp and keep their order, which is the hub's order.
+        const at = performance.now();
         if (done) {
           open = false;
           break;
@@ -220,7 +242,7 @@ async function readLoop(p: SerialPortLike) {
           if (!line.startsWith('{')) continue; // boot chatter from the hub
           record('in', line);
           try {
-            handle(JSON.parse(line) as FromDevice);
+            handle(JSON.parse(line) as FromDevice, at);
           } catch {
             // ignore malformed lines
           }

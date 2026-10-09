@@ -120,4 +120,4 @@ export async function lastLed(page: Page, dev: string): Promise<{ c: string; m: 
 }
 
 export const hello = (dev: string, caps = { btn: 1, led: 'ring', audio: 'none' }, fw = '0.1.0') => ({ t: 'hello', dev, fw, caps });
-export const press = (dev: string, e: 'tap' | 'double' | 'hold', b = 0) => ({ t: 'btn', dev, b, e });
+export const press = (dev: string, e: 'tap' | 'double' | 'hold' | 'down', b = 0) => ({ t: 'btn', dev, b, e });
