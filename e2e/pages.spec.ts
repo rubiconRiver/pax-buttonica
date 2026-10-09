@@ -15,6 +15,7 @@ test('every page renders, with a heading, and nothing in the console', async ({ 
     ['/hardware', /./],
     ['/button', /./],
     ['/bench', /Is this thing on\?/],
+    ['/buzzer', /First question/],
   ];
   for (const [path, heading] of pages) {
     await page.goto(path);

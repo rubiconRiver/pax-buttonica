@@ -1,6 +1,7 @@
 import { useLayoutEffect } from 'react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { Bench } from './pages/Bench';
+import { Buzzer } from './pages/Buzzer';
 import { ButtonConcept } from './pages/ButtonConcept';
 import { Demo } from './pages/Demo';
 import { Join } from './pages/Join';
@@ -34,6 +35,7 @@ export function App() {
       <Route path="/hardware" element={<Standard doc="hardware" />} />
       <Route path="/button" element={<ButtonConcept />} />
       <Route path="/bench" element={<Bench />} />
+      <Route path="/buzzer" element={<Buzzer />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   );

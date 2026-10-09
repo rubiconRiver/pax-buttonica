@@ -1,0 +1,71 @@
+@import './setup.css';
+
+/* The quiz, read from the host's seat and glanced at from across the room: one big word in the middle, scores under it. */
+.buzzer { max-width: 1180px; min-height: 100%; margin: 0 auto; padding: 18px 22px 60px; display: grid; gap: 16px; align-content: start; }
+.buzzer__hub { display: flex; align-items: center; gap: 10px; }
+.buzzer__error { color: var(--danger); font-size: 13px; }
+
+.buzzer__top { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 12px 24px; margin-top: 10px; }
+.buzzer__top h1 { font-size: clamp(26px, 3vw, 38px); text-transform: uppercase; margin: 4px 0 0; }
+.buzzer__values { display: flex; gap: 4px; }
+.buzzer__value { position: relative; min-width: 62px; padding: 10px 10px 8px; border: 1px solid var(--line-2); background: var(--panel); color: var(--muted); font: 700 17px/1 var(--font-d); cursor: pointer; clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px); transition: background 60ms var(--snap), color 60ms var(--snap); }
+.buzzer__value small { position: absolute; top: 3px; left: 7px; font: 600 10px/1 var(--font-b); color: var(--faint); }
+.buzzer__value:hover { color: var(--text); }
+.buzzer__value[aria-checked='true'] { background: var(--gold); color: #1a1206; border-color: var(--gold); }
+.buzzer__value[aria-checked='true'] small { color: #5a4310; }
+
+/* The stage */
+.buzzer__stage { position: relative; min-height: clamp(260px, 38vh, 420px); display: grid; place-items: center; text-align: center; padding: 28px 24px; overflow: hidden; }
+.buzzer__stage::before { content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 120ms var(--snap); }
+.buzzer[data-phase='open'] .buzzer__stage::before { opacity: 1; background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.06), transparent 70%); }
+.buzzer[data-phase='won'] .buzzer__stage::before { opacity: 1; background: radial-gradient(ellipse at center, color-mix(in srgb, var(--pc, #fff) 18%, transparent), transparent 70%); }
+.buzzer[data-phase='open'] .buzzer__stage { border-color: rgba(255, 255, 255, 0.5); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25), 0 0 40px rgba(255, 255, 255, 0.08); }
+.buzzer__closed, .buzzer__open, .buzzer__won { display: grid; gap: 14px; justify-items: center; position: relative; }
+.buzzer__closed p, .buzzer__open p { max-width: 52ch; margin: 0; }
+.buzzer__big { font: 800 clamp(44px, 7vw, 96px)/1 var(--font-d); letter-spacing: 0.04em; text-transform: uppercase; }
+.buzzer__go { color: #fff; text-shadow: 0 0 40px rgba(255, 255, 255, 0.5); animation: buzzer-go 0.25s var(--out); }
+.buzzer__winner { color: color-mix(in oklab, var(--pc) 70%, white); text-shadow: 0 0 46px var(--pc); animation: buzzer-go 0.22s var(--out); }
+.buzzer__won { --pc: #fff; }
+.buzzer__presses { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 18px; font-size: 15px; color: var(--muted); }
+.buzzer__presses li { --pc: #fff; }
+.buzzer__presses b { color: color-mix(in oklab, var(--pc) 60%, white); font-family: var(--font-d); letter-spacing: 0.05em; text-transform: uppercase; }
+.buzzer__presses em { color: var(--gold); font-style: normal; font-weight: 600; }
+.buzzer__judge { display: flex; gap: 10px; margin-top: 6px; }
+.buzzer__next { position: absolute; right: 12px; bottom: 10px; }
+kbd { font: 600 11px/1 var(--font-b); padding: 2px 5px; border: 1px solid var(--line-2); border-bottom-width: 2px; color: var(--muted); vertical-align: 2px; }
+.btn kbd { margin-left: 6px; color: inherit; border-color: currentColor; opacity: 0.6; }
+
+@keyframes buzzer-go { from { transform: scale(0.9); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Scores */
+.buzzer__board { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 8px; }
+.buzzer__empty { padding: 16px; color: var(--muted); font-size: 14px; grid-column: 1 / -1; }
+.buzzer__tile { position: relative; display: grid; gap: 6px; padding: 10px 12px 12px; min-width: 0; border: 1px solid color-mix(in srgb, var(--pc) 40%, #1a2030); background: linear-gradient(180deg, color-mix(in srgb, var(--pc) 14%, #0b0e17), #0b0e17 70%); clip-path: polygon(8px 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%, 0 8px); transition: opacity 120ms var(--snap); }
+.buzzer__tile[data-winner] { border-color: var(--pc); box-shadow: 0 0 24px color-mix(in srgb, var(--pc) 40%, transparent); }
+.buzzer__tile[data-out] { opacity: 0.45; }
+.buzzer__tile[data-lead] .buzzer__score { text-shadow: 0 0 26px var(--pc); }
+.buzzer__name { width: 100%; min-width: 0; background: none; border: 0; border-bottom: 1px solid transparent; padding: 2px 0; font: 700 clamp(13px, 1.25vw, 19px)/1.1 var(--font-d); letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in oklab, var(--pc) 60%, white); }
+.buzzer__name:hover, .buzzer__name:focus { border-bottom-color: var(--line-2); outline: none; }
+.buzzer__score { font-size: clamp(34px, 4.2vw, 64px); font-weight: 800; line-height: 0.95; color: #fff; }
+.buzzer__adjust { display: flex; gap: 4px; }
+.buzzer__adjust .btn { min-width: 34px; padding-inline: 8px; }
+.buzzer__tag { position: absolute; top: 8px; right: 10px; font: 600 10px/1 var(--font-b); letter-spacing: 0.1em; text-transform: uppercase; color: var(--gold-2); }
+
+/* Below the fold */
+.buzzer__foot { display: grid; grid-template-columns: 1.3fr 1fr; gap: 12px; align-items: start; }
+.buzzer__devices, .buzzer__help { padding: 14px 16px; display: grid; gap: 8px; }
+.buzzer__devices h3, .buzzer__help h3 { margin: 0; font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-2); }
+.buzzer__device { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.buzzer__device[data-lost] { opacity: 0.5; }
+.buzzer__device code { font: 700 13px/1 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--gold-2); }
+.buzzer__device .muted { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.buzzer__device .select { width: auto; padding-block: 4px; }
+.buzzer__help dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; color: var(--muted); }
+.buzzer__help dt { white-space: nowrap; }
+.buzzer__help dd { margin: 0; }
+
+@media (max-width: 760px) {
+  .buzzer { padding-inline: 16px; }
+  .buzzer__foot { grid-template-columns: 1fr; }
+  .buzzer__board { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); }
+}
