@@ -45,6 +45,7 @@ The device detects gestures itself, so timing never depends on the radio.
 | `double` | A second `tap` released within **400 ms** of the first | "I'm playing my strategy card" |
 | `hold` | Held continuously for the **hold time** (default **2000 ms**, set by the host) | "End my turn" |
 | *(abandoned hold)* | Released after 350 ms but before the hold time | Nothing. Report nothing. |
+| `down` | The instant the button closes (after the device's debounce), before any of the above | Timing only. The game ignores it; the buzzer quiz on the site (`/buzzer`) orders buttons by it, because a tap is reported on release and the first to *press* should win. Reference firmware from 0.3.16. |
 
 `tap` is sent the moment the button is released — never delayed to wait for a possible second tap, so acknowledging stays instant. A double-tap therefore arrives as `tap` then `double`; the host knows the first one was the wind-up. (It also ignores taps from a card's owner for 600 ms after the card comes out, so an over-enthusiastic triple-tap can't skip their own primary.)
 
@@ -108,7 +109,7 @@ Newline-delimited JSON, UTF-8, **115200 baud** between host and hub. Every messa
 ```
 
 - `hello` — sent on power-up and whenever the hub asks. Optional: `up`, seconds since the device powered up. A host that logs it has a battery test for free: the last `up` it heard is how long the cell lasted. `caps.btn` is the number of buttons, `caps.led` is `rgb`, `ring` or `none`, `caps.audio` is `tones` or `none`.
-- `btn` — `b` is the button index, `e` is `tap`, `double` or `hold`. Only button 0 sends `double` and `hold`.
+- `btn` — `b` is the button index, `e` is `tap`, `double`, `hold` or `down`. Only button 0 sends `double`, `hold` and `down`. A press therefore arrives as `down` then `tap` (or `hold`); a host that only wants gestures ignores `down`, and one racing buttons against each other uses the order the `down`s arrive in, since buttons carry no clock the host could compare.
 - `bat` — battery millivolts, now and then. Optional.
 
 ### Hub → host

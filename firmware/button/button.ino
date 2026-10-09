@@ -38,7 +38,7 @@ static I2SClass i2s;
 #define SAMPLE_RATE 16000
 #endif
 
-#define FW_VERSION "0.3.15"
+#define FW_VERSION "0.3.16"
 #define MAX_LINE 250
 #define TAP_MAX_MS 350
 #define DOUBLE_MS 400
@@ -1106,7 +1106,10 @@ static void serviceButtons() {
       if (raw) {
         b.downSince = now;
         b.holdSent = false;
-        if (i == 0) pressedAt = now;
+        if (i == 0) {
+          pressedAt = now;
+          sendButton(0, "down");                      // the instant of the press, for anything that races buttons (the buzzer)
+        }
       } else if (!b.holdSent && now - b.downSince <= TAP_MAX_MS) {
         // Taps go out at once so acknowledging never lags; a quick second one adds "double".
         if (i == 0 && b.lastTap && now - b.lastTap <= DOUBLE_MS) {
