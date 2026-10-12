@@ -1,10 +1,23 @@
-# The demo video
+# Videos
 
-`npm run video` plays a scripted tour of the app in a headless browser, records it, and writes `video/out/pax-buttonica-tour.mp4` (1080p, about two minutes, with the app's own sound). Needs `ffmpeg` on the path.
+Pax Buttonica's videos are shot and cut by [showreel](https://github.com/rubiconRiver/showreel) (`~/showreel`,
+a sibling checkout; this folder is its own small npm package depending on it). The skill `/showreel` knows the
+whole workflow.
 
-- `stage.html` is the set: the big screen and two phones as iframes, a caption bar, title cards and a drawn cursor. All three frames run the real app and talk to each other through the same stand-in for PeerJS that the browser tests use.
-- `tour.ts` is the script: who clicks what, when, and what the caption says. Edit the captions and beats there.
-- `inject.ts` runs inside every frame: separate identities for the phones, cursor reporting, and a recorder on the big screen's audio.
-- `cut.mjs` lines sound up with picture (a flash and a beep are recorded at the start of both, then cut off), trims the set-up, and encodes. Re-run it alone with `node video/cut.mjs` to re-encode the last recording.
+```bash
+cd video && npm install                       # once: links ../../showreel
+npx showreel shoot scenes/tour.ts             # a take: out/takes/tour/{host.mp4, sarah.mp4, kyle.mp4, audio.m4a, take.json, index.txt}
+npx showreel cut edits/tour.ts --preview      # a quick look, half size
+npx showreel sheet out/renders/pax-buttonica-tour.preview.mp4
+npx showreel cut edits/tour.ts                # the real thing: out/renders/pax-buttonica-tour.mp4
+```
 
-The recording runs in real time, so it takes as long as the video does.
+- `showreel.config.ts`: the dev server (port 5231, its own), the stand-in for the site (`e2e/api.ts`), the theme.
+- `scenes/`: what happens. `tour.ts` is a whole round with two phones; `table.ts` the big screen alone with a probe
+  of every button's light, for the room video. Scenes mark every beat and say the captions as they go.
+- `edits/`: what to make of it. `tour.ts` (the two-minute tour), `hero.ts` (an eight-second loop as mp4, webm and
+  gif), `table.ts` (the room: a 3D table of players with physical buttons lit from the probe, the screen on the wall).
+- `out/` is not committed: takes are big. Re-shoot with the commands above.
+
+Everything is real time: the recording runs as long as the footage. A scene that fails leaves a
+`failure-<surface>.png` in its take folder.

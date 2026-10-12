@@ -1,0 +1,13 @@
+{
+  "name": "pax-buttonica-video",
+  "private": true,
+  "type": "module",
+  "description": "Scenes and edits for Pax Buttonica's videos, shot and cut by showreel.",
+  "scripts": {
+    "shoot": "showreel shoot",
+    "cut": "showreel cut"
+  },
+  "devDependencies": {
+    "showreel": "file:../../showreel"
+  }
+}
