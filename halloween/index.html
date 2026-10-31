@@ -105,6 +105,7 @@
   .sub { font: 600 11.5px var(--font-d); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin: 8px 0 0; display: flex; align-items: center; gap: 8px; }
   .sub::after { content: ''; flex: 1; height: 1px; background: var(--line); }
   .sub i { width: 10px; height: 10px; background: var(--k, var(--gold)); clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
+  .showcell { display: grid; } .showcell .f { font-size: 11px; padding: 3px 0 0 4px; }
   .shows .btn { border-left: 3px solid var(--k, var(--line-2)); clip-path: polygon(0 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%); }
   .shows .btn.on { background: var(--k); color: #000; } .shows .btn.on small { color: #000; }
   .item .n { font: 700 12px var(--font-d); color: var(--bg); background: var(--gold); width: 20px; height: 20px; display: grid; place-items: center; clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); }
@@ -186,7 +187,8 @@
     <div class="row">
       <label class="f">Lamp brightness <input type="range" id="lampmax" min="10" max="100" step="5"><span id="lampmaxv"></span></label>
       <label class="f">Button brightness <input type="range" id="btnmax" min="10" max="100" step="5"><span id="btnmaxv"></span></label>
-      <label class="f">Lamps between presses <select id="idle"><option value="glow">Orange and purple glow</option><option value="keep">Leave them as they were</option></select></label>
+      <label class="f"><input type="checkbox" id="gentle"> Leave out the scariest shows</label>
+      <label class="f">Lamps between presses <select id="idle"><option value="turn">Fading in and out, in turn</option><option value="glow">Orange and purple glow</option><option value="keep">Leave them as they were</option></select></label>
     </div>
     <div class="sub">The night</div>
     <div class="row">
@@ -203,7 +205,7 @@
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
   // ── what is remembered between visits ─────────────────────────────────────
-  const store = Object.assign({ vol: 60, lampmax: 80, btnmax: 80, lag: 160, awake: true, source: 'mix', idle: 'glow', close: '21:00', count: 0, roles: {}, lamps: [], group: null, snapshot: null }, JSON.parse(localStorage.getItem('halloween') || '{}'),
+  const store = Object.assign({ vol: 60, lampmax: 80, btnmax: 80, lag: 160, awake: true, source: 'mix', idle: 'turn', close: '21:00', count: 0, roles: {}, gentle: true, skip: {}, lamps: [], group: null, snapshot: null }, JSON.parse(localStorage.getItem('halloween') || '{}'),
     await fetch('/api/state').then((r) => r.json()).catch(() => ({})));   // the server's copy wins: it is the same in every window
   let saving = null;
   const save = () => { localStorage.setItem('halloween', JSON.stringify(store)); clearTimeout(saving); saving = setTimeout(() => fetch('/api/state', { method: 'POST', body: JSON.stringify({ ...store, armed: undefined, tab: undefined }) }).catch(() => {}), 300); };   // whether the show is running, and which tab is open, are this window's own
@@ -353,8 +355,13 @@
     // Turn every lamp's colour round the wheel by `deg`: one command for the lot.
     spin(deg, ms) { for (const l of used()) { l.h = ((l.h ?? 0) + deg) % 360; paint(l, null, l.bri, ms); } if (store.group) hueSend(`groups/${store.group}/action`, { hue_inc: Math.round(deg / 360 * 65535), transitiontime: Math.round(ms / 100) }); },
     idle() {
+      clearInterval(L.breath); L.breath = null;
       if (store.idle === 'keep') return L.restore();
-      used().forEach((_, i) => L.one(i, i % 2 ? C.purple : C.orange, 0.35, 1200, true));
+      used().forEach((_, i) => L.one(i, i % 2 ? C.purple : C.orange, store.idle === 'turn' ? 0.12 : 0.35, 1200, true));
+      if (store.idle !== 'turn') return;
+      // In turn along the house, each lamp swells and settles again: orange, then purple, then orange...
+      let k = 0;
+      L.breath = setInterval(() => { if (!armed || busy) return; const n = used().length; if (!n) return; const i = k % n, c = (k % 2 ? C.purple : C.orange); k++; L.one(i, c, 0.7, 900, true); setTimeout(() => { if (armed && !busy) L.one(i, c, 0.12, 1800, true); }, 1000); }, 1300);
     },
     async snapshot() {
       if (!paired) return;
@@ -462,7 +469,7 @@
     let msg; try { msg = JSON.parse(line); } catch { return; }
     if (!msg.dev || !['hello', 'btn', 'rssi', 'bat', 'lost'].includes(msg.t)) return;
     let d = devs.find((x) => x.dev === msg.dev);
-    if (!d) { if (msg.t === 'lost') return; d = { dev: msg.dev, role: store.roles[msg.dev] ?? (devs.length % 2 ? 'funny' : 'spooky') }; devs.push(d); }
+    if (!d) { if (msg.t === 'lost') return; d = { dev: msg.dev, role: store.roles[msg.dev] ?? (devs.length === 0 ? 'mystery' : devs.length % 2 ? 'funny' : 'spooky') }; devs.push(d); }
     if (msg.t === 'hello') { d.fw = msg.fw; d.lost = false; send(cfg(d.dev)); if (look[d.role]) send(ledMsg(d.dev, look[d.role])); }
     if (msg.t === 'rssi') d.rssi = msg.dbm;
     if (msg.t === 'bat') d.mv = msg.mv;
@@ -548,7 +555,7 @@
         for (let i = 0; i < n(); i++) { at(500 + i * 380, () => L.one(i, C.green, 0.9, 300)); at(1000 + i * 380, () => L.one(i, C.teal, 0.08, 900)); }
         at(3800, () => { L.all(C.blue, 0.6, 1400); B.all(C.blue, 'wave'); }); at(5800, () => L.all(C.blue, 0.05, 1200));
       } },
-    { role: 'spooky', name: 'Heartbeat', what: 'faster and faster, then…', ms: 7400,
+    { role: 'spooky', scary: true, name: 'Heartbeat', what: 'faster and faster, then…', ms: 7400,
       beats: [400, 1400, 2300, 3100, 3800, 4400],
       sound(t) { for (const b of this.beats) S.heart(t + b / 1000); S.stab(t + 5); },
       lights(at) {
@@ -582,7 +589,7 @@
         at(2600, () => { L.all(C.green, 0.9); B.all(C.green, 'sparkle'); B.fx('glitch'); }); at(3000, () => L.all(C.mustard, 0.5, 400));
         at(3800, () => { L.all(C.pink, 1); B.fx('fireworks'); }); at(4300, () => L.all(C.blue, 1)); at(4700, () => L.all(C.blue, 0.2, 800));
       } },
-    { role: 'spooky', name: 'Something runs past', what: 'footsteps along the house… and back', ms: 7400,
+    { role: 'spooky', scary: true, name: 'Something runs past', what: 'footsteps along the house… and back', ms: 7400,
       sound(t) { for (let k = 0; k < 7; k++) S.step(t + 0.4 + k * 0.23); for (let k = 0; k < 7; k++) S.step(t + 2.8 + k * 0.12); S.growl(t + 3.9); },
       lights(at) {
         at(0, () => { L.all(null, 0, 300); B.all(C.red, 'dim'); });
@@ -677,7 +684,9 @@
   function deal(role) {
     const kind = role === 'mystery' ? ['spooky', 'funny', 'magic'][Math.floor(Math.random() * 3)] : role;
     const bag = bags[kind] ??= { left: [], last: null };
-    if (!bag.left.length) { bag.left = SHOWS.filter((s) => s.role === kind).sort(() => Math.random() - 0.5); if (bag.left.length > 1 && bag.left[0] === bag.last) bag.left.push(bag.left.shift()); }
+    const allowed = (s) => s.role === kind && !(store.gentle && s.scary) && !store.skip?.[s.name];
+    const pool = SHOWS.some(allowed) ? SHOWS.filter(allowed) : SHOWS.filter((s) => s.role !== 'jackpot' && !(store.gentle && s.scary) && !store.skip?.[s.name]);   // nothing of this kind left: any kind
+    if (!bag.left.length) { bag.left = (pool.length ? pool : SHOWS.filter((s) => s.role === kind)).sort(() => Math.random() - 0.5); if (bag.left.length > 1 && bag.left[0] === bag.last) bag.left.push(bag.left.shift()); }
     return (bag.last = bag.left.shift());
   }
   async function recording(kind) {
@@ -698,7 +707,7 @@
     if (counted) { store.count += 1; save(); $('count').textContent = store.count; }
     say(`${label(show)}: ${show.name}${buf ? ' (your recording)' : ''}`);
     const at = (when, fn) => timers.push(setTimeout(fn, when + +store.lag));
-    show.card?.classList.add('on');
+    show.card?.classList.add('on'); clearInterval(L.breath); L.breath = null;
     show.lights(at);
     at(show.ms, () => { if (armed) { L.idle(); } else L.all(null, 0, 600); });
     at(ms, () => { if (armed) B.idle(); else B.dark(); });
@@ -725,7 +734,7 @@
     armed = false; store.armed = false; wake?.release().catch(() => {}); wake = null; busy = false; timers.forEach(clearTimeout); timers = [];
     $('arm').textContent = 'Start the show'; $('arm').className = 'btn primary big';
     say(why); $('status').textContent = '';
-    B.dark(); L.restore(); store.snapshot = null; save();
+    clearInterval(L.breath); L.breath = null; B.dark(); L.restore(); store.snapshot = null; save();
   }
   $('arm').onclick = () => (armed ? disarm() : arm());
   setInterval(() => { if (armed && closeAt && new Date() >= closeAt && !busy) disarm(`Lights out: it is past ${store.close}. Good night.`); }, 5000);
@@ -741,7 +750,9 @@
   const kindColour = (role) => '#' + (ROLES[role]?.idle.c ?? C.gold);
   $('shows').replaceChildren(...[...Object.keys(ROLES), 'jackpot'].filter((k) => SHOWS.some((s) => s.role === k)).flatMap((k) => {
     const head = el('div', { className: 'sub' }, el('i'), ROLES[k]?.label ?? 'Jackpot'); head.style.setProperty('--k', kindColour(k));
-    const grid = el('div', { className: 'shows' }, ...SHOWS.filter((s) => s.role === k).map((s) => { s.card = el('button', { className: 'btn' }, s.name, el('small', { textContent: s.what })); s.card.style.setProperty('--k', kindColour(k)); s.card.onclick = () => play(s, false); return s.card; }));
+    const grid = el('div', { className: 'shows' }, ...SHOWS.filter((s) => s.role === k).map((s) => { s.card = el('button', { className: 'btn' }, s.name, el('small', { textContent: (s.scary ? 'scary · ' : '') + s.what })); s.card.style.setProperty('--k', kindColour(k)); s.card.onclick = () => play(s, false);
+      const skip = el('label', { className: 'f', title: 'Leave this one out of the rotation' }, el('input', { type: 'checkbox', checked: Boolean(store.skip?.[s.name]) }), 'skip'); skip.firstChild.onchange = () => { (store.skip ??= {})[s.name] = skip.firstChild.checked; save(); bags[s.role] = null; };
+      return el('div', { className: 'showcell' }, s.card, skip); }));
     return [head, grid];
   }));
   for (const [role, p] of Object.entries(pads)) p.parentElement.style.setProperty('--k', kindColour(role));
@@ -751,12 +762,12 @@
   for (const c of document.querySelectorAll('.chip')) c.onclick = () => openTab(c.dataset.open);
   openTab(store.tab ?? 'shows');
   const units = { vol: '%', lampmax: '%', btnmax: '%', lag: ' ms' };
-  for (const id of ['vol', 'lampmax', 'btnmax', 'lag', 'source', 'idle', 'close', 'awake']) {
+  for (const id of ['vol', 'lampmax', 'btnmax', 'lag', 'source', 'idle', 'close', 'awake', 'gentle']) {
     const input = $(id), box = input.type === 'checkbox';
     if (box) input.checked = store[id]; else input.value = store[id];
     const shown = () => { if ($(id + 'v')) $(id + 'v').textContent = input.value + units[id]; };
     shown();
-    input.oninput = () => { store[id] = box ? input.checked : input.value; save(); shown(); if (id === 'vol' && master) master.gain.value = store.vol / 100; if (id === 'awake') keepAwake(); };
+    input.oninput = () => { store[id] = box ? input.checked : input.value; save(); shown(); if (id === 'gentle') for (const k in bags) bags[k] = null; if (id === 'vol' && master) master.gain.value = store.vol / 100; if (id === 'awake') keepAwake(); };
     if (id === 'btnmax') input.onchange = () => { for (const d of devs) send(cfg(d.dev)); };
     if (id === 'idle') input.onchange = () => { if (armed && !busy) L.idle(); };
   }
