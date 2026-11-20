@@ -29,7 +29,8 @@ npm run e2e          # Playwright, the whole app in a browser (~2.5 min); see e2
 npm run typecheck    # app + api
 npm run build
 npm run video        # cut the two-minute tour from its take with showreel (video/README.md); shoot first
-npx --yes vercel@latest --prod --yes   # deploy (the installed vercel CLI fails on Node 24)
+git push                                # deploys: Vercel builds main from GitHub on every push (connected 2026-11-20)
+npx --yes vercel@latest --prod --yes   # deploy by hand, only if that fails (uploads are capped per day on the free plan)
 ```
 
 Firmware (arduino-cli can't see the sketchbook libraries from the sandbox, so pass them):
@@ -61,7 +62,7 @@ kicad-cli pcb drc pax-button.kicad_pcb     # must stay at 0 violations, 0 unconn
 - The UI has to feel crisp and look like TI (chamfered frames, not bubbly). The site doubles as a recruiting demo.
 - The M5Stack button and hub ran on real parts on 2026-09-24 (see `hardware/HANDOFF.md`). The carrier board has never been manufactured: say "passes DRC", not "works", about it. Say "works" only about what has been seen running.
 - Run `npm run test:all` before pushing app changes. A behaviour change needs its test changed or added in `e2e/`.
-- Garett's standing instruction: commit, push and redeploy when a round of changes is done.
+- Garett's standing instruction: commit and push when a round of changes is done. The push is the deploy: check that the build went green (`npx --yes vercel@latest ls pax-buttonica`).
 
 ## Working in parallel
 
@@ -70,4 +71,4 @@ Several Claude sessions may be open on this repo at once, each in its own git wo
 - **App session:** `src/`, `api/`, `e2e/`, build config.
 - **Hardware session:** `firmware/`, `hardware/`, `docs/HARDWARE.md`, `docs/SHOPPING.md`, `docs/BUTTON_STANDARD.md`. If the protocol has to change, change the doc and the firmware, and leave a note for the app session rather than editing `src/hardware/` yourself. Hardware status and open questions are in `hardware/HANDOFF.md`.
 
-Merge to `main` with small commits, rebase before pushing, and only the session that touched `src/`, `api/` or `docs/` needs to redeploy.
+Merge to `main` with small commits and rebase before pushing. Every push to `main` deploys the site, so `main` must always build.
