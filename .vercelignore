@@ -1,0 +1,19 @@
+# What a deploy leaves behind. When this file exists the Vercel CLI reads it instead of .gitignore, so it repeats
+# that list, and spells out the firmware build folders (tens of MB of compiler output), which a `*` pattern missed.
+node_modules
+dist
+.vercel
+.DS_Store
+*.local
+.claude
+playwright-report
+test-results
+video/out
+video/node_modules
+video/*.log
+firmware/button/build
+firmware/hub/build
+firmware/soak-logs
+halloween/.hue.json
+halloween/.glow.json
+pax-buttonica-*.json
