@@ -1,4 +1,5 @@
 import type { BrowserContext, Route } from '@playwright/test';
+import { Refusal, apply, createDraft, keyOf, parseKey, view, whoIs, type Draft, type Env, type Op } from '../api/_secretsDraft';
 
 export interface Row {
   id: string;
@@ -35,6 +36,55 @@ export class FakeApi {
     await context.route('**/api/game**', (r) => this.game(r));
     await context.route('**/api/actions**', (r) => this.inbox(r));
     await context.route('**/api/button**', (r) => this.button(r));
+    await context.route('**/api/secrets**', (r) => this.secrets(r));
+  }
+
+  /** Secret objectives dealt ahead of game night, as api/secrets.ts keeps them: the same rules, held in memory. */
+  drafts = new Map<string, Draft>();
+  private tokens = 0;
+  private secretsEnv(now: number): Env {
+    const letters = 'abcdefghijkmnopqrstuvwxyz23456789';
+    return {
+      now,
+      int: (n) => Math.floor(Math.random() * n),
+      token: (length) => {
+        const stamp = (this.tokens++).toString(36).replace(/[01l]/g, 'z').padStart(4, 'a');
+        return (stamp + Array.from({ length }, () => letters[Math.floor(Math.random() * letters.length)]).join('')).slice(0, length);
+      },
+    };
+  }
+  private async secrets(route: Route) {
+    if (!this.online) return route.abort('internetdisconnected');
+    const req = route.request();
+    const url = new URL(req.url());
+    try {
+      if (req.method() === 'GET') {
+        const key = parseKey(url.searchParams.get('k'));
+        const draft = key && this.drafts.get(key.id);
+        const who = draft && whoIs(draft, key.token);
+        if (!draft || !who) return route.fulfill({ status: 404, json: { error: 'No such link.' } });
+        return route.fulfill({ json: view(draft, who, url.searchParams.get('dev')) });
+      }
+      const body = req.postDataJSON() as Record<string, unknown>;
+      this.requests.push({ method: 'POST', url: req.url(), body });
+      // The page's clock is the test's (paused); the stand-in keeps the same time so "picked at" reads right.
+      const now = typeof body.now === 'number' ? body.now : Date.parse('2026-10-03T19:00:00-04:00');
+      if (body.op === 'create') {
+        const draft = createDraft(body, this.secretsEnv(now));
+        this.drafts.set(draft.id, draft);
+        return route.fulfill({ json: { key: keyOf(draft, draft.adminToken) } });
+      }
+      const key = parseKey(body.k);
+      const draft = key && this.drafts.get(key.id);
+      const who = draft && whoIs(draft, key.token);
+      if (!draft || !who) return route.fulfill({ status: 404, json: { error: 'No such link.' } });
+      const next = apply(draft, who, body as unknown as Op, body.dev, this.secretsEnv(now));
+      this.drafts.set(next.id, next);
+      return route.fulfill({ json: view(next, who, body.dev) });
+    } catch (e) {
+      if (e instanceof Refusal) return route.fulfill({ status: e.status, json: { error: e.message } });
+      throw e;
+    }
   }
 
   /** api/button.ts: whose a real button is, and which game it is in. */

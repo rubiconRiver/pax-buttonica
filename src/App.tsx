@@ -10,6 +10,7 @@ import { Parts } from './pages/Parts';
 import { Landing } from './pages/Landing';
 import { ButtonLink } from './pages/ButtonLink';
 import { Play } from './pages/Play';
+import { Secrets } from './pages/Secrets';
 import { Stats } from './pages/Stats';
 import { Standard } from './pages/Standard';
 
@@ -36,6 +37,8 @@ export function App() {
       <Route path="/button" element={<ButtonConcept />} />
       <Route path="/bench" element={<Bench />} />
       <Route path="/buzzer" element={<Buzzer />} />
+      <Route path="/secrets" element={<Secrets />} />
+      <Route path="/secrets/:key" element={<Secrets />} />
       <Route path="*" element={<Landing />} />
     </Routes>
   );

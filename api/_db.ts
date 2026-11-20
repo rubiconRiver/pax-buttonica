@@ -63,6 +63,14 @@ async function createSchema() {
       at bigint not null
     )`,
     tx`create index if not exists game_actions_code_seq on game_actions (code, seq)`,
+    // Secret objectives dealt ahead of game night (/secrets): one row per deal, rewritten whole, and only if
+    // nobody else has written since it was read.
+    tx`create table if not exists secret_drafts (
+      id text primary key,
+      version integer not null default 0,
+      data jsonb not null,
+      created_at bigint not null
+    )`,
   ]);
 }
 

@@ -13,6 +13,7 @@ Private GitHub repo: rubiconRiver/pax-buttonica. Owner: Garett (Canada; knows so
 | `api/` | Vercel functions on Neon Postgres: `game` (the record, by code), `actions` (phones' inbox), `profiles`, `clips`. No auth yet, by choice |
 | `docs/` | `BUTTON_STANDARD.md` (wire protocol), `HARDWARE.md` (build guide), `SHOPPING.md`; the first two are rendered on the site at `/standard` and `/hardware` |
 | `src/stats/` | `analyze.ts` takes a downloaded game log apart (phases, turns, waiting, pauses, refused presses); `/stats` shows the first game night's log, `game-V28W.json` |
+| `api/secrets.ts`, `src/pages/Secrets.tsx` | A side tool at `/secrets`, apart from the game: secret objectives dealt before game night. The rules are pure, in `api/_secretsDraft.ts` (shared with the tests' stand-in); the deck is `api/_secretsDeck.ts`, the only file to edit to change the cards. The organiser's dashboard must never be sent a card |
 | `e2e/` | Playwright browser tests |
 | `video/` | Scenes and edits for the videos, shot and cut by showreel (`~/showreel`, skill `/showreel`); see `video/README.md` |
 | `halloween/` | The buttons' night off: a local-only show (Hue lamps, speaker, buttons through the hub) plus Porch glow at `/glow`, ambient lamp scenes played by the server (`scenes.mjs`, `glow.mjs`); run with `node halloween/server.mjs` or installed as an app by `install.sh`; never deployed, see its README |
